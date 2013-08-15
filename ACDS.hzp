@@ -1,28 +1,42 @@
 <!DOCTYPE CrossStudio_Project_File>
-<solution Name="BUS" target="9" version="2">
-  <project Name="BUS">
+<solution Name="ADCS" target="9" version="2">
+  <project Name="ADCS">
     <configuration Name="Common" Platform="MSP430" Target="MSP430F2618" build_use_hardware_multiplier="16-Bit Multiplier" link_symbol_definitions="CTL_IRQ_STACK_SIZE=128" link_use_multi_threaded_libraries="Yes" linker_additional_files="$(StudioDir)/ctl/lib/libctl$(LibExt).hza" linker_memory_map_file="$(PackagesDir)/targets/msp430/MSP430F2618.xml" linker_printf_fmt_level="long" linker_section_placement_file="$(StudioDir)/targets/section_placement_info_abcd_iv32.xml" msp430_debug_interface="JTAG" msp430_identify_string="MSP430F2618" msp430_insn_set="MSP430X" optimize_code_motion="Yes" optimize_copy_propagation="Yes" optimize_jump_chaining="Yes" project_directory="" project_type="Executable"/>
     <folder Name="Source Files">
       <configuration Name="Common" filter="c;h;s;asm;inc;s43"/>
       <file file_name="main.c"/>
-      <file file_name="UCint.c"/>
-      <file file_name="UCA1_uart.c"/>
-      <file file_name="UCA1_uart.h"/>
-      <file file_name="timerA.c"/>
-      <file file_name="timerA.h"/>
-      <file file_name="terminal.c"/>
-      <file file_name="terminal.h"/>
       <file file_name="commands.c"/>
+      <file file_name="bias.c"/>
+      <file file_name="bias.h"/>
+      <file file_name="vector.c"/>
+      <file file_name="vector.h"/>
+      <file file_name="output_type.h"/>
+      <file file_name="SensorDataInterface.h"/>
+      <file file_name="ACDS.c"/>
+      <file file_name="ACDS.h"/>
+      <file file_name="stackcheck.c"/>
+      <folder Name="Hardware">
+        <file file_name="LED.c"/>
+        <file file_name="LED.h"/>
+        <file file_name="torquers.c"/>
+        <file file_name="torquers.h"/>
+        <file file_name="timerA.c"/>
+        <file file_name="timerA.h"/>
+      </folder>
+      <file file_name="algorithm.h"/>
+      <file file_name="algorythm.c"/>
+      <file file_name="Error_decode.c"/>
+      <file file_name="ACDSerr.h"/>
+      <file file_name="stackcheck.h"/>
     </folder>
     <folder Name="System Files">
-      <file file_name="crt0.asm"/>
       <file file_name="$(StudioDir)/ctl/source/threads.js"/>
     </folder>
   </project>
-  <configuration Name="MSP430 Debug" inherited_configurations="MSP430;Debug" linker_additional_files="Z:\\Software\\BUS\\library\\MSP430 Debug\\BUSlib.hza"/>
+  <configuration Name="MSP430 Debug" inherited_configurations="MSP430;Debug" linker_additional_files="Z:/Software/lib/BUSlib_Debug.hza;Z:/Software/lib/termlib_Debug.hza;Z:/Software/lib/SD-lib_UCA1_Debug.hza;Z:/Software/lib/Error_Debug.hza"/>
   <configuration Name="MSP430" Platform="MSP430" hidden="Yes"/>
   <configuration Name="Debug" build_debug_information="Yes" hidden="Yes"/>
-  <configuration Name="MSP430 Release" inherited_configurations="MSP430;Release" linker_additional_files="Z:\\Software\\BUS\\library\\MSP430 Release\\BUSlib.hza"/>
+  <configuration Name="MSP430 Release" inherited_configurations="MSP430;Release" linker_additional_files="Z:/Software/lib/BUSlib_Release.hza;Z:/Software/lib/termlib_Release.hza;Z:/Software/lib/SD-lib_UCA1_Release.hza;Z:/Software/lib/Error_Release.hza"/>
   <configuration Name="Release" build_debug_information="No" c_preprocessor_definitions="NDEBUG" hidden="Yes" optimize_block_locality="Yes" optimize_copy_propagation="Yes" optimize_cross_calling="Standard" optimize_cross_jumping="Yes" optimize_dead_code="Yes" optimize_jump_chaining="Yes" optimize_jump_threading="Yes" optimize_tail_merging="Yes"/>
-  <configuration Name="Common" c_system_include_directories="$(StudioDir)/include;$(PackagesDir)/include;$(StudioDir)/ctl/include;Z:\\Software\\BUS\\library"/>
+  <configuration Name="Common" c_system_include_directories="$(StudioDir)/include;$(PackagesDir)/include;$(StudioDir)/ctl/include;Z:/Software/include" linker_printf_fp_enabled="Yes"/>
 </solution>
