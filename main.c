@@ -70,8 +70,6 @@ int main(void){
   //turn on LED 3
   LED_on(3);
   
-  //setup error reporting library
-  error_init();
   //TESTING: set log level to report everything by default
   set_error_level(0);
 
