@@ -744,11 +744,36 @@ int outputTypeCmd(char **argv,unsigned short argc){
     return 0;
 }
 
+//print the status of each tasks stack
+int stackstatsCmd(char **argv,unsigned short argc){
+  extern CTL_TASK_t *ctl_task_list;
+  int i;
+  CTL_TASK_t *t=ctl_task_list;
+  //format string
+  const char *fmt="%-10s\t%lp\t%lp\t%li\r\n";
+  //print out nice header
+  printf("\r\nName\tPointer\tStart\tRemaining\r\n--------------------------------------------------------------------\r\n");
+  //loop through tasks and print out info
+  while(t!=NULL){
+    printf(fmt,t->name,t->stack_pointer,t->stack_start,t->stack_pointer-t->stack_start);
+    t=t->next;
+  }
+  //add a blank line after table
+  printf("\r\n");
+  return 0;
+}
+
+int replayCmd(char **argv,unsigned short argc){
+  error_log_replay();
+  return 0;
+}
+
 //table of commands with help
 const CMD_SPEC cmd_tbl[]={{"help"," [command]\r\n\t""get a list of commands or help on a spesific command.",helpCmd},
                      {"priority"," task [priority]\r\n\t""Get/set task priority.",priorityCmd},
                      {"timeslice"," [period]\r\n\t""Get/set ctl_timeslice_period.",timesliceCmd},
                      {"stats","\r\n\t""Print task status",statsCmd},
+                     {"stack","\r\n\t""Print task stack status",stackstatsCmd},
                      {"time","\r\n\t""Return current time.",timeCmd},
                      {"flip","[X Y Z]\r\n\t""Flip a torquer in each axis.",flipCmd},
                      {"setTorque"," Xtorque Ytorque Ztorque\r\n\tFlip torquers to set the torque in the X, Y and Z axis",setTorqueCmd},
@@ -768,5 +793,7 @@ const CMD_SPEC cmd_tbl[]={{"help"," [command]\r\n\t""get a list of commands or h
                      {"clear","\r\n\t""",clearCmd},
                      {"clrerr","\r\n\t""Clear error LED",clrErrCmd},
                      {"output","[output type]\r\n\tchange output between human and machine readable",outputTypeCmd},
+                     {"clear","\r\n\t""Clear all saved errors on the SD card",clearCmd},
+                     {"replay","\r\n\t""Replay errors from log",replayCmd},
                      //end of list
                      {NULL,NULL,NULL}};
