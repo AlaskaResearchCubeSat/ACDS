@@ -644,7 +644,6 @@ int calCmd(char **argv,unsigned short argc){
   int res;
   unsigned int e;
   VEC T={0,0,0};
-  unsigned char oldErr;
   extern int cal_stat;
   //reset calibration state
   cal_stat=0;
@@ -654,7 +653,6 @@ int calCmd(char **argv,unsigned short argc){
 
   setTorque(&T,TQ_SET_BIG);
   setTorque(&T,TQ_SET_BIG);
-  oldErr=set_error_level(ERR_LEV_CRITICAL);
   //wait
   ctl_timeout_wait(ctl_get_current_time()+2048);
   //send sample command
@@ -672,8 +670,6 @@ int calCmd(char **argv,unsigned short argc){
   //check result
   if(res<0){
     printf("Error communicating with LEDL : %s\r\n",BUS_error_str(res));
-    //restore error level
-    set_error_level(oldErr);
     //return error
     return 1;
   } 
@@ -690,13 +686,9 @@ int calCmd(char **argv,unsigned short argc){
   *ptr++=MAG_SAMPLE_STOP;
   //send packet
   res=BUS_cmd_tx(BUS_ADDR_LEDL,buff,1,0,BUS_I2C_SEND_FOREGROUND);
-  //restore error level
-  set_error_level(oldErr);
   //check result
   if(res<0){
     printf("Error stopping data collection : %s\r\n",BUS_error_str(res));
-    //restore error level
-    set_error_level(oldErr);
     //return error
     return 1;
   }
