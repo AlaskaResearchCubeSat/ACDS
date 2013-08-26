@@ -176,106 +176,6 @@ int statsCmd(char **argv,unsigned short argc){
   return 0;
 }
 
-//transmit command over I2C
-int txCmd(char **argv,unsigned short argc){
-  unsigned char buff[10],*ptr,id;
-  unsigned char addr;
-  unsigned short len;
-  unsigned int e;
-  char *end;
-  int i,resp,nack=BUS_CMD_FL_NACK;
-  if(!strcmp(argv[1],"noNACK")){
-    nack=0;
-    //shift arguments
-    argv[1]=argv[0];
-    argv++;
-    argc--;
-  }
-  //check number of arguments
-  if(argc<2){
-    printf("Error : too few arguments.\r\n");
-    return 1;
-  }
-  if(argc>sizeof(buff)){
-    printf("Error : too many arguments.\r\n");
-    return 2;
-  }
-  //get address
-  addr=getI2C_addr(argv[1],0);
-  if(addr==0xFF){
-    return 1;
-  }
-  //get packet ID
-  id=strtol(argv[2],&end,0);
-  if(end==argv[2]){
-      printf("Error : could not parse element \"%s\".\r\n",argv[2]);
-      return 2;
-  }
-  if(*end!=0){
-    printf("Error : unknown sufix \"%s\" at end of element \"%s\"\r\n",end,argv[2]);
-    return 3;
-  }
-  //setup packet 
-  ptr=BUS_cmd_init(buff,id);
-  //pares arguments
-  for(i=0;i<argc-2;i++){
-    ptr[i]=strtol(argv[i+3],&end,0);
-    if(end==argv[i+1]){
-        printf("Error : could not parse element \"%s\".\r\n",argv[i+3]);
-        return 2;
-    }
-    if(*end!=0){
-      printf("Error : unknown sufix \"%s\" at end of element \"%s\"\r\n",end,argv[i+3]);
-      return 3;
-    }
-  }
-  len=i;
-  resp=BUS_cmd_tx(addr,buff,len,nack,BUS_I2C_SEND_FOREGROUND);
-  switch(resp){
-    case RET_SUCCESS:
-      printf("Command Sent Sucussfully.\r\n");
-    break;
-  }
-  //check if an error occured
-  if(resp<0){
-    printf("Error : unable to send command\r\n");
-  }
-  printf("Resp = %i\r\n",resp);
-  return 0;
-}
-
-int printCmd(char **argv,unsigned short argc){
-  unsigned char buff[40],*ptr,id;
-  unsigned char addr;
-  unsigned short len;
-  int i,j,k;
-  //check number of arguments
-  if(argc<2){
-    printf("Error : too few arguments.\r\n");
-    return 1;
-  }
-  //get address
-  addr=getI2C_addr(argv[1],0);
-  if(addr==0xFF){
-    return 1;
-  }
-  //setup packet 
-  ptr=BUS_cmd_init(buff,6);
-  //coppy strings into buffer for sending
-  for(i=2,k=0;i<=argc && k<sizeof(buff);i++){
-    j=0;
-    while(argv[i][j]!=0){
-      ptr[k++]=argv[i][j++];
-    }
-    ptr[k++]=' ';
-  }
-  //get length
-  len=k;
-  //send command
-  BUS_cmd_tx(addr,buff,len,0,BUS_I2C_SEND_FOREGROUND);
-  return 0;
-}
-
 //print current time
 int timeCmd(char **argv,unsigned short argc){
   printf("time ticker = %li\r\n",get_ticker_time());
@@ -848,9 +748,7 @@ int outputTypeCmd(char **argv,unsigned short argc){
 const CMD_SPEC cmd_tbl[]={{"help"," [command]\r\n\t""get a list of commands or help on a spesific command.",helpCmd},
                      {"priority"," task [priority]\r\n\t""Get/set task priority.",priorityCmd},
                      {"timeslice"," [period]\r\n\t""Get/set ctl_timeslice_period.",timesliceCmd},
-                     {"stats","\r\n\t""Print task status",statsCmd}, 
-                     {"tx"," [noACK] [noNACK] addr ID [[data0] [data1]...]\r\n\t""send data over I2C to an address",txCmd},
-                     {"print"," addr str1 [[str2] ... ]\r\n\t""Send a string to addr.",printCmd},
+                     {"stats","\r\n\t""Print task status",statsCmd},
                      {"time","\r\n\t""Return current time.",timeCmd},
                      {"flip","[X Y Z]\r\n\t""Flip a torquer in each axis.",flipCmd},
                      {"setTorque"," Xtorque Ytorque Ztorque\r\n\tFlip torquers to set the torque in the X, Y and Z axis",setTorqueCmd},
