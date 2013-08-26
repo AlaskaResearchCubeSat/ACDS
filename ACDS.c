@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <ARCbus.h>
 #include <string.h>
+#include <terminal.h>
 #include "SensorDataInterface.h"
 #include "ACDS.h"
 #include "LED.h"
@@ -11,12 +12,16 @@
 #include "torquers.h"
 
 
+//spesifications for the terminal
+const TERM_SPEC async_term={"ACDS Test Program ready",async_Getc};
+
 void sub_events(void *p) __toplevel{
   unsigned int e,len;
   int i;
+  extern CTL_TASK_t tasks[3];
   unsigned char buf[10],*ptr;
   for(;;){
-    e=ctl_events_wait(CTL_EVENT_WAIT_ANY_EVENTS_WITH_AUTO_CLEAR,&SUB_events,SUB_EV_ALL,CTL_TIMEOUT_NONE,0);
+    e=ctl_events_wait(CTL_EVENT_WAIT_ANY_EVENTS_WITH_AUTO_CLEAR,&SUB_events,SUB_EV_ALL|SUB_EV_ASYNC_OPEN|SUB_EV_ASYNC_CLOSE,CTL_TIMEOUT_NONE,0);
     if(e&SUB_EV_PWR_OFF){
       //print message
       puts("System Powering Down\r");
@@ -54,27 +59,25 @@ void sub_events(void *p) __toplevel{
     if(e&SUB_EV_SPI_ERR_CRC){
       puts("SPI bad CRC\r");
     }
-        if(e&SUB_EV_SPI_ERR_CRC){
+    if(e&SUB_EV_SPI_ERR_CRC){
       //puts("SPI bad CRC\r");
       P7OUT|=BIT7;
     }
-    if(e&SUB_EV_ASYNC_OPEN){
-      //kill off the terminal if it is running
+    /*if(e&SUB_EV_ASYNC_OPEN){
+      extern unsigned char async_addr;
+      unsigned *stack2;
       //setup closed event
       async_setup_close_event(&SUB_events,SUB_EV_ASYNC_CLOSE);
-      //setup async terminal        
-      //ctl_task_run(&tasks[1],2,terminal,"\rRemote Terminal started\r\n","async_terminal",sizeof(stack2)/sizeof(stack2[0])-2,stack2+1,0);
       //print message
-      printf("ACDS Async Terminal Opened\r\n");
-      //set LED's to indicate status
-      LED_on(1);
+      printf("Async Opened from 0x%02X\r\n",async_addr);
+      //setup UART terminal        
+      ctl_task_run(&tasks[1],BUS_PRI_NORMAL,terminal,(void*)&async_term,"terminal",sizeof(stack2)/sizeof(stack2[0])-2,stack2+1,0);
+      //async_close();
     }
     if(e&SUB_EV_ASYNC_CLOSE){
       //kill off async terminal
-      //ctl_task_remove(&tasks[1]);
-      //set LED's to indicate status
-      LED_off(1);
-    }
+      ctl_task_remove(&tasks[1]);
+    }*/
   }
 }
 
