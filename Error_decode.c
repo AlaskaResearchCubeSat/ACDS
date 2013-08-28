@@ -1,7 +1,6 @@
 #include <Error.h>
 #include "ACDSerr.h"
 #include "torquers.h"
-#include "LED.h"
 
 static char axis(unsigned short ax){
   switch(ax){
@@ -18,7 +17,6 @@ static char axis(unsigned short ax){
 
 //decode errors from ACDS system
 char *err_decode(char buf[150], unsigned short source,int err, unsigned short argument){
-  ERR_LED_on();
   switch(source){
     case ACDS_ERR_SRC_TORQUERS:
       switch(err){
