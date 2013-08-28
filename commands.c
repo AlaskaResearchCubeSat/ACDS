@@ -7,6 +7,8 @@
 #include <terminal.h>
 #include <ARCbus.h>
 #include <Error.h>
+#include <SDlib.h>
+#include <errno.h>
 #include "torquers.h"
 #include "output_type.h"
 #include "SensorDataInterface.h"
@@ -14,6 +16,11 @@
 #include "stackcheck.h"
 #include "ACDS.h"
 #include "LED.h"
+
+
+//define printf formats
+#define HEXOUT_STR    "%02X "
+#define ASCIIOUT_STR  "%c"
 
 int current_set=TQ_SET_BIG;
 
@@ -633,11 +640,6 @@ int logCmd(char **argv,unsigned short argc){
 
 int stackCmd(char **argv,unsigned short agrc);
 
-int clearCmd(char **argv,unsigned short argc){
-  resetTorqueStatus();
-  return 0;
-}
-
 int calCmd(char **argv,unsigned short argc){
   unsigned short time=32768,count=0;
   unsigned char buff[BUS_I2C_HDR_LEN+3+BUS_I2C_CRC_LEN],*ptr;
@@ -760,6 +762,85 @@ int replayCmd(char **argv,unsigned short argc){
   return 0;
 }
 
+int mmcInitChkCmd(char**argv,unsigned short argc){
+  int resp;
+  resp=mmc_is_init();
+  if(resp==MMC_SUCCESS){
+    printf("Card Initialized\r\n");
+  }else{
+    printf("Card Not Initialized\r\n%s\r\n",SD_error_str(resp));
+  }
+  return 0;
+}
+
+int mmc_eraseCmd(char **argv, unsigned short argc){
+  unsigned long start,end;
+  int resp;
+  //check arguments
+  if(argc!=2){
+    printf("Error : %s requiors two arguments\r\n",argv[0]);
+    return 1;
+  }
+  errno=0;
+  start=strtoul(argv[1],NULL,0);
+  end=strtoul(argv[2],NULL,0);
+  if(errno){
+    printf("Error : could not parse arguments\r\n");
+    return 2;
+  }
+  printf("Erasing from %lu to %lu\r\n",start,end);
+  //send erase command
+  resp=mmcErase(start,end);
+  printf("%s\r\n",SD_error_str(resp));
+  return 0;
+}
+
+int mmc_dump(char **argv, unsigned short argc){
+  int resp; 
+  char *buffer=NULL;
+  unsigned long sector=0;
+  int i;
+  //check if sector given
+  if(argc!=0){
+    //read sector
+    if(1!=sscanf(argv[1],"%ul",&sector)){
+      //print error
+      printf("Error parsing sector \"%s\"\r\n",argv[1]);
+      return -1;
+    }
+  }
+  //get buffer, set a timeout of 2 secconds
+  buffer=BUS_get_buffer(CTL_TIMEOUT_DELAY,2048);
+  //check for error
+  if(buffer==NULL){
+    printf("Error : Timeout while waiting for buffer.\r\n");
+    return -1;
+  }
+  //read from SD card
+  resp=mmcReadBlock(sector,(unsigned char*)buffer);
+  //print response from SD card
+  printf("%s\r\n",SD_error_str(resp));
+  //print out buffer
+  for(i=0;i<512/16;i++){
+    printf(HEXOUT_STR HEXOUT_STR HEXOUT_STR HEXOUT_STR HEXOUT_STR HEXOUT_STR HEXOUT_STR HEXOUT_STR HEXOUT_STR HEXOUT_STR HEXOUT_STR HEXOUT_STR HEXOUT_STR HEXOUT_STR HEXOUT_STR HEXOUT_STR "\r\n",
+    buffer[i*16],buffer[i*16+1],buffer[i*16+2],buffer[i*16+3],buffer[i*16+4],buffer[i*16+5],buffer[i*16+6],buffer[i*16+7],buffer[i*16+8],buffer[i*16+9],buffer[i*16+10],
+    buffer[i*16+11],buffer[i*16+12],buffer[i*16+13],buffer[i*16+14],buffer[i*16+15]);
+  }
+  //free buffer
+  BUS_free_buffer();
+  return 0;
+}
+  
+//clear saved errors from the SD card
+int clearCmd(char **argv,unsigned short argc){
+  int ret;
+  ret=clear_saved_errors();
+  if(ret){
+    printf("Error erasing errors : %s\r\n",SD_error_str(ret));
+  }
+  return 0;
+}
+
 //table of commands with help
 const CMD_SPEC cmd_tbl[]={{"help"," [command]\r\n\t""get a list of commands or help on a spesific command.",helpCmd},
                      {"priority"," task [priority]\r\n\t""Get/set task priority.",priorityCmd},
@@ -782,10 +863,10 @@ const CMD_SPEC cmd_tbl[]={{"help"," [command]\r\n\t""get a list of commands or h
                      {"cal","load|dump|write|test\r\n\t""do things with the magnetometer calibration",calCmd},
                      {"log","[level]\r\n\t""get/set log level",logCmd},
                      {"stack","\r\n\t""",stackCmd},
-                     {"clear","\r\n\t""",clearCmd},
                      {"clrerr","\r\n\t""Clear error LED",clrErrCmd},
                      {"output","[output type]\r\n\tchange output between human and machine readable",outputTypeCmd},
                      {"clear","\r\n\t""Clear all saved errors on the SD card",clearCmd},
                      {"replay","\r\n\t""Replay errors from log",replayCmd},
+                     {"mmcinitchk","\r\n\t""Check if the SD card is initialized",mmcInitChkCmd},
                      //end of list
                      {NULL,NULL,NULL}};
