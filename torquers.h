@@ -103,7 +103,7 @@ enum{M_MINUS=-1,M_PLUS=1};
 enum{X_AXIS=0,Y_AXIS,Z_AXIS};
 //Torquer sets
 enum {TQ_SET_ALL=-2,TQ_SET_NONE=-1,TQ_SET_BIG=1,TQ_SET_SMALL=2};
-
+//errors from torquer sets
 enum{TQ_ERR_BAD_SET=-1,TQ_ERR_BAD_TORQUER=-2,TQ_ERR_COMP=1,TQ_ERR_CAP=2,TQ_ERR_BAD_CONNECTION=3,TQ_INFO_FLIP,TQ_ERROR_INVALID_STATUS};
 
 int setTorque(const VEC *T,int set);
