@@ -9,6 +9,7 @@
 #include <Error.h>
 #include <SDlib.h>
 #include <errno.h>
+#include <commandLib.h>
 #include "torquers.h"
 #include "output_type.h"
 #include "SensorDataInterface.h"
@@ -23,172 +24,6 @@
 #define ASCIIOUT_STR  "%c"
 
 int current_set=TQ_SET_BIG;
-
-//helper function to parse I2C address
-//if res is true reject reserved addresses
-unsigned char getI2C_addr(char *str,short res){
-  unsigned long addr;
-  unsigned char tmp;
-  char *end;
-  //attempt to parse a numeric address
-  addr=strtol(str,&end,0);
-  //check for errors
-  if(end==str){
-    //check for symbolic matches
-    if(!strcmp(str,"LEDL")){
-      return BUS_ADDR_LEDL;
-    }else if(!strcmp(str,"ACDS")){
-      return BUS_ADDR_ACDS;
-    }else if(!strcmp(str,"COMM")){
-      return BUS_ADDR_COMM;
-    }else if(!strcmp(str,"IMG")){
-      return BUS_ADDR_IMG;
-    }else if(!strcmp(str,"CDH")){
-      return BUS_ADDR_CDH;
-    }else if(!strcmp(str,"GC")){
-      return BUS_ADDR_GC;
-    }
-    //not a known address, error
-    printf("Error : could not parse address \"%s\".\r\n",str);
-    return 0xFF;
-  }
-  if(*end!=0){
-    printf("Error : unknown sufix \"%s\" at end of address\r\n",end);
-    return 0xFF;
-  }
-  //check address length
-  if(addr>0x7F){
-    printf("Error : address 0x%04lX is not 7 bits.\r\n",addr);
-    return 0xFF;
-  }
-  //check for reserved address
-  tmp=0x78&addr;
-  if((tmp==0x00 || tmp==0x78) && res){
-    printf("Error : address 0x%02lX is reserved.\r\n",addr);
-    return 0xFF;
-  }
-  //return address
-  return addr;
-}
-
-//set priority for tasks on the fly
-int priorityCmd(char **argv,unsigned short argc){
-  extern CTL_TASK_t *ctl_task_list;
-  int i,found=0;
-  CTL_TASK_t *t=ctl_task_list;
-  if(argc<1 || argc>2){
-    printf("Error: %s takes one or two arguments, but %u are given.\r\n",argv[0],argc);
-    return -1;
-  }
-  while(t!=NULL){
-    if(!strcmp(t->name,argv[1])){
-      found=1;
-      //match found, break
-      break;
-    }
-    t=t->next;
-  }
-  //check that a task was found
-  if(found==0){
-      //no task found, return
-      printf("Error: could not find task named %s.\r\n",argv[1]);
-      return -3;
-  }
-  //print original priority
-  printf("\"%s\" priority = %u\r\n",t->name,t->priority);
-  if(argc==2){
-      unsigned char val=atoi(argv[2]);
-      if(val==0){
-        printf("Error: invalid priority.\r\n");
-        return -2;
-      }
-      //set priority
-      ctl_task_set_priority(t,val);
-      //print original priority
-      printf("new \"%s\" priority = %u\r\n",t->name,t->priority);
-  }
-  return 0;
-}
-
-//get/set ctl_timeslice_period
-int timesliceCmd(char **argv,unsigned short argc){
-  if(argc>1){
-    printf("Error: too many arguments.\r\n");
-    return 0;
-  }
-  //if one argument given then set otherwise get
-  if(argc==1){
-    int en;
-    CTL_TIME_t val=atol(argv[1]);
-    //check value
-    if(val==0){
-      printf("Error: bad value.\r\n");
-      return -1;
-    }
-    //disable interrupts so that opperation is atomic
-    en=ctl_global_interrupts_set(0);
-    ctl_timeslice_period=val;
-    ctl_global_interrupts_set(en);
-  }
-  printf("ctl_timeslice_period = %ul\r\n",ctl_timeslice_period);
-  return 0;
-}
-
-//return state name
-const char *stateName(unsigned char state){
-  switch(state){
-    case CTL_STATE_RUNNABLE:
-      return "CTL_STATE_RUNNABLE";
-    case CTL_STATE_TIMER_WAIT:
-      return "CTL_STATE_TIMER_WAIT";
-    case CTL_STATE_EVENT_WAIT_ALL:
-      return "CTL_STATE_EVENT_WAIT_ALL";
-    case CTL_STATE_EVENT_WAIT_ALL_AC:
-      return "CTL_STATE_EVENT_WAIT_ALL_AC";
-    case CTL_STATE_EVENT_WAIT_ANY:
-      return "CTL_STATE_EVENT_WAIT_ANY";
-    case CTL_STATE_EVENT_WAIT_ANY_AC:
-      return "CTL_STATE_EVENT_WAIT_ANY_AC";
-    case CTL_STATE_SEMAPHORE_WAIT:
-      return "CTL_STATE_SEMAPHORE_WAIT";
-    case CTL_STATE_MESSAGE_QUEUE_POST_WAIT:
-      return "CTL_STATE_MESSAGE_QUEUE_POST_WAIT";
-    case CTL_STATE_MESSAGE_QUEUE_RECEIVE_WAIT:
-      return "CTL_STATE_MESSAGE_QUEUE_RECEIVE_WAIT";
-    case CTL_STATE_MUTEX_WAIT:
-      return "CTL_STATE_MUTEX_WAIT";
-    case CTL_STATE_SUSPENDED:
-      return "CTL_STATE_SUSPENDED";
-    default:
-      return "unknown state";
-  }
-}
-
-//print the status of all tasks in a table
-int statsCmd(char **argv,unsigned short argc){
-  extern CTL_TASK_t *ctl_task_list;
-  int i;
-  CTL_TASK_t *t=ctl_task_list;
-  //format string
-  const char *fmt="%-10s\t%u\t\t%c%-28s\t%lu\r\n";
-  //print out nice header
-  printf("\r\nName\t\tPriority\tState\t\t\t\tTime\r\n--------------------------------------------------------------------\r\n");
-  //loop through tasks and print out info
-  while(t!=NULL){
-    printf(fmt,t->name,t->priority,(t==ctl_task_executing)?'*':' ',stateName(t->state),t->execution_time);
-    t=t->next;
-  }
-  //add a blank line after table
-  printf("\r\n");
-  return 0;
-}
-
-//print current time
-int timeCmd(char **argv,unsigned short argc){
-  printf("time ticker = %li\r\n",get_ticker_time());
-  return 0;
-}
-
 
 //get torque from string
 float readTorque(const char*tstr){
@@ -593,50 +428,6 @@ float torqueCal[64];
 }*/
 
 
-//set which errors are logged
-int logCmd(char **argv,unsigned short argc){
-  const unsigned char logLevels[]={ERR_LEV_DEBUG,ERR_LEV_INFO,ERR_LEV_WARNING,ERR_LEV_ERROR,ERR_LEV_CRITICAL};
-  const char *(levelNames[])={"debug","info","warn","error","critical"};
-  int found,i;
-  unsigned char level;
-  //check for too many arguments
-  if(argc>1){
-    printf("Error : %s takes 0 or 1 arguments\r\n",argv[0]);
-    return -1;
-  }
-  //check if argument given
-  if(argc==1){
-    if(!strcmp("levels",argv[1])){
-      //print a list of level names
-      for(i=0;i<sizeof(logLevels)/sizeof(logLevels[0]);i++){
-        printf("% 3u - %s\r\n",logLevels[i],levelNames[i]);
-       }
-       return 0;
-    }
-    //check for matching level names
-    for(i=0;i<sizeof(logLevels)/sizeof(logLevels[0]);i++){
-      if(!strcmp(levelNames[i],argv[1])){
-        //match found
-        found=1;
-        //set log level
-        level=logLevels[i];
-        //done
-        break;
-      }
-    }
-    //check if there was a matching name
-    if(!found){
-      //get convert to integer
-      level=atoi(argv[1]);
-    }
-    //set log level
-    set_error_level(level);
-  }
-  //print (new) log level
-  printf("Log level = %u\r\n",get_error_level());
-  return 0;
-}
-
 
 int stackCmd(char **argv,unsigned short agrc);
 
@@ -738,116 +529,10 @@ int outputTypeCmd(char **argv,unsigned short argc){
     return 0;
 }
 
-//print the status of each tasks stack
-int stackstatsCmd(char **argv,unsigned short argc){
-  extern CTL_TASK_t *ctl_task_list;
-  int i;
-  CTL_TASK_t *t=ctl_task_list;
-  //format string
-  const char *fmt="%-10s\t%lp\t%lp\t%li\r\n";
-  //print out nice header
-  printf("\r\nName\tPointer\tStart\tRemaining\r\n--------------------------------------------------------------------\r\n");
-  //loop through tasks and print out info
-  while(t!=NULL){
-    printf(fmt,t->name,t->stack_pointer,t->stack_start,t->stack_pointer-t->stack_start);
-    t=t->next;
-  }
-  //add a blank line after table
-  printf("\r\n");
-  return 0;
-}
-
-int replayCmd(char **argv,unsigned short argc){
-  error_log_replay();
-  return 0;
-}
-
-int mmcInitChkCmd(char**argv,unsigned short argc){
-  int resp;
-  resp=mmc_is_init();
-  if(resp==MMC_SUCCESS){
-    printf("Card Initialized\r\n");
-  }else{
-    printf("Card Not Initialized\r\n%s\r\n",SD_error_str(resp));
-  }
-  return 0;
-}
-
-int mmc_eraseCmd(char **argv, unsigned short argc){
-  unsigned long start,end;
-  int resp;
-  //check arguments
-  if(argc!=2){
-    printf("Error : %s requiors two arguments\r\n",argv[0]);
-    return 1;
-  }
-  errno=0;
-  start=strtoul(argv[1],NULL,0);
-  end=strtoul(argv[2],NULL,0);
-  if(errno){
-    printf("Error : could not parse arguments\r\n");
-    return 2;
-  }
-  printf("Erasing from %lu to %lu\r\n",start,end);
-  //send erase command
-  resp=mmcErase(start,end);
-  printf("%s\r\n",SD_error_str(resp));
-  return 0;
-}
-
-int mmc_dump(char **argv, unsigned short argc){
-  int resp; 
-  char *buffer=NULL;
-  unsigned long sector=0;
-  int i;
-  //check if sector given
-  if(argc!=0){
-    //read sector
-    if(1!=sscanf(argv[1],"%ul",&sector)){
-      //print error
-      printf("Error parsing sector \"%s\"\r\n",argv[1]);
-      return -1;
-    }
-  }
-  //get buffer, set a timeout of 2 secconds
-  buffer=BUS_get_buffer(CTL_TIMEOUT_DELAY,2048);
-  //check for error
-  if(buffer==NULL){
-    printf("Error : Timeout while waiting for buffer.\r\n");
-    return -1;
-  }
-  //read from SD card
-  resp=mmcReadBlock(sector,(unsigned char*)buffer);
-  //print response from SD card
-  printf("%s\r\n",SD_error_str(resp));
-  //print out buffer
-  for(i=0;i<512/16;i++){
-    printf(HEXOUT_STR HEXOUT_STR HEXOUT_STR HEXOUT_STR HEXOUT_STR HEXOUT_STR HEXOUT_STR HEXOUT_STR HEXOUT_STR HEXOUT_STR HEXOUT_STR HEXOUT_STR HEXOUT_STR HEXOUT_STR HEXOUT_STR HEXOUT_STR "\r\n",
-    buffer[i*16],buffer[i*16+1],buffer[i*16+2],buffer[i*16+3],buffer[i*16+4],buffer[i*16+5],buffer[i*16+6],buffer[i*16+7],buffer[i*16+8],buffer[i*16+9],buffer[i*16+10],
-    buffer[i*16+11],buffer[i*16+12],buffer[i*16+13],buffer[i*16+14],buffer[i*16+15]);
-  }
-  //free buffer
-  BUS_free_buffer();
-  return 0;
-}
-  
-//clear saved errors from the SD card
-int clearCmd(char **argv,unsigned short argc){
-  int ret;
-  ret=clear_saved_errors();
-  if(ret){
-    printf("Error erasing errors : %s\r\n",SD_error_str(ret));
-  }
-  return 0;
-}
 
 //table of commands with help
 const CMD_SPEC cmd_tbl[]={{"help"," [command]\r\n\t""get a list of commands or help on a spesific command.",helpCmd},
-                     {"priority"," task [priority]\r\n\t""Get/set task priority.",priorityCmd},
-                     {"timeslice"," [period]\r\n\t""Get/set ctl_timeslice_period.",timesliceCmd},
-                     {"stats","\r\n\t""Print task status",statsCmd},
-                     {"stack","\r\n\t""Print task stack status",stackstatsCmd},
-                     {"time","\r\n\t""Return current time.",timeCmd},
+                     CTL_COMMANDS,ARC_COMMANDS,ERROR_COMMANDS,MMC_COMMANDS,
                      {"flip","[X Y Z]\r\n\t""Flip a torquer in each axis.",flipCmd},
                      {"setTorque"," Xtorque Ytorque Ztorque\r\n\tFlip torquers to set the torque in the X, Y and Z axis",setTorqueCmd},
                      {"drive"," axis num dir\r\n\tdrive a torquer in the given axis in a given direction",driveCmd},
@@ -862,11 +547,7 @@ const CMD_SPEC cmd_tbl[]={{"help"," [command]\r\n\t""get a list of commands or h
                      {"mag","\r\n\t""Read From The magnetomitor",magCmd},
                      {"cal","load|dump|write|test\r\n\t""do things with the magnetometer calibration",calCmd},
                      {"log","[level]\r\n\t""get/set log level",logCmd},
-                     {"stack","\r\n\t""",stackCmd},
                      {"clrerr","\r\n\t""Clear error LED",clrErrCmd},
                      {"output","[output type]\r\n\tchange output between human and machine readable",outputTypeCmd},
-                     {"clear","\r\n\t""Clear all saved errors on the SD card",clearCmd},
-                     {"replay","\r\n\t""Replay errors from log",replayCmd},
-                     {"mmcinitchk","\r\n\t""Check if the SD card is initialized",mmcInitChkCmd},
                      //end of list
                      {NULL,NULL,NULL}};
