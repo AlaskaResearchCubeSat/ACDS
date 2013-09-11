@@ -17,6 +17,7 @@
 #include "stackcheck.h"
 #include "ACDS.h"
 #include "LED.h"
+#include "IGRF/igrf.h"
 
 
 //define printf formats
@@ -529,6 +530,55 @@ int outputTypeCmd(char **argv,unsigned short argc){
     return 0;
 }
 
+#define PI 3.14159265358979323846
+#define RAD2DEG (180.0/PI)
+
+int shval3Cmd(char **argv,unsigned short argc){
+  float year,lat,lon,alt;
+  VEC field;
+  char *end;
+  int nmax;
+  //check for proper number of arguments
+  if(argc!=4){
+    printf("Error: %s takes exactly 4 arguments\r\n",argv[0]);
+    return -1;
+  }
+  //parse arguments
+  year=strtof(argv[1],&end);
+  alt=strtof(argv[2],&end);
+  lat=strtof(argv[3],&end);
+  lon=strtof(argv[4],&end);
+  //turn on LED's
+  P7OUT|=BIT0|BIT1;
+  //extrapolate model to desired date
+  nmax=extrapsh(year);
+  P7OUT&=~BIT1;
+  P7OUT|=BIT2;
+  //calculate magnetic field
+  shval3(lat,lon,alt,nmax,&field);
+  P7OUT&=~(BIT0|BIT2);
+  //print
+  printf("%f %f %f\r\n",field.c.x,field.c.y,field.c.z);
+  return 0;
+}
+
+int tst_IGRF_cmd(char **argv,unsigned short argc){
+    VEC field;
+    int nmax;
+    P7OUT|=BIT0|BIT1;
+    //extrapolate model to desired date
+    nmax=extrapsh(2013);
+    P7OUT&=~BIT1;
+    P7OUT|=BIT2;
+    //calculate magnetic field
+    shval3(64.9261111/RAD2DEG,-147.4958333/RAD2DEG,6371.2,nmax,&field);
+    //shval3(1.13317,-2.57429,6371.2,nmax,&field);
+    //shval3(64.9261111/RAD2DEG,-147.4958333/RAD2DEG,6771.2,nmax,&field);
+    P7OUT&=~(BIT0|BIT2);
+    //print
+    printf("x = %f\r\ny = %f\r\nz = %f\r\n",field.c.x,field.c.y,field.c.z);
+    return 0;
+}
 
 //table of commands with help
 const CMD_SPEC cmd_tbl[]={{"help"," [command]\r\n\t""get a list of commands or help on a spesific command.",helpCmd},
@@ -549,5 +599,7 @@ const CMD_SPEC cmd_tbl[]={{"help"," [command]\r\n\t""get a list of commands or h
                      {"log","[level]\r\n\t""get/set log level",logCmd},
                      {"clrerr","\r\n\t""Clear error LED",clrErrCmd},
                      {"output","[output type]\r\n\tchange output between human and machine readable",outputTypeCmd},
+                     {"tstIGRF","\r\n\t""Test IGRF conversion",tst_IGRF_cmd},
+                     {"shval3","year alt lat long\r\n\t""IGRF conversion",shval3Cmd},
                      //end of list
                      {NULL,NULL,NULL}};

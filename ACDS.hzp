@@ -28,6 +28,14 @@
       <file file_name="Error_decode.c"/>
       <file file_name="ACDSerr.h"/>
       <file file_name="stackcheck.h"/>
+      <folder Name="IGRF">
+        <file file_name="IGRF/igrf.c"/>
+        <file file_name="IGRF/igrf.h"/>
+        <file file_name="IGRF/igrfCoeffs.h"/>
+        <file file_name="IGRF/igrfCoeffs.c">
+          <configuration Name="Common" compile_pre_build_command="python.exe extract-cords.py -o igrfCoeffs.c igrf11coeffs.txt" compile_pre_build_command_wd="$(ProjectDir)/IGRF/"/>
+        </file>
+      </folder>
     </folder>
     <folder Name="System Files">
       <file file_name="$(StudioDir)/ctl/source/threads.js"/>

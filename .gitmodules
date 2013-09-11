@@ -1,0 +1,3 @@
+[submodule "IGRF"]
+	path = IGRF
+	url = https://github.com/AlaskaResearchCubeSat/IGRF.git
