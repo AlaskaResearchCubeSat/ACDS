@@ -17,34 +17,37 @@ const TERM_SPEC async_term={"ACDS Test Program ready",async_Getc};
 
 void sub_events(void *p) __toplevel{
   unsigned int e,len;
-  int i;
+  int i,resp;
   extern CTL_TASK_t tasks[3];
-  unsigned char buf[10],*ptr;
+  unsigned char buf[30],*ptr;
   for(;;){
     e=ctl_events_wait(CTL_EVENT_WAIT_ANY_EVENTS_WITH_AUTO_CLEAR,&SUB_events,SUB_EV_ALL|SUB_EV_ASYNC_OPEN|SUB_EV_ASYNC_CLOSE,CTL_TIMEOUT_NONE,0);
     if(e&SUB_EV_PWR_OFF){
       //print message
-      puts("System Powering Down\r");
+      puts("System Powering Down\r\n");
     }
     if(e&SUB_EV_PWR_ON){
       //print message
-      puts("System Powering Up\r");
+      puts("System Powering Up\r\n");
     }
     if(e&SUB_EV_SEND_STAT){
       //send status
-      //puts("Sending status\r");
+      puts("Sending status\r\n");
       //setup packet 
       //TODO: put actual command for subsystem response
-      ptr=BUS_cmd_init(buf,20);
+      ptr=BUS_cmd_init(buf,CMD_ACDS_STAT);
       //TODO: fill in telemitry data
       //send command
-      BUS_cmd_tx(BUS_ADDR_CDH,buf,0,0,BUS_I2C_SEND_FOREGROUND);
+      resp=BUS_cmd_tx(BUS_ADDR_CDH,buf,26,0,BUS_I2C_SEND_FOREGROUND);
+      if(resp!=RET_SUCCESS){
+        printf("Failed to send status %s\r\n",BUS_error_str(resp));
+      }
     }
     if(e&SUB_EV_TIME_CHECK){
       printf("time ticker = %li\r\n",get_ticker_time());
     }
     if(e&SUB_EV_SPI_DAT){
-      puts("SPI data recived:\r");
+      puts("SPI data recived:\r\n");
       //get length
       len=arcBus_stat.spi_stat.len;
       //print out data
@@ -57,11 +60,7 @@ void sub_events(void *p) __toplevel{
       BUS_free_buffer_from_event();
     }
     if(e&SUB_EV_SPI_ERR_CRC){
-      puts("SPI bad CRC\r");
-    }
-    if(e&SUB_EV_SPI_ERR_CRC){
-      //puts("SPI bad CRC\r");
-      P7OUT|=BIT7;
+      puts("SPI bad CRC\r\n");
     }
     /*if(e&SUB_EV_ASYNC_OPEN){
       extern unsigned char async_addr;
@@ -142,10 +141,6 @@ CTL_EVENT_SET_t ACDS_evt;
 int SUB_parseCmd(unsigned char src,unsigned char cmd,unsigned char *dat,unsigned short len){
   int i;
   switch(cmd){
-    case CMD_ACDS_STAT:
-      //need to send status set event
-      ctl_events_set_clear(&ACDS_evt,ACDS_EVT_SEND_STAT,0);
-    return RET_SUCCESS;
     case CMD_MAG_DATA:
       memcpy(magData,dat,sizeof(magData));
       //sensor data recieved set event
