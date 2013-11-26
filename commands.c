@@ -591,7 +591,7 @@ int statusCmd(char **argv,unsigned short argc){
   printf   ("tqstat  \t0x%02X, 0x%02X, 0x%02X\r\n",status.tqstat[0],status.tqstat[1],status.tqstat[2]);
   printf   ("flips   \t%u, %u, %u\r\n",status.flips[0],status.flips[1],status.flips[2]);
   printf   ("flags   \t0x%04X\r\n",status.flags);
-  quatPrint("attitude",&status.attitude);
+  iquatPrint("attitude",&status.attitude);
   vecPrint ("rates   ",&status.rates);
   return 0;
 }  

@@ -17,7 +17,7 @@
       unsigned char tqstat[3];
       unsigned short flips[3];
       unsigned short flags;
-      QUAT attitude;
+      IQUAT attitude;
       VEC rates;
   }ACDS_STAT;
     

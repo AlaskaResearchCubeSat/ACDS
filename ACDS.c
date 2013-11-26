@@ -330,7 +330,7 @@ void ACDS_events(void *p) __toplevel{
   memset(status.tqstat,0,sizeof(status.tqstat));
   memset(status.flips,0,sizeof(status.flips));
   status.flags=0;
-  quat_zero(&status.attitude);
+  iquat_zero(&status.attitude);
   vec_zero(&status.rates);
   //init event
   ctl_events_init(&ACDS_evt,0);

@@ -14,6 +14,35 @@ void quatPrint(const char * name,const QUAT *q){
     printf("%f\t%f\t%f\t%f\t",name,q->c.a,q->c.b,q->c.c,q->c.d);
   }
 }
+  
+//print out an integer quaternion
+void iquatPrint(const char * name,const IQUAT *q){
+  QUAT tmp;
+  //convert to float quaternion and print
+  quatPrint(name,iquat2quat(&tmp,q));
+}
+  
+//scale factor for integer quaternion elements
+//when representing rotations quaternions can take on +1 through -1
+#define IQUAT_SCL   32000 
+
+//convert float quaternion to integer quaternion
+IQUAT* quat2iquat(IQUAT *dest,const QUAT* src){
+    dest->a=IQUAT_SCL*src->c.a;
+    dest->b=IQUAT_SCL*src->c.b;
+    dest->c=IQUAT_SCL*src->c.c;
+    dest->d=IQUAT_SCL*src->c.d;
+    return dest;
+}
+
+//convert integer quaternion to float quaternion
+QUAT* iquat2quat(QUAT *dest,const IQUAT* src){
+    dest->c.a=src->a/((SCL)IQUAT_SCL);
+    dest->c.b=src->b/((SCL)IQUAT_SCL);
+    dest->c.c=src->c/((SCL)IQUAT_SCL);
+    dest->c.d=src->d/((SCL)IQUAT_SCL);
+    return dest;
+}
 
 //scale quaternion
 QUAT* quat_scale(SCL s,QUAT* a){
@@ -52,11 +81,40 @@ QUAT* quat_zero(QUAT* q){
     return q;
 }
 
-//set all quaternion elements to zero
+//set to unit quaternion
 QUAT* quat_unit(QUAT* q){
     q->c.a=0;
     q->c.b=0;
     q->c.c=0;
     q->c.d=1;
+    return q;
+}
+
+//integer operations
+
+//integer quaternion copy
+IQUAT* iquat_cp(IQUAT* dest,const IQUAT* src){
+    dest->a=src->a;
+    dest->b=src->b;
+    dest->c=src->c;
+    dest->d=src->d;
+    return dest;
+}
+
+//set all integer quaternion elements to zero
+IQUAT* iquat_zero(IQUAT* q){
+    q->a=0;
+    q->b=0;
+    q->c=0;
+    q->d=0;
+    return q;
+}
+
+//set to unit quaternion
+IQUAT* iquat_unit(IQUAT* q){
+    q->a=0;
+    q->b=0;
+    q->c=0;
+    q->d=IQUAT_SCL;
     return q;
 }
