@@ -118,5 +118,6 @@ void torque_fb_init(void);
 void resetTorqueStatus(void);
 
 unsigned char get_torquer_fb(void);
+void tqstat2stat(unsigned char *dest);
 
 #endif

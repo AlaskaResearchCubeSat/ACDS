@@ -4,10 +4,12 @@
 #include <ctl.h>
 #include <ARCbus.h>
 #include <Error.h>
+#include <limits.h>
 #include "vector.h"
 #include "torquers.h"
 #include "output_type.h"
 #include "ACDSerr.h"
+#include "ACDS.h"
 
 //structures to track torquer status
 TQ_SET tq_big,tq_small;
@@ -20,6 +22,16 @@ CTL_TIME_t lastFlip=0;
 //return 1 if torquers have been initialized
 short checkTorqueInit(void){
   return !(tq_big.c.x.status&(T_STAT_UNINIT_2|T_STAT_UNINIT_1) || tq_big.c.y.status&(T_STAT_UNINIT_2|T_STAT_UNINIT_1) || tq_big.c.z.status&(T_STAT_UNINIT_2|T_STAT_UNINIT_1));
+}
+
+//generate beacon status info
+void tqstat2stat(unsigned char *dest){
+  int i;
+  //get info for each axis
+  for(i=0;i<3;i++){
+    //combine data from torquer sets
+    dest[i]=((T_STAT_TQ_MASK&tq_big.elm[i].status)<<4)|(T_STAT_TQ_MASK&tq_small.elm[i].status);
+  }
 }
 
 //sets torquer status back to uninitialized state
@@ -516,6 +528,14 @@ int drive_torquers(int set,const int* num,const int* dir){
    //TODO: think deep thoughts about what error bits should be set here
    //special care should be taken so that functionality is not limited if comparitors function poorly
    for(i=0;i<3;i++,fb1>>=2,fb2>>=2){
+     //check if torquer was flipped in this axis
+     if(num[i]!=0){
+       //increment flips
+       if(status.flips[i]++==USHRT_MAX){
+         //saturate
+         status.flips[i]=USHRT_MAX;
+       }
+     }  
      //check feedback from before flip
      switch(fb1&0x3){
        //check if discharged

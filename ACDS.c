@@ -4,6 +4,7 @@
 #include <ARCbus.h>
 #include <string.h>
 #include <terminal.h>
+#include <stdlib.h>
 #include "SensorDataInterface.h"
 #include "ACDS.h"
 #include "LED.h"
@@ -11,6 +12,7 @@
 #include "algorithm.h"
 #include "torquers.h"
 
+ACDS_STAT status;
 
 //spesifications for the terminal
 const TERM_SPEC async_term={"ACDS Test Program ready",async_Getc};
@@ -19,7 +21,7 @@ void sub_events(void *p) __toplevel{
   unsigned int e,len;
   int i,resp;
   extern CTL_TASK_t tasks[3];
-  unsigned char buf[30],*ptr;
+  unsigned char buf[BUS_I2C_HDR_LEN+sizeof(ACDS_STAT)+BUS_I2C_CRC_LEN],*ptr;
   for(;;){
     e=ctl_events_wait(CTL_EVENT_WAIT_ANY_EVENTS_WITH_AUTO_CLEAR,&SUB_events,SUB_EV_ALL|SUB_EV_ASYNC_OPEN|SUB_EV_ASYNC_CLOSE,CTL_TIMEOUT_NONE,0);
     if(e&SUB_EV_PWR_OFF){
@@ -34,11 +36,13 @@ void sub_events(void *p) __toplevel{
       //send status
       puts("Sending status\r\n");
       //setup packet 
-      //TODO: put actual command for subsystem response
       ptr=BUS_cmd_init(buf,CMD_ACDS_STAT);
-      //TODO: fill in telemitry data
+      //fill in telemitry data
+      for(i=0;i<sizeof(ACDS_STAT);i++){
+        ptr[i]=((unsigned char*)(&status))[i];
+      }
       //send command
-      resp=BUS_cmd_tx(BUS_ADDR_CDH,buf,26,0,BUS_I2C_SEND_FOREGROUND);
+      resp=BUS_cmd_tx(BUS_ADDR_CDH,buf,sizeof(ACDS_STAT),0,BUS_I2C_SEND_FOREGROUND);
       if(resp!=RET_SUCCESS){
         printf("Failed to send status %s\r\n",BUS_error_str(resp));
       }
@@ -315,26 +319,34 @@ calibrate(long *dat){
   }
 }
 
+
 void ACDS_events(void *p) __toplevel{
   unsigned int e;
   const VEC zero={0,0,0};
-  VEC Flux;
+  VEC Flux,mag;
+  //initialize status
+  memset(status.mag,0,sizeof(status.mag));
+  memset(status.gyro,0,sizeof(status.gyro));
+  memset(status.tqstat,0,sizeof(status.tqstat));
+  memset(status.flips,0,sizeof(status.flips));
+  status.flags=0;
+  quat_zero(&status.attitude);
+  vec_zero(&status.rates);
   //init event
   ctl_events_init(&ACDS_evt,0);
   for(;;){
     //wait for events
     e=ctl_events_wait(CTL_EVENT_WAIT_ANY_EVENTS_WITH_AUTO_CLEAR,&ACDS_evt,ACDS_EVT_ALL,CTL_TIMEOUT_NONE,0);
-    //status event
-    if(e&ACDS_EVT_SEND_STAT){
-      //TODO: send status
-      printf("Fixme: send status info\r\n");
-    }
     //magnetometer data event
     if(e&ACDS_EVT_DAT_REC){
       //calculate flux Vector
       Flux.c.x=applyCal(magData,calX);
       Flux.c.y=applyCal(magData,calY);
       Flux.c.z=0;
+      //set flux in status packet
+      status.mag[0]=32767/2*Flux.elm[0];
+      status.mag[1]=32767/2*Flux.elm[1];
+      status.mag[2]=32767/2*Flux.elm[2];
       switch(ACDS_mode){
         case ACDS_MODE_1:
           //run B-dot algorithm
@@ -352,6 +364,7 @@ void ACDS_events(void *p) __toplevel{
           setTorque(&zero,TQ_SET_BIG);
         break;
       }
+      tqstat2stat(status.tqstat);
     }
   }
 }

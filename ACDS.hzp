@@ -36,6 +36,8 @@
           <configuration Name="Common" compile_pre_build_command="python.exe extract-cords.py -o igrfCoeffs.c igrf11coeffs.txt" compile_pre_build_command_wd="$(ProjectDir)/IGRF/"/>
         </file>
       </folder>
+      <file file_name="quat.h"/>
+      <file file_name="quat.c"/>
     </folder>
     <folder Name="System Files">
       <file file_name="$(StudioDir)/ctl/source/threads.js"/>

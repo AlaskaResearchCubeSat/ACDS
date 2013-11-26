@@ -580,6 +580,23 @@ int tst_IGRF_cmd(char **argv,unsigned short argc){
     return 0;
 }
 
+int statusCmd(char **argv,unsigned short argc){
+  int i;
+  printf("Status Size = %u\r\n",sizeof(ACDS_STAT));
+  printf("Quat Size = %u\r\n",sizeof(QUAT));
+  printf("Vec Size = %u\r\n",sizeof(VEC));
+  //print status data
+  printf   ("mag     \t%i, %i, %i\r\n",status.mag[0],status.mag[1],status.mag[2]);
+  printf   ("gyro    \t%i, %i, %i\r\n",status.gyro[0],status.gyro[1],status.gyro[2]);
+  printf   ("tqstat  \t0x%02X, 0x%02X, 0x%02X\r\n",status.tqstat[0],status.tqstat[1],status.tqstat[2]);
+  printf   ("flips   \t%u, %u, %u\r\n",status.flips[0],status.flips[1],status.flips[2]);
+  printf   ("flags   \t0x%04X\r\n",status.flags);
+  quatPrint("attitude",&status.attitude);
+  vecPrint ("rates   ",&status.rates);
+  return 0;
+}  
+  
+
 //table of commands with help
 const CMD_SPEC cmd_tbl[]={{"help"," [command]\r\n\t""get a list of commands or help on a spesific command.",helpCmd},
                      CTL_COMMANDS,ARC_COMMANDS,ERROR_COMMANDS,MMC_COMMANDS,
@@ -601,5 +618,6 @@ const CMD_SPEC cmd_tbl[]={{"help"," [command]\r\n\t""get a list of commands or h
                      {"output","[output type]\r\n\tchange output between human and machine readable",outputTypeCmd},
                      {"tstIGRF","\r\n\t""Test IGRF conversion",tst_IGRF_cmd},
                      {"shval3","year alt lat long\r\n\t""IGRF conversion",shval3Cmd},
+                     {"status","\r\n\t""Print status information",statusCmd},
                      //end of list
                      {NULL,NULL,NULL}};
