@@ -62,6 +62,18 @@ QUAT* quat_ascale(SCL s,QUAT* a){
     return a;
 }
 
+//multiply dest*src with quaternion math
+QUAT* quat_mul(QUAT* dest,const QUAT* src){
+    SCL p1,p2,p3;
+    p1        = dest->c.a*src->c.a - dest->c.b*src->c.b - dest->c.c*src->c.c - dest->c.d*src->c.d;
+    p2        = dest->c.a*src->c.b + dest->c.b*src->c.a + dest->c.c*src->c.d - dest->c.d*src->c.c;
+    p3        = dest->c.a*src->c.c - dest->c.b*src->c.d + dest->c.c*src->c.a + dest->c.d*src->c.b;
+    dest->c.d = dest->c.a*src->c.d + dest->c.b*src->c.c - dest->c.c*src->c.b + dest->c.d*src->c.a;
+    dest->c.a = p1;
+    dest->c.b = p2;
+    dest->c.c = p3;
+    return dest;
+}
 
 //quaternion copy
 QUAT* quat_cp(QUAT* dest,const QUAT* src){
@@ -83,10 +95,10 @@ QUAT* quat_zero(QUAT* q){
 
 //set to unit quaternion
 QUAT* quat_unit(QUAT* q){
-    q->c.a=0;
+    q->c.a=1;
     q->c.b=0;
     q->c.c=0;
-    q->c.d=1;
+    q->c.d=0;
     return q;
 }
 
@@ -112,9 +124,9 @@ IQUAT* iquat_zero(IQUAT* q){
 
 //set to unit quaternion
 IQUAT* iquat_unit(IQUAT* q){
-    q->a=0;
+    q->a=IQUAT_SCL;
     q->b=0;
     q->c=0;
-    q->d=IQUAT_SCL;
+    q->d=0;
     return q;
 }

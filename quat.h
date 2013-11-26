@@ -23,6 +23,7 @@ QUAT* quat_zero(QUAT* q);
 QUAT* quat_unit(QUAT* q);
 QUAT* quat_ascale(SCL s,QUAT* a);
 QUAT* quat_scale(SCL s,QUAT* a);
+QUAT* quat_mul(QUAT* dest,const QUAT* src);
 
 //conversion functions
 IQUAT* quat2iquat(IQUAT *dest,const QUAT* src);
