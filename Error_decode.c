@@ -56,6 +56,13 @@ char *err_decode(char buf[150], unsigned short source,int err, unsigned short ar
     case ACDS_ERR_SRC_ALGORITHM:
     break;
     case ACDS_ERR_SRC_SENSORS:
+      switch(err){
+        case ACDS_ERR_SEN_BAD_PACKET_LENGTH:
+          sprintf(buf,"Sensors : Bad Packet Length, len = %i",argument);
+        default:
+          sprintf(buf,"Sensors : Unknown Error #%i, argument = %i",err,argument);
+        return buf;
+      }
     break;
   }
   sprintf(buf,"source = %i, error = %i, argument = %i",source,err,argument);

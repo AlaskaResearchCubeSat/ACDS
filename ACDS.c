@@ -11,6 +11,7 @@
 #include "vector.h"
 #include "algorithm.h"
 #include "torquers.h"
+#include "ACDSerr.h"
 
 ACDS_STAT status;
 
@@ -146,6 +147,12 @@ int SUB_parseCmd(unsigned char src,unsigned char cmd,unsigned char *dat,unsigned
   int i;
   switch(cmd){
     case CMD_MAG_DATA:
+      //check packet length
+      if(len!=sizeof(magData)){
+        //length incorrect, report error and exit
+        report_error(ERR_LEV_ERROR,ACDS_ERR_SRC_SENSORS,ACDS_ERR_SEN_BAD_PACKET_LENGTH,len);
+        return ERR_PK_LEN;
+      }
       memcpy(magData,dat,sizeof(magData));
       //sensor data recieved set event
       ctl_events_set_clear(&ACDS_evt,ACDS_EVT_DAT_REC,0);
