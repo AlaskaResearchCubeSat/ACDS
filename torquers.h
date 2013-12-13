@@ -92,27 +92,33 @@ typedef union{
 #define TQ_FB_Z_SEL (P6SEL)
 
 
-#define T_STAT_ERR_MASK     (T_STAT_ERR_1|T_STAT_ERR_2|T_STAT_CAP_ERR|T_STAT_COMP_ERR)
-#define T_STAT_TQ_MASK      (T_STAT_1|T_STAT_2|T_STAT_UNINIT_1|T_STAT_UNINIT_2)
+#define T_STAT_ERR_MASK     (T_STAT_ERR_1|T_STAT_ERR_2|T_STAT_ERR_2|T_STAT_ERR_4| T_STAT_CAP_ERR|T_STAT_COMP_ERR)
+#define T_STAT_TQ_MASK      (T_STAT_1|T_STAT_2|T_STAT_3|T_STAT_4)
+#define T_STAT_INIT_MASK    (T_STAT_UNINIT_1|T_STAT_UNINIT_2|T_STAT_UNINIT_3|T_STAT_UNINIT_4)
+
+#define T_STAT_TQ_INIT_SHIFT  4
 
 //status bits
-enum{T_STAT_1=1<<0,T_STAT_2=1<<1,T_STAT_UNINIT_1=1<<2,T_STAT_UNINIT_2=1<<3,T_STAT_ERR_1=1<<4,T_STAT_ERR_2=1<<5,T_STAT_CAP_ERR=1<<6,T_STAT_COMP_ERR=1<<7};
+enum{T_STAT_1=1<<0,T_STAT_2=1<<1,T_STAT_3=1<<2,T_STAT_4=1<<3,
+     T_STAT_UNINIT_1=1<<4,T_STAT_UNINIT_2=1<<5,T_STAT_UNINIT_3=1<<6,T_STAT_UNINIT_4=1<<7,
+     T_STAT_ERR_1=1<<8,T_STAT_ERR_2=1<<9,T_STAT_ERR_3=1<<10,T_STAT_ERR_4=1<<11,
+     T_STAT_CAP_ERR=1<<12,T_STAT_COMP_ERR=1<<13};
 //Directions
 enum{M_MINUS=-1,M_PLUS=1};
 //Axis
 enum{X_AXIS=0,Y_AXIS,Z_AXIS};
 //Torquer sets
-enum {TQ_SET_ALL=-2,TQ_SET_NONE=-1,TQ_SET_BIG=1,TQ_SET_SMALL=2};
+enum {TQ_SET_ALL=-2,TQ_SET_NONE=-1,TQ_SET_BIG=1};
 //errors from torquer sets
 enum{TQ_ERR_BAD_SET=-1,TQ_ERR_BAD_TORQUER=-2,TQ_ERR_COMP=1,TQ_ERR_CAP=2,TQ_ERR_BAD_CONNECTION=3,TQ_INFO_FLIP,TQ_ERROR_INVALID_STATUS};
 
-int setTorque(const VEC *T,int set);
-int drive_torquer(int axis,int set,unsigned char num,unsigned char dir);
+int setTorque(const VEC *T);
+int drive_torquer(int axis,unsigned char num,unsigned char dir);
 void torqueInit(void);
 void driverInit(void);
-int drive_torquers(int set,const int* num,const int* dir);
-void print_torquer_status(int set);
-void print_torquer_stat_code(int set);
+int drive_torquers(const int* num,const int* dir);
+void print_torquer_status(void);
+void print_torquer_stat_code(void);
 short checkTorqueInit(void);
 void torque_fb_init(void);
 void resetTorqueStatus(void);

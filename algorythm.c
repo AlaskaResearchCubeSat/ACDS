@@ -287,15 +287,15 @@ void bdot(const VEC *FluxVector,unsigned short step){
   vec_eemul(&M_cmd,&Kb);
   vecPrint("M_cmd",&M_cmd);
   //flip torquers
-  setTorque(&M_cmd,set);
+  setTorque(&M_cmd);
   if(output_type==HUMAN_OUTPUT){
     //print new status
     printf("New Torquer Status:\r\n");
-    print_torquer_status(set);
+    print_torquer_status();
     //print mode
     printf("mode\t%i\r\n\r\n",mode);
   }else{
-    print_torquer_stat_code(set);
+    print_torquer_stat_code();
   }
   //save old flux
   vec_cp(&oldFlux,FluxVector);

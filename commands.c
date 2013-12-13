@@ -59,12 +59,12 @@ int setTorqueCmd(char **argv,unsigned short argc){
   T.c.z=readTorque(argv[3]);
   //print old status
   printf("Previous Torquer Status:\r\n");
-  print_torquer_status(current_set);
+  print_torquer_status();
   //current_set torques
-  setTorque(&T,current_set);
+  setTorque(&T);
   //print status
   printf("New Torquer Status:\r\n");
-  print_torquer_status(current_set);
+  print_torquer_status();
   return 0;
 }
 
@@ -111,16 +111,16 @@ int flipCmd(char **argv,unsigned short argc){
   if(output_type==HUMAN_OUTPUT){
     //print old status
     printf("Previous Torquer Status:\r\n");
-    print_torquer_status(current_set);
+    print_torquer_status();
   }
   //drive torquers 
-  drive_torquers(current_set,num,dir);
+  drive_torquers(num,dir);
   if(output_type==HUMAN_OUTPUT){
     //print status
     printf("New Torquer Status:\r\n");
-    print_torquer_status(current_set);
+    print_torquer_status();
   }else{
-    print_torquer_stat_code(current_set);
+    print_torquer_stat_code();
     printf("\r\n");
   }
   return 0;
@@ -174,77 +174,23 @@ int driveCmd(char **argv,unsigned short argc){
   }
   //print old status
   printf("Previous Torquer Status:\r\n");
-  print_torquer_status(current_set);  
+  print_torquer_status();  
   //drive torquer 
-  drive_torquers(current_set,num,dir);
+  drive_torquers(num,dir);
   //print new status
   printf("New Torquer Status:\r\n");
-  print_torquer_status(current_set);
-  return 0;
-}
-
-int tqsetCmd(char **argv,unsigned short argc){
-  if(argc>2){
-    printf("Error : %s requires 1 or 2 arguments\r\n",argv[0]);
-    return -1;
-  }
-  if(argc==1){
-    if(!strcmp(argv[1],"B")){
-        current_set=TQ_SET_BIG;
-    }else if(!strcmp(argv[1],"S")){
-      current_set=TQ_SET_SMALL;
-    }else{
-      printf("Error : could not parse argument \"%s\"\r\n",argv[1]);
-      return -2;
-    }
-  }
-  switch(current_set){
-    case TQ_SET_SMALL:
-      printf("\t""Small Torquers\r\n");
-    break;
-    case TQ_SET_BIG:
-      printf("\t""Large Torquers\r\n");
-    break;
-    default:
-    //this should never happen
-      printf("Error : unknown torquer set.\r\n");
-      return -1;
-  }
+  print_torquer_status();
   return 0;
 }
 
 int tqstatCmd(char **argv,unsigned short argc){
   int set=TQ_SET_NONE,i;
   if(argc>2){
-    printf("Error : %s requires 1 or 2 arguments\r\n",argv[0]);
+    printf("Error : %s takes no arguments\r\n",argv[0]);
     return -1;
   }
-  if(argc==1){
-    if(!strcmp(argv[1],"B")){
-        set=TQ_SET_BIG;
-    }else if(!strcmp(argv[1],"S")){
-        set=TQ_SET_SMALL;
-    }else if(!strcmp(argv[1],"current")){
-        set=TQ_SET_NONE;
-    }else if(!strcmp(argv[1],"all")){
-        set=TQ_SET_ALL;
-    }else{
-      printf("Error : could not parse argument \"%s\"\r\n",argv[1]);
-      return -2;
-    }
-  }
-  if(set==TQ_SET_ALL){
-    for(i=0,set=TQ_SET_BIG;i<2;i++,set=TQ_SET_SMALL){
-      print_torquer_status(set);
-    }
-  }else{
-    //check if printing current set
-    if(set==TQ_SET_NONE){
-      set=current_set;
-    }
-    //print torquer status
-    print_torquer_status(set);
-  }
+  //print torquer status
+  print_torquer_status();
   return 0;
 }
 
@@ -271,7 +217,7 @@ int initCmd(char **argv,unsigned short argc){
 int tstCmd(char **argv,unsigned short argc){
   int num[3]={0,0,0},dir[3]={0,0,0};
   int axis=0,err;
-  extern TQ_SET tq_big,tq_small;
+  extern TQ_SET tq_stat;
   //three arguments are accepted: axis, torquer direction
   if(argc!=2){
     printf("Error : %s requires 2 arguments\r\n",argv[0]);
@@ -303,11 +249,7 @@ int tstCmd(char **argv,unsigned short argc){
   }
   //direction is oposite of current direction
   //get direction of torquer
-  if(current_set==TQ_SET_BIG){
-    dir[axis]=(tq_big.elm[axis].status>>(num[axis]-1))&1;
-  }else{
-    dir[axis]=(tq_small.elm[axis].status>>(num[axis]-1))&1;
-  }
+  dir[axis]=(tq_stat.elm[axis].status>>(num[axis]-1))&1;
   //Toggle direction
   if(dir[axis]==0){
     //Torquer was minus, set to plus
@@ -317,7 +259,7 @@ int tstCmd(char **argv,unsigned short argc){
     dir[axis]=M_MINUS;
   }
   //drive torquer 
-  err=drive_torquers(current_set,num,dir);
+  err=drive_torquers(num,dir);
   //print message based on the error that is returned
   switch(err){
     case RET_SUCCESS:
@@ -445,8 +387,11 @@ int calCmd(char **argv,unsigned short argc){
   //reset torquers to initial status
   resetTorqueStatus();
 
-  setTorque(&T,TQ_SET_BIG);
-  setTorque(&T,TQ_SET_BIG);
+  //set four times to get all needed torquer flips
+  setTorque(&T);
+  setTorque(&T);
+  setTorque(&T);
+  setTorque(&T);
   //wait
   ctl_timeout_wait(ctl_get_current_time()+2048);
   //send sample command
@@ -603,7 +548,6 @@ const CMD_SPEC cmd_tbl[]={{"help"," [command]\r\n\t""get a list of commands or h
                      {"flip","[X Y Z]\r\n\t""Flip a torquer in each axis.",flipCmd},
                      {"setTorque"," Xtorque Ytorque Ztorque\r\n\tFlip torquers to set the torque in the X, Y and Z axis",setTorqueCmd},
                      {"drive"," axis num dir\r\n\tdrive a torquer in the given axis in a given direction",driveCmd},
-                     {"tqset","[B|S]\r\n\t""Set/Get current torquer set",tqsetCmd},
                      {"tqstat","[B|S|all|current]\r\n\t""Get torquer status",tqstatCmd},
                      {"init","\r\n\t""initialize torquers",initCmd},
                      {"comp","\r\n\t""print feedback comparitor status",compCmd},

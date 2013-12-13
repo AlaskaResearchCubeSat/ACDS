@@ -12,16 +12,21 @@
 #include "ACDS.h"
 
 //structures to track torquer status
-TQ_SET tq_big,tq_small;
+TQ_SET tq_stat;
 
 //charge time for torquer capacitor in ms (or so)
 unsigned short chargeTime=1*1024;
 CTL_TIME_t lastFlip=0;
 
+//values for status
+static const int  err_mask[4]={T_STAT_ERR_1,T_STAT_ERR_2,T_STAT_ERR_3,T_STAT_ERR_4};
+static const int init_mask[4]={T_STAT_UNINIT_1,T_STAT_UNINIT_2,T_STAT_UNINIT_3,T_STAT_UNINIT_4};
+static const int stat_mask[4]={T_STAT_1,T_STAT_2,T_STAT_3,T_STAT_4};
+
 //check if torquers have been initialized
 //return 1 if torquers have been initialized
 short checkTorqueInit(void){
-  return !(tq_big.c.x.status&(T_STAT_UNINIT_2|T_STAT_UNINIT_1) || tq_big.c.y.status&(T_STAT_UNINIT_2|T_STAT_UNINIT_1) || tq_big.c.z.status&(T_STAT_UNINIT_2|T_STAT_UNINIT_1));
+  return !(tq_stat.c.x.status&(T_STAT_UNINIT_1|T_STAT_UNINIT_2|T_STAT_UNINIT_3|T_STAT_UNINIT_4) || tq_stat.c.y.status&(T_STAT_UNINIT_1|T_STAT_UNINIT_2|T_STAT_UNINIT_3|T_STAT_UNINIT_4) || tq_stat.c.z.status&(T_STAT_UNINIT_1|T_STAT_UNINIT_2|T_STAT_UNINIT_3|T_STAT_UNINIT_4));
 }
 
 //generate beacon status info
@@ -29,50 +34,52 @@ void tqstat2stat(unsigned char *dest){
   int i;
   //get info for each axis
   for(i=0;i<3;i++){
-    //combine data from torquer sets
-    dest[i]=((T_STAT_TQ_MASK&tq_big.elm[i].status)<<4)|(T_STAT_TQ_MASK&tq_small.elm[i].status);
+    //get data from each axis
+    dest[i]=tq_stat.elm[i].status;
   }
 }
 
 //sets torquer status back to uninitialized state
 void resetTorqueStatus(void){
   //big
-  memset(&tq_big,0,sizeof(tq_big));
-  tq_big.c.x.status=T_STAT_UNINIT_2|T_STAT_UNINIT_1;
-  tq_big.c.y.status=T_STAT_UNINIT_2|T_STAT_UNINIT_1;
-  tq_big.c.z.status=T_STAT_UNINIT_2|T_STAT_UNINIT_1;
-  //small
-  memset(&tq_small,0,sizeof(tq_small));
-  tq_small.c.x.status=T_STAT_UNINIT_2|T_STAT_UNINIT_1;
-  tq_small.c.y.status=T_STAT_UNINIT_2|T_STAT_UNINIT_1;
-  tq_small.c.z.status=T_STAT_UNINIT_2|T_STAT_UNINIT_1;
+  memset(&tq_stat,0,sizeof(TQ_SET));
+  tq_stat.c.x.status=T_STAT_UNINIT_1|T_STAT_UNINIT_2|T_STAT_UNINIT_3|T_STAT_UNINIT_4;
+  tq_stat.c.y.status=T_STAT_UNINIT_1|T_STAT_UNINIT_2|T_STAT_UNINIT_3|T_STAT_UNINIT_4;
+  tq_stat.c.z.status=T_STAT_UNINIT_1|T_STAT_UNINIT_2|T_STAT_UNINIT_3|T_STAT_UNINIT_4;
 }
 
 //initialize torquer status
 void torqueInit(void){
   VEC T={0,0,0};
-  int set,i;
   
   //reset torquer status to unknown
   resetTorqueStatus();
 
   printf("Initializing torquers\r\n");
-  for(set=TQ_SET_BIG,i=0;i<2;i++,set=TQ_SET_SMALL){
-    //drive torquers
-    if(output_type==HUMAN_OUTPUT){
-      printf("Previous Torquer Status:\r\n");
-      print_torquer_status(set);
-    }
-    setTorque(&T,set);
-    if(output_type==HUMAN_OUTPUT){
-      printf("New Torquer Status:\r\n");
-      print_torquer_status(set);
-    }
-    setTorque(&T,set);
-    if(output_type==HUMAN_OUTPUT){
-      printf("Final Torquer Status:\r\n");
-      print_torquer_status(set);
-    }
+  //drive torquers
+  if(output_type==HUMAN_OUTPUT){
+    printf("Previous Torquer Status:\r\n");
+    print_torquer_status();
+  }
+  setTorque(&T);
+  if(output_type==HUMAN_OUTPUT){
+    printf("New Torquer Status:\r\n");
+    print_torquer_status();
+  }
+  setTorque(&T);
+  if(output_type==HUMAN_OUTPUT){
+    printf("Final Torquer Status:\r\n");
+    print_torquer_status();
+  }
+  setTorque(&T);
+  if(output_type==HUMAN_OUTPUT){
+    printf("Final Torquer Status:\r\n");
+    print_torquer_status();
+  }
+  setTorque(&T);
+  if(output_type==HUMAN_OUTPUT){
+    printf("Final Torquer Status:\r\n");
+    print_torquer_status();
   }
 }
 
@@ -146,62 +153,55 @@ unsigned char get_torquer_fb(void){
   return fb;
 }
 
+//TODO: fix this for 4 torquer set code
 //determine which torquer should be flipped based on what direction the flip is and which torquer was last flipped
 int choseTorquer(int stat,int last,int dir){
-  //check if torquers have been initialized
-  if(!(stat&(T_STAT_UNINIT_1|T_STAT_UNINIT_2))){
-     //strip off error bits
-     //TODO: handle error bits appropratly: should a non working torquer be flipped or not flipped?
-     stat&=~(T_STAT_ERR_1|T_STAT_ERR_2);
-     //if both torquers are the same flip the one that was flipped least recently  
-     if(stat==(T_STAT_1|T_STAT_2) || stat==0){
-      return (last==1)?2:1;
-    //otherwise there is only one choice of torquer
-    }else if(stat==T_STAT_1){
-        return (dir==M_PLUS)?2:1;
-    }else if(stat==T_STAT_2){
-        return (dir==M_PLUS)?1:2;
-    }
-  }else{
-    //check which torquer was not initialized and flip that one
-    //if one torquer has an error try the other
-    if(stat&T_STAT_UNINIT_1 && !(stat&T_STAT_ERR_1)){
-      return 1;
-    }else if(stat&T_STAT_UNINIT_2 && !(stat&T_STAT_ERR_2)){
-      return 2;
-    }else{
-      //otherwise flip the least recently flipped torquer
-      return (last==1)?2:1;
-    }
+  //first check for uninitialized torquers
+  if(stat&T_STAT_INIT_MASK){
+    //TODO: chose a torquer that is not initialized and return it
+    return 0;
   }
-  //TODO: do something with error bits here
-  //something is not right, extra bits are set here
-  //TODO: probably could take corrective action
-  report_error(ERR_LEV_ERROR,ACDS_ERR_SRC_TORQUERS,TQ_ERROR_INVALID_STATUS,stat);
+  //TODO: figure out which torquer is the best to flip
+  
   //unknown inputs
   return 0;
 }
 
 //convert torquer status bits into a torque string for printing
 const char *stat_to_torque(int st){
-  //mask out large error bits
-  st&=~(T_STAT_CAP_ERR|T_STAT_COMP_ERR);
-  //check status
-  switch(st){
-    case 0:
-      return "-1";
-    case T_STAT_1:
-    case T_STAT_2:
-      return "0";
-    case T_STAT_1|T_STAT_2: 
-      return "1";
-  }
+  int c,tq;
   //check for error
   if(st&T_STAT_ERR_MASK){
     return "E!";
   }
-  //unknown torque status
-  return "?";
+  //check if torquers are not initialized
+  if(st&T_STAT_INIT_MASK){
+    return "?";
+  }
+  //mask out all but torque bits
+  st&=T_STAT_TQ_MASK;
+  //count bits set
+  for(c=0;st;c++){
+    st&=st-1;
+  }
+  //calculate torque
+  tq=2*c-4;
+  //use switch to return constant value
+  switch(tq){
+    case -4:
+      return "-4";
+    case -2:
+      return "-2";
+    case 0:
+      return "0";
+    case 2:
+      return "2";
+    case 4:
+      return "4";
+    default:
+      //error unknown torque
+      return "X";
+  }
 }
 
 //return error string from status
@@ -224,34 +224,22 @@ const char *stat_err(int st){
 }
 
 //direction status of torquer 1
-char torquer_dir_1(int st){
+char torquer_dir(int st,int n){
+  //check range of n
+  if(n<1 || n>4){
+    //TODO: report error?
+    return 'X';
+  }
   //check for errors
-  if(st&T_STAT_ERR_1){
+  if(st&err_mask[n-1]){
     return '!';
   }
   //check if initialized
-  if(st&T_STAT_UNINIT_1){
+  if(st&init_mask[n-1]){
     return '?';
   }
   //return status
-  if(st&T_STAT_1){
-    return '+';
-  }else{
-    return '-';
-  }
-}
-//direction status of torquer 2
-char torquer_dir_2(int st){
-  //check for errors
-  if(st&T_STAT_ERR_2){
-    return '!';
-  }
-  //check if initialized
-  if(st&T_STAT_UNINIT_2){
-    return '?';
-  }
-  //return status
-  if(st&T_STAT_2){
+  if(st&stat_mask[n-1]){
     return '+';
   }else{
     return '-';
@@ -259,185 +247,115 @@ char torquer_dir_2(int st){
 }
 
 //print the staus of a torquer set for easy reading by a human
-void print_torquer_status(int set){
-  TQ_SET *p;
-  //get the current torque of the set given by set
-  switch(set){
-    case TQ_SET_BIG:
-      p=&tq_big;
-      printf("Large Torquers:\r\n");
-    break;
-    case TQ_SET_SMALL:
-      p=&tq_small;
-      printf("Small Torquers:\r\n");
-    break;
-    default:
-      return;
-    break;
-  }
+void print_torquer_status(void){
   //print status
-  printf(     "\t""Axis\t""M\t""status\t""last\t""error\r\n"
-              "\tx\t%s\t%c%c\t%i\t%s\r\n"
-              "\ty\t%s\t%c%c\t%i\t%s\r\n"
-              "\tz\t%s\t%c%c\t%i\t%s\r\n",
-              stat_to_torque(p->c.x.status),torquer_dir_1(p->c.x.status),torquer_dir_2(p->c.x.status),p->c.x.last,stat_err(p->c.x.status),
-              stat_to_torque(p->c.y.status),torquer_dir_1(p->c.y.status),torquer_dir_2(p->c.y.status),p->c.y.last,stat_err(p->c.y.status),
-              stat_to_torque(p->c.z.status),torquer_dir_1(p->c.z.status),torquer_dir_2(p->c.z.status),p->c.z.last,stat_err(p->c.z.status));
+  printf("\t""Axis\t""M\t""status\t""last\t""error\r\n"
+        "\tx\t%s\t%c%c%c%c\t%i\t%s\r\n"
+        "\ty\t%s\t%c%c%c%c\t%i\t%s\r\n"
+        "\tz\t%s\t%c%c%c%c\t%i\t%s\r\n",
+        stat_to_torque(tq_stat.c.x.status),torquer_dir(tq_stat.c.x.status,1),torquer_dir(tq_stat.c.x.status,2),torquer_dir(tq_stat.c.x.status,3),torquer_dir(tq_stat.c.x.status,4),tq_stat.c.x.last,stat_err(tq_stat.c.x.status),
+        stat_to_torque(tq_stat.c.y.status),torquer_dir(tq_stat.c.y.status,1),torquer_dir(tq_stat.c.y.status,2),torquer_dir(tq_stat.c.y.status,3),torquer_dir(tq_stat.c.y.status,4),tq_stat.c.y.last,stat_err(tq_stat.c.y.status),
+        stat_to_torque(tq_stat.c.z.status),torquer_dir(tq_stat.c.z.status,1),torquer_dir(tq_stat.c.z.status,2),torquer_dir(tq_stat.c.z.status,3),torquer_dir(tq_stat.c.z.status,4),tq_stat.c.z.last,stat_err(tq_stat.c.z.status));
 }
 
 //print the status of a torquer set so that it can be easily parsed on the other end by software
-void print_torquer_stat_code(int set){
-  TQ_SET *p;
-    //get the current torque of the set given by set
-  switch(set){
-    case TQ_SET_BIG:
-      p=&tq_big;
-      printf("B");
-    break;
-    case TQ_SET_SMALL:
-      p=&tq_small;
-      printf("S");
-    break;
-    default:
-      return;
-    break;
-  }
+void print_torquer_stat_code(void){
   //print status
-  printf("\t%c%c\t%c%c\t%c%c\t%i\t%i\t%i\t",
-              (p->c.x.status&T_STAT_UNINIT_1)?'?':((p->c.x.status&T_STAT_1)?'+':'-'),(p->c.x.status&T_STAT_UNINIT_2)?'?':((p->c.x.status&T_STAT_2)?'+':'-'),
-              (p->c.y.status&T_STAT_UNINIT_1)?'?':((p->c.y.status&T_STAT_1)?'+':'-'),(p->c.y.status&T_STAT_UNINIT_2)?'?':((p->c.y.status&T_STAT_2)?'+':'-'),
-              (p->c.z.status&T_STAT_UNINIT_1)?'?':((p->c.z.status&T_STAT_1)?'+':'-'),(p->c.z.status&T_STAT_UNINIT_2)?'?':((p->c.z.status&T_STAT_2)?'+':'-'),
-              p->c.x.last,p->c.y.last,p->c.z.last);
+  printf("%c%c%c%c\t%c%c%c%c\t%c%c%c%c\t%i\t%i\t%i\t",
+      torquer_dir(tq_stat.c.x.status,1),torquer_dir(tq_stat.c.x.status,2),torquer_dir(tq_stat.c.x.status,3),torquer_dir(tq_stat.c.x.status,4),
+      torquer_dir(tq_stat.c.y.status,1),torquer_dir(tq_stat.c.y.status,2),torquer_dir(tq_stat.c.y.status,3),torquer_dir(tq_stat.c.y.status,4),
+      torquer_dir(tq_stat.c.z.status,1),torquer_dir(tq_stat.c.z.status,2),torquer_dir(tq_stat.c.z.status,3),torquer_dir(tq_stat.c.z.status,4),
+      tq_stat.c.x.last,tq_stat.c.y.last,tq_stat.c.z.last);
 }
 
+//TODO: fix for four torquers
 //set the torque of the torquer set given by set
-int setTorque(const VEC *T,int set){
-  TQ_SET *current;
-  const char ax_name[3]={'X','Y','Z'};
+int setTorque(const VEC *T){
   int flip[3]={0,0,0},dir[3]={0,0,0},tmp,rt=0,i;
-  //get the current torque of the set given by set
-  switch(set){
-    case TQ_SET_BIG:
-      current=&tq_big;
-    break;
-    case TQ_SET_SMALL:
-      current=&tq_small;
-    break;
-    default:
-      //report error
-      report_error(ERR_LEV_ERROR,ACDS_ERR_SRC_TORQUERS,TQ_ERR_BAD_SET,set);
-      return -1;
-    break;
-  }
-  //TODO: try to get this into some sort of loop to make the code easier to read and maintain
+  int stat,set,num;
+  //loop through torquer axis and set torque
   for(i=0;i<3;i++){
-    //figure out which torquers need to be flipped
-    //look at current dipole moment
-    switch(current->elm[i].status){
-      case 0:
-        if(T->elm[i]>=0){
-          //set direction
+    if(T->elm[i]<-3){
+      //set torque to -4
+      num=0;
+    }else if(T->elm[i]>3){
+      //set torque to +4
+      num=4;
+    }else if(T->elm[i]<-1){
+      //set torque to -2
+      num=1;
+    }else if(T->elm[i]>1){
+      //set torque to +2
+      num=3;
+    }else{
+      //set torque to 0
+      num=2;
+    }
+    //get torquer status
+    stat=tq_stat.elm[i].status;
+    //mask out all but status of initialized torquers
+    stat=(stat&T_STAT_TQ_MASK)&(((~stat)&T_STAT_INIT_MASK)>>T_STAT_TQ_INIT_SHIFT);
+    //count number of torquers set
+    for(set=0;stat;set++){
+      stat&=stat-1;
+    }
+    //check if set torque is desired torque
+    if(stat==num){
+      //check if torquers are uninitialized
+      if(tq_stat.elm[i].status&T_STAT_INIT_MASK){
+        //check last
+        if(tq_stat.elm[i].last&0x01){
+          //even, flip in + direction
           dir[i]=M_PLUS;
-          //determine which torquer should be flipped
-          flip[i]=choseTorquer(current->elm[i].status,current->elm[i].last,dir[i]);
-          //report information message
-          report_error(ERR_LEV_INFO,ACDS_ERR_SRC_TORQUERS,TQ_INFO_FLIP,i|(flip[i]<<4));
-        }
-      break;
-      case T_STAT_1:
-      case T_STAT_2:
-        if(T->elm[i]>0){
-          //set direction
-          dir[i]=M_PLUS;
-          //determine which torquer should be flipped
-          flip[i]=choseTorquer(current->elm[i].status,current->elm[i].last,dir[i]);
-          //report information message
-          report_error(ERR_LEV_INFO,ACDS_ERR_SRC_TORQUERS,TQ_INFO_FLIP,i|(flip[i]<<4));
-        }else if(T->elm[i]<0){
-          //set direction
-          dir[i]=M_MINUS;
-          //determine which torquer should be flipped
-          flip[i]=choseTorquer(current->elm[i].status,current->elm[i].last,dir[i]);
-          //report information message
-          report_error(ERR_LEV_INFO,ACDS_ERR_SRC_TORQUERS,TQ_INFO_FLIP,i|(flip[i]<<4));
-        }
-      break;
-      case T_STAT_1|T_STAT_2:  
-        if(T->elm[i]<=0){
-          //set direction
-          dir[i]=M_MINUS;
-          //determine which torquer should be flipped
-          flip[i]=choseTorquer(current->elm[i].status,current->elm[i].last,dir[i]);
-          //report information message
-          report_error(ERR_LEV_INFO,ACDS_ERR_SRC_TORQUERS,TQ_INFO_FLIP,i|(flip[i]<<4));
-        }
-      break;
-      default:
-        if(T->elm[i]>0){
-          //set direction
-          dir[i]=M_PLUS;
-          //determine which torquer should be flipped
-          flip[i]=choseTorquer(current->elm[i].status,current->elm[i].last,dir[i]);
-          //report information message
-          report_error(ERR_LEV_INFO,ACDS_ERR_SRC_TORQUERS,TQ_INFO_FLIP,i|(flip[i]<<4));
-        }else if(T->elm[i]<0){
-          //set direction
-          dir[i]=M_MINUS;
-          //determine which torquer should be flipped
-          flip[i]=choseTorquer(current->elm[i].status,current->elm[i].last,dir[i]);
-          //report information message
-          report_error(ERR_LEV_INFO,ACDS_ERR_SRC_TORQUERS,TQ_INFO_FLIP,i|(flip[i]<<4));
         }else{
-          //zero torque desired
-          //check if one status is known 
-          if(current->elm[i].status&(~(current->elm[i].status>>2))&0x03){
-            //set direction
-            dir[i]=M_MINUS;
-            //determine which torquer should be flipped
-            flip[i]=choseTorquer(current->elm[i].status,current->elm[i].last,dir[i]);
-          }else{
-            //set direction
-            dir[i]=M_PLUS;
-            //determine which torquer should be flipped
-            flip[i]=choseTorquer(current->elm[i].status,current->elm[i].last,dir[i]);
-          }
-          //report information message
-          report_error(ERR_LEV_INFO,ACDS_ERR_SRC_TORQUERS,TQ_INFO_FLIP,i|(flip[i]<<4));
-        } 
+          //odd, flip in - direction
+          dir[i]=M_MINUS;
+        }
+        //determine which torquer should be flipped
+        flip[i]=choseTorquer(tq_stat.elm[i].status,tq_stat.elm[i].last,dir[i]);
+        //report information message
+        report_error(ERR_LEV_INFO,ACDS_ERR_SRC_TORQUERS,TQ_INFO_FLIP,i|(flip[i]<<4));        
+      }
+    }else if(num>stat){
+        //too few torquers flipped in the + direction, flip one
+        dir[i]=M_PLUS;
+        //determine which torquer should be flipped
+        flip[i]=choseTorquer(tq_stat.elm[i].status,tq_stat.elm[i].last,dir[i]);
+        //report information message
+        report_error(ERR_LEV_INFO,ACDS_ERR_SRC_TORQUERS,TQ_INFO_FLIP,i|(flip[i]<<4));
+    }else{
+       //too few torquers flipped in the - direction, flip one
+       dir[i]=M_MINUS;
+      //determine which torquer should be flipped
+      flip[i]=choseTorquer(tq_stat.elm[i].status,tq_stat.elm[i].last,dir[i]);
+      //report information message
+      report_error(ERR_LEV_INFO,ACDS_ERR_SRC_TORQUERS,TQ_INFO_FLIP,i|(flip[i]<<4));
     }
   }
   //drive toruqers
-  return drive_torquers(set,flip,dir);
+  return drive_torquers(flip,dir);
 }
  
 //drive one torquer in each axis
-int drive_torquers(int set,const int* num,const int* dir){
+int drive_torquers(const int* num,const int* dir){
   volatile unsigned char *(port[3]);
+  volatile unsigned char *const ports[3][2]={{&X_DRV_PORT1,&X_DRV_PORT2},{&Y_DRV_PORT1,&Y_DRV_PORT2},{&Z_DRV_PORT1,&Z_DRV_PORT2}};
   unsigned char val[3]={0,0,0};
   unsigned char p_old,fb1,fb2;
   CTL_TIME_t ct;
-  TQ_SET *current;
   int i,d,rtval=RET_SUCCESS;
-  //get the current torque of the set given by set
-  switch(set){
-    case TQ_SET_BIG:
-      current=&tq_big;
-      port[0]=&X_DRV_PORT1;
-      port[1]=&Y_DRV_PORT1;
-      port[2]=&Z_DRV_PORT1;
-    break;
-    case TQ_SET_SMALL:
-      current=&tq_small;
-      port[0]=&X_DRV_PORT2;
-      port[1]=&Y_DRV_PORT2;
-      port[2]=&Z_DRV_PORT2;
-    break;
-    default:
-      //Report error
-      report_error(ERR_LEV_ERROR,ACDS_ERR_SRC_TORQUERS,TQ_ERR_BAD_SET,set);
-      return TQ_ERR_BAD_SET;
-    break;
+  //get the needed ports based on which torquer is used
+  for(i=0;i<3;i++){
+    //check which torquer is being flipped
+    if(num[i]<=2){
+      //use first port
+      port[i]=ports[i][1];
+    }else{
+      //use second port
+      port[i]=ports[i][2];
+    }
   }
+  //calculate mask values
   for(i=0;i<3;i++){
     //get direction
     d=dir[i];
@@ -445,9 +363,10 @@ int drive_torquers(int set,const int* num,const int* dir){
     if(i==0){
       d*=-1;
     }
-    //setup
+    //set mask based on torquer and direction
     switch(num[i]){
       case 1:
+      case 3:
         //drive torquer 1
         if(d==M_PLUS){
           //drive 0 high 1 low
@@ -458,6 +377,7 @@ int drive_torquers(int set,const int* num,const int* dir){
         }
       break;
       case 2:
+      case 4:
         //drive torquer 2
         if(d==M_PLUS){
           //drive 2 high, 1 low
@@ -477,13 +397,20 @@ int drive_torquers(int set,const int* num,const int* dir){
      }
     //set new status
     if(dir[i]==M_PLUS){
-      current->elm[i].status|=1<<(num[i]-1);
-      current->elm[i].last=num[i];
+      //set direction
+      tq_stat.elm[i].status|=stat_mask[num[i]-1];
+      //set last torquer
+      tq_stat.elm[i].last=num[i];
+      //clear init flag
+      tq_stat.elm[i].status&=~init_mask[num[i]-1];
     }else if(dir[i]==M_MINUS){
-      current->elm[i].status&=~(1<<(num[i]-1));
-      current->elm[i].last=num[i];
+      //set direction
+      tq_stat.elm[i].status&=~stat_mask[num[i]-1];
+      //set last torquer
+      tq_stat.elm[i].last=num[i];
+      //clear init flag
+      tq_stat.elm[i].status&=~init_mask[num[i]-1];
     }
-    current->elm[i].status&=~(T_STAT_UNINIT_1<<(num[i]-1));
    }
    //elevate priority so torquer flip is not interrupted
    //TODO: perhaps do this with an interrupt? also get priorities straight (just had to say that)
@@ -542,16 +469,13 @@ int drive_torquers(int set,const int* num,const int* dir){
        case 0x01:
        //check if not charged or discharged
        case 0x00:
-          current->elm[i].status|=T_STAT_CAP_ERR;
+          tq_stat.elm[i].status|=T_STAT_CAP_ERR;
           //report error
           report_error(ERR_LEV_ERROR,ACDS_ERR_SRC_TORQUERS,TQ_ERR_CAP,i);
           //check which torquer was flipped
-          if(num[i]==1){
+          if(num[i]!=0){
             //Cap not charged, flip questionable
-            current->elm[i].status|=T_STAT_UNINIT_1;
-          }else if(num[i]==2){
-            //Cap not charged, flip questionable
-            current->elm[i].status|=T_STAT_UNINIT_2;
+            tq_stat.elm[i].status|=init_mask[num[i]-1];
           }
           rtval=TQ_ERR_CAP;
        break;
@@ -561,7 +485,7 @@ int drive_torquers(int set,const int* num,const int* dir){
        break;
        //error with comparitor
        default:
-         current->elm[i].status|=T_STAT_COMP_ERR;
+         tq_stat.elm[i].status|=T_STAT_COMP_ERR;
          //report error
          report_error(ERR_LEV_ERROR,ACDS_ERR_SRC_TORQUERS,TQ_ERR_COMP,i);
        break;
@@ -572,20 +496,13 @@ int drive_torquers(int set,const int* num,const int* dir){
        case 0x00:
        //check if charged
        case 0x02:
-        //check which torquer was flipped
-        if(num[i]==1){
-          //error flipping torquer #1
-          current->elm[i].status|=T_STAT_ERR_1;
-          //Cap not discharged, flip questionable
-          //current->elm[i].status|=T_STAT_UNINIT_1;
-        }else if(num[i]==2){
-          //error flipping torquer #2
-          current->elm[i].status|=T_STAT_ERR_2;
-          //Cap not discharged, flip questionable
-          current->elm[i].status|=T_STAT_UNINIT_2;
-        }
         //check if torquer should have been flipped
         if(num[i]!=0){
+           //error flipping torquer, set error flag
+           tq_stat.elm[i].status|=err_mask[num[i]-1];
+           //Cap not discharged, flip questionable
+           //TODO: figure out what to do here
+           //tq_stat.elm[i].status|=int_mask[num[i]-1];
            //report error
            report_error(ERR_LEV_ERROR,ACDS_ERR_SRC_TORQUERS,TQ_ERR_BAD_CONNECTION,i|(num[i]<<4));
            //check if already returning an error
@@ -603,14 +520,14 @@ int drive_torquers(int set,const int* num,const int* dir){
         }
         //no torquer was flipped so no discharge should have happened, flag error
         //TODO: is this really the correct error here?
-        current->elm[i].status|=T_STAT_CAP_ERR;
+        tq_stat.elm[i].status|=T_STAT_CAP_ERR;
         rtval=TQ_ERR_CAP;
         //report error
         report_error(ERR_LEV_ERROR,ACDS_ERR_SRC_TORQUERS,TQ_ERR_CAP,i);
        break;
        //error with comparitor
        default:
-         current->elm[i].status|=T_STAT_COMP_ERR;
+         tq_stat.elm[i].status|=T_STAT_COMP_ERR;
          //report error
          report_error(ERR_LEV_ERROR,ACDS_ERR_SRC_TORQUERS,TQ_ERR_COMP,i);
          rtval=TQ_ERR_COMP;

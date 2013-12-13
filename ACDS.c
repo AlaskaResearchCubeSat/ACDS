@@ -190,11 +190,11 @@ int stat2idx(int stat){
 //get index for the current torquer status in the calibration table
 int calIdx(void){
   int idx,xidx,yidx,zidx;
-  extern TQ_SET tq_big;
+  extern TQ_SET tq_stat;
   //get index from status values
-  xidx=stat2idx(tq_big.c.x.status);
-  yidx=stat2idx(tq_big.c.y.status);
-  zidx=stat2idx(tq_big.c.z.status);
+  xidx=stat2idx(tq_stat.c.x.status);
+  yidx=stat2idx(tq_stat.c.y.status);
+  zidx=stat2idx(tq_stat.c.z.status);
   //check for error
   if(xidx==-1 || yidx==-1 || zidx==-1){
     //error, return invalid
@@ -309,9 +309,9 @@ calibrate(long *dat){
     tmpCal[idx].c.y=dat[1];
     tmpCal[idx].c.z=0;
   }
-  print_torquer_stat_code(TQ_SET_BIG);
+  print_torquer_stat_code();
   //flip torquers
-  drive_torquers(TQ_SET_BIG,flipTable[cal_stat].num,flipTable[cal_stat].dir);
+  drive_torquers(flipTable[cal_stat].num,flipTable[cal_stat].dir);
   //increment counter
   cal_stat++;
   printf("\r\n");
@@ -368,7 +368,7 @@ void ACDS_events(void *p) __toplevel{
         break;
         case ACDS_HOLD_MODE:
           //flip torquers
-          setTorque(&zero,TQ_SET_BIG);
+          setTorque(&zero);
         break;
       }
       tqstat2stat(status.tqstat);
