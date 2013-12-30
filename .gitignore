@@ -5,3 +5,4 @@
 #build directories
 MSP430 Debug/
 MSP430 Release/
+MSP430 DEV/

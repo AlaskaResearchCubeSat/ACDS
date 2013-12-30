@@ -6,7 +6,7 @@
 //tracking information for a single axis
 typedef struct{
   int status;
-  int last;
+  unsigned short last;
 }TQ_AXIS;
 
 //set of torquers
@@ -97,6 +97,9 @@ typedef union{
 #define T_STAT_INIT_MASK    (T_STAT_UNINIT_1|T_STAT_UNINIT_2|T_STAT_UNINIT_3|T_STAT_UNINIT_4)
 
 #define T_STAT_TQ_INIT_SHIFT  4
+
+//number of torquers in each axis
+#define T_NUM_AXIS_TQ         4
 
 //status bits
 enum{T_STAT_1=1<<0,T_STAT_2=1<<1,T_STAT_3=1<<2,T_STAT_4=1<<3,

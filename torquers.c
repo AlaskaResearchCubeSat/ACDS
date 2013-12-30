@@ -22,6 +22,8 @@ CTL_TIME_t lastFlip=0;
 static const int  err_mask[4]={T_STAT_ERR_1,T_STAT_ERR_2,T_STAT_ERR_3,T_STAT_ERR_4};
 static const int init_mask[4]={T_STAT_UNINIT_1,T_STAT_UNINIT_2,T_STAT_UNINIT_3,T_STAT_UNINIT_4};
 static const int stat_mask[4]={T_STAT_1,T_STAT_2,T_STAT_3,T_STAT_4};
+      
+const char ax_char[3]={'X','Y','Z'};
 
 //check if torquers have been initialized
 //return 1 if torquers have been initialized
@@ -68,12 +70,12 @@ void torqueInit(void){
   }
   setTorque(&T);
   if(output_type==HUMAN_OUTPUT){
-    printf("Final Torquer Status:\r\n");
+    printf("New Torquer Status:\r\n");
     print_torquer_status();
   }
   setTorque(&T);
   if(output_type==HUMAN_OUTPUT){
-    printf("Final Torquer Status:\r\n");
+    printf("New Torquer Status:\r\n");
     print_torquer_status();
   }
   setTorque(&T);
@@ -85,6 +87,8 @@ void torqueInit(void){
 
 //init pins for torquer drivers
 void driverInit(void){
+//skip init for DEV_BUILD
+#ifndef DEV_BUILD
   //set all driver pins low
   X_DRV_PORT1&=~TQ_DRV_PINS;
   X_DRV_PORT2&=~TQ_DRV_PINS;
@@ -110,12 +114,15 @@ void driverInit(void){
   P5OUT&=~BIT1;
   P5SEL&=~BIT1;
   P5DIR|= BIT1;
+#endif
   //reset torquer status to unknown
   resetTorqueStatus();
 }
 
 //initialize torquer feedback pins
 void torque_fb_init(void){
+//skip init for DEV_BUILD
+#ifndef DEV_BUILD
     //X-axis
     TQ_FB_X_OUT|=TQ_FB_PIN_MASK;
     TQ_FB_X_DIR&=~TQ_FB_PIN_MASK;
@@ -131,6 +138,7 @@ void torque_fb_init(void){
     TQ_FB_Z_DIR&=~TQ_FB_PIN_MASK;
     TQ_FB_Z_SEL&=~TQ_FB_PIN_MASK;
     TQ_FB_Z_REN|=TQ_FB_PIN_MASK;
+#endif
 }
 
 //get feedback from all axis
@@ -156,13 +164,38 @@ unsigned char get_torquer_fb(void){
 //TODO: fix this for 4 torquer set code
 //determine which torquer should be flipped based on what direction the flip is and which torquer was last flipped
 int choseTorquer(int stat,int last,int dir){
+  int i;
   //first check for uninitialized torquers
   if(stat&T_STAT_INIT_MASK){
-    //TODO: chose a torquer that is not initialized and return it
+    //return first torquer that is not initialized
+    for(i=0;i<4;i++){
+      if(stat&init_mask[i]){
+        return i+1;
+      }
+    }
+    //all torquers initialized????
     return 0;
   }
-  //TODO: figure out which torquer is the best to flip
   
+  if(dir==M_PLUS){
+    //find a - torquer to flip
+    for(i=0;i<4;i++){
+      //take the first one that comes along
+      //TODO : find the torquer flipped least recently
+      if(!(stat&stat_mask[i])){
+        return i+1;
+      }
+    }
+  }else{
+    //find a + torquer to flip
+    for(i=0;i<4;i++){
+      //take the first that comes along
+      //TODO : find the torquer flipped least recently
+      if(stat&stat_mask[i]){
+        return i+1;
+      }
+    }
+  }
   //unknown inputs
   return 0;
 }
@@ -245,17 +278,19 @@ char torquer_dir(int st,int n){
     return '-';
   }
 }
+  
+ #define getLast(s,n)   ((((s).last)&(0x000F<<(n*4)))>>(n*4))
 
 //print the staus of a torquer set for easy reading by a human
 void print_torquer_status(void){
   //print status
-  printf("\t""Axis\t""M\t""status\t""last\t""error\r\n"
-        "\tx\t%s\t%c%c%c%c\t%i\t%s\r\n"
-        "\ty\t%s\t%c%c%c%c\t%i\t%s\r\n"
-        "\tz\t%s\t%c%c%c%c\t%i\t%s\r\n",
-        stat_to_torque(tq_stat.c.x.status),torquer_dir(tq_stat.c.x.status,1),torquer_dir(tq_stat.c.x.status,2),torquer_dir(tq_stat.c.x.status,3),torquer_dir(tq_stat.c.x.status,4),tq_stat.c.x.last,stat_err(tq_stat.c.x.status),
-        stat_to_torque(tq_stat.c.y.status),torquer_dir(tq_stat.c.y.status,1),torquer_dir(tq_stat.c.y.status,2),torquer_dir(tq_stat.c.y.status,3),torquer_dir(tq_stat.c.y.status,4),tq_stat.c.y.last,stat_err(tq_stat.c.y.status),
-        stat_to_torque(tq_stat.c.z.status),torquer_dir(tq_stat.c.z.status,1),torquer_dir(tq_stat.c.z.status,2),torquer_dir(tq_stat.c.z.status,3),torquer_dir(tq_stat.c.z.status,4),tq_stat.c.z.last,stat_err(tq_stat.c.z.status));
+  printf("\t""Axis\t""M\t""status\t""last0\t""last1\t""last2\t""last3\t""error\r\n"
+        "\tx\t%s\t%c%c%c%c\t%i\t%i\t%i\t%i\t%s\r\n"
+        "\ty\t%s\t%c%c%c%c\t%i\t%i\t%i\t%i\t%s\r\n"
+        "\tz\t%s\t%c%c%c%c\t%i\t%i\t%i\t%i\t%s\r\n",
+        stat_to_torque(tq_stat.c.x.status),torquer_dir(tq_stat.c.x.status,1),torquer_dir(tq_stat.c.x.status,2),torquer_dir(tq_stat.c.x.status,3),torquer_dir(tq_stat.c.x.status,4),getLast(tq_stat.c.x,0),getLast(tq_stat.c.x,1),getLast(tq_stat.c.x,2),getLast(tq_stat.c.x,3),stat_err(tq_stat.c.x.status),
+        stat_to_torque(tq_stat.c.y.status),torquer_dir(tq_stat.c.y.status,1),torquer_dir(tq_stat.c.y.status,2),torquer_dir(tq_stat.c.y.status,3),torquer_dir(tq_stat.c.y.status,4),getLast(tq_stat.c.y,0),getLast(tq_stat.c.y,1),getLast(tq_stat.c.y,2),getLast(tq_stat.c.y,3),stat_err(tq_stat.c.y.status),
+        stat_to_torque(tq_stat.c.z.status),torquer_dir(tq_stat.c.z.status,1),torquer_dir(tq_stat.c.z.status,2),torquer_dir(tq_stat.c.z.status,3),torquer_dir(tq_stat.c.z.status,4),getLast(tq_stat.c.z,0),getLast(tq_stat.c.z,1),getLast(tq_stat.c.z,2),getLast(tq_stat.c.z,3),stat_err(tq_stat.c.z.status));
 }
 
 //print the status of a torquer set so that it can be easily parsed on the other end by software
@@ -291,6 +326,7 @@ int setTorque(const VEC *T){
       //set torque to 0
       num=2;
     }
+    printf("%c-axis torque = %i. num = %i\r\n",ax_char[i],(int)T->elm[i],num);
     //get torquer status
     stat=tq_stat.elm[i].status;
     //mask out all but status of initialized torquers
@@ -300,7 +336,7 @@ int setTorque(const VEC *T){
       stat&=stat-1;
     }
     //check if set torque is desired torque
-    if(stat==num){
+    if(set==num){
       //check if torquers are uninitialized
       if(tq_stat.elm[i].status&T_STAT_INIT_MASK){
         //check last
@@ -316,7 +352,7 @@ int setTorque(const VEC *T){
         //report information message
         report_error(ERR_LEV_INFO,ACDS_ERR_SRC_TORQUERS,TQ_INFO_FLIP,i|(flip[i]<<4));        
       }
-    }else if(num>stat){
+    }else if(num>set){
         //too few torquers flipped in the + direction, flip one
         dir[i]=M_PLUS;
         //determine which torquer should be flipped
@@ -399,13 +435,17 @@ int drive_torquers(const int* num,const int* dir){
     if(dir[i]==M_PLUS){
       //set direction
       tq_stat.elm[i].status|=stat_mask[num[i]-1];
+      //shift last torquer
+      tq_stat.elm[i].last<<=4;
       //set last torquer
-      tq_stat.elm[i].last=num[i];
+      tq_stat.elm[i].last|=num[i];
       //clear init flag
       tq_stat.elm[i].status&=~init_mask[num[i]-1];
     }else if(dir[i]==M_MINUS){
       //set direction
       tq_stat.elm[i].status&=~stat_mask[num[i]-1];
+      //shift last torquer
+      tq_stat.elm[i].last<<=4;
       //set last torquer
       tq_stat.elm[i].last=num[i];
       //clear init flag
@@ -424,29 +464,49 @@ int drive_torquers(const int* num,const int* dir){
    if((ct-lastFlip)<(chargeTime-10)){
     ctl_timeout_wait(lastFlip+chargeTime);
    }
-   //get torquer feedback before
-   fb1=get_torquer_fb();
-   //TESTING: set test pin high while torquer is flipped
-   P5OUT|=BIT1;
-   //Set outputs
-   for(i=0;i<3;i++){
-     //Clear output pins
-     *port[i]&=~TQ_DRV_PINS;
-     //drive torquer
-     *port[i]|=val[i];
-   }
+   //skip torquer feedback for DEV_BUILD
+   #ifndef DEV_BUILD
+     //get torquer feedback before
+     fb1=get_torquer_fb();
+     //TESTING: set test pin high while torquer is flipped
+     P5OUT|=BIT1;
+   #else
+    fb1=0x2A;
+   #endif
+   //skip driving torquers for DEV build
+   #ifndef DEV_BUILD
+     //Set outputs
+     for(i=0;i<3;i++){
+       //Clear output pins
+       *port[i]&=~TQ_DRV_PINS;
+       //drive torquer
+       *port[i]|=val[i];
+     }
+   #endif
    //delay while torquer flipped
    ctl_timeout_wait(ctl_get_current_time()+2);
-   for(i=0;i<3;i++){
-     //stop driving
-     *port[i]&=~TQ_DRV_PINS;
-   }
-   //TESTING: set test pin low after torquers have been flipped
-   P5OUT&=~BIT1;
+   //skip driving torquers for DEV build
+   #ifndef DEV_BUILD
+     for(i=0;i<3;i++){
+       //stop driving
+       *port[i]&=~TQ_DRV_PINS;
+     }
+   #endif
+   //skip torquer feedback for DEV_BUILD
+   #ifndef DEV_BUILD
+     //TESTING: set test pin low after torquers have been flipped
+     P5OUT&=~BIT1;
+   #endif
    //get flip time
    lastFlip=ctl_get_current_time();
-   //get torquer feedback after
-   fb2=get_torquer_fb();
+   //skip torquer feedback for DEV_BUILD
+   #ifndef DEV_BUILD
+     //get torquer feedback after
+     fb2=get_torquer_fb();
+   #else
+     //pretend everything is good
+     fb2=(num[0]?0x01:0x02)|(num[1]?0x04:0x08)|(num[2]?0x10:0x20);
+   #endif
    //restore old priority
    ctl_task_set_priority(ctl_task_executing,p_old);
    //TODO: save feedback for ground analysis

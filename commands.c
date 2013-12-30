@@ -26,37 +26,31 @@
 
 int current_set=TQ_SET_BIG;
 
-//get torque from string
-float readTorque(const char*tstr){
-  //only consider 1 char long strings
-  if(strlen(tstr)!=1){
-    return 0;
-  }
-  switch(tstr[0]){
-    case '+':
-      return 1;
-    case '-':
-      return -1;
-    case '0':
-      return 0;
-    default:
-      //unknown torque
-      return 0;
-  }
-}
 
 //Set torque in each axis
 int setTorqueCmd(char **argv,unsigned short argc){
   VEC T;
+  int i;
+  char *end;
   // three arguments are accepted, X axis, Y axis and Z axis torques
   if(argc!=3){
     printf("Error : %s requires 3 arguments\r\n",argv[0]);
     return -1;
   }
-  //get torques
-  T.c.x=readTorque(argv[1]);
+  for(i=0;i<3;i++){
+    //get torques
+    T.elm[i]=strtof(argv[i+1],&end);
+    if(end==argv[i+2]){
+      printf("Error : could not parse torquer number \'%s\'\r\n",argv[i+1]);
+      return -1;
+    }else if(*end!=0){
+      printf("Error : unknown suffix \'%s\' on torque \'%s\'\r\n",end,argv[i+1]);
+      return -2;
+    }
+  }
+  /*T.c.x=readTorque(argv[1]);
   T.c.y=readTorque(argv[2]);
-  T.c.z=readTorque(argv[3]);
+  T.c.z=readTorque(argv[3]);*/
   //print old status
   printf("Previous Torquer Status:\r\n");
   print_torquer_status();
@@ -72,6 +66,8 @@ int setTorqueCmd(char **argv,unsigned short argc){
 int flipCmd(char **argv,unsigned short argc){
   int num[3]={0,0,0},dir[3]={0,0,0};
   int i,set=TQ_SET_BIG;
+  unsigned long tnum;
+  char *end;
   const char axis[]={'X','Y','Z'};
   // three arguments are accepted, X axis, Y axis and Z axis torques
   if(argc!=3){
@@ -80,33 +76,34 @@ int flipCmd(char **argv,unsigned short argc){
   }
   //get torquers
   for(i=0;i<3;i++){
-    //get torquer number
-    if(strlen(argv[i+1]+1)!=1){
-      printf("Error parsing torquer number \"%s\" in %c-axis\r\n",argv[i+1],axis[i]);
-      return -1;
-    }
-    if(argv[i+1][1]=='1'){
-      num[i]=1;
-    }else if(argv[i+1][1]=='2'){
-      num[i]=2;
-    }else if(argv[i+1][1]=='0'){
-      num[i]=0;    ///no torquer to flip
-    }else{
-      printf("Error : \'%s\' is not a valid torquer number for %c-axis\r\n",argv[i+1]+1,axis[i]);
-      return -1;
-    }
-    //get torquer direction
-    if(argv[i+1][0]=='+'){
-      dir[i]=M_PLUS;
-    }else if(argv[i+1][0]=='-'){
-      dir[i]=M_MINUS;
-    }else if(argv[i+1][0]=='0' && num[i]==0){
+    //check for no flip represented by a zero
+    if(!strcmp("0",argv[i+1])){
       dir[i]=0;
+      num[i]=0;
     }else{
-      printf("Error : \'%c\' is not a valid torquer direction for %c-axis\r\n",argv[3][0],axis[i]);
-      return -1;
+      //get torquer direction
+      if(argv[i+1][0]=='+'){
+        dir[i]=M_PLUS;
+      }else if(argv[i+1][0]=='-'){
+        dir[i]=M_MINUS;
+      }else{
+        printf("Error : \'%c\' is not a valid torquer direction for %c-axis\r\n",argv[3][0],axis[i]);
+        return -1;
+      }
+      //get torquer number
+      tnum=strtoul(argv[i+1]+1,&end,10);
+      if(end==argv[2]){
+        printf("Error : could not parse \'%s\' for %c-axis torquer number\r\n",argv[i+1]+1,axis[i]);
+        return -1;
+      }else if(*end!=0){
+        printf("Error : unknown suffix \'%s\' for %c-axis torquer number\r\n",end,axis[i]);
+        return -2;
+      }else if(tnum>T_NUM_AXIS_TQ){
+        printf("Error : torquer number %lu for %c-axis is too large. maximum torquer number is %u\r\n",tnum,axis[i],T_NUM_AXIS_TQ);
+        return -3;
+      }
+      num[i]=tnum;
     }
-    
   }
   if(output_type==HUMAN_OUTPUT){
     //print old status
@@ -130,6 +127,8 @@ int flipCmd(char **argv,unsigned short argc){
 int driveCmd(char **argv,unsigned short argc){
   int num[3]={0,0,0},dir[3]={0,0,0};
   int axis=0;
+  unsigned long tnum;
+  char *end;
   //three arguments are accepted: axis, torquer direction
   if(argc!=3){
     printf("Error : %s requires 3 arguments\r\n",argv[0]);
@@ -147,18 +146,18 @@ int driveCmd(char **argv,unsigned short argc){
     return -1;
   }
   //get torquer number
-  if(strlen(argv[2])!=1){
-    printf("Error parsing torquer number\r\n");
+  tnum=strtoul(argv[2],&end,10);
+  if(end==argv[2]){
+    printf("Error : could not parse torquer number \'%s\'\r\n",argv[2]);
     return -1;
+  }else if(*end!=0){
+    printf("Error : unknown suffix \'%s\' for torquer number\r\n",end);
+    return -2;
+  }else if(tnum>T_NUM_AXIS_TQ){
+    printf("Error : torquer number %lu is too large. maximum torquer number is %u\r\n",tnum,T_NUM_AXIS_TQ);
+    return -3;
   }
-  if(argv[2][0]=='1'){
-    num[axis]=1;
-  }else if(argv[2][0]=='2'){
-    num[axis]=2;
-  }else{
-    printf("Error : \'%s\' is not a valid torquer number\r\n",argv[2]);
-    return -1;
-  }
+  num[axis]=tnum;
   //get torque direction
   if(strlen(argv[3])!=1){
     printf("Error parsing torquer direction\r\n");
@@ -199,7 +198,7 @@ int initCmd(char **argv,unsigned short argc){
   return 0;
 }
 
-  int compCmd(char **argv,unsigned short argc){
+int compCmd(char **argv,unsigned short argc){
   unsigned char fb;
   int i;
   const char axis[]={'X','Y','Z'};

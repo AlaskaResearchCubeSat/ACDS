@@ -1,6 +1,38 @@
 #include <stdio.h>
 #include "LED.h"
 
+#ifdef DEV_BUILD
+
+void init_LED(void){
+  P7OUT=0x00;
+  P7DIR=0xFF;
+  P7SEL=0x00;
+}
+
+//turn off all LED's
+void LEDs_clear(void){
+   P7OUT=0;
+}
+  
+//turn on an LED
+void LED_on(int LED){
+  if(LED>7 || LED<0){
+    printf("Error: can\'t turn on unknown LED number %i\r\n",LED);
+    return;
+  }
+  P7OUT|=1<<LED;
+}
+
+//Turn off an LED
+void LED_off(int LED){
+  if(LED>7 || LED<0){
+    printf("Error: can\'t turn on unknown LED number %i\r\n",LED);
+    return;
+  }
+  P7OUT&=~(1<<LED);
+}
+#else
+
 void init_LED(void){
   //1st pair of LED's
   P2SEL&=~(BIT0|BIT1);
@@ -61,3 +93,5 @@ void LED_off(int LED){
     break;
   }
 }
+
+#endif
