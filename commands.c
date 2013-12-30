@@ -371,7 +371,7 @@ float torqueCal[64];
 
 
 
-int stackCmd(char **argv,unsigned short agrc);
+//int stackCmd(char **argv,unsigned short agrc);
 
 int calCmd(char **argv,unsigned short argc){
   unsigned short time=32768,count=0;
@@ -539,6 +539,24 @@ int statusCmd(char **argv,unsigned short argc){
   vecPrint ("rates   ",&status.rates);
   return 0;
 }  
+
+int randomTorqueCmd(char **argv,unsigned short argc){
+  VEC T;
+  int i;
+  for(i=0;i<3;i++){
+    //generate random torque
+    T.elm[i]=(rand()%5-2)*2;
+  }
+  //print old status
+  printf("Previous Torquer Status:\r\n");
+  print_torquer_status();
+  //current_set torques
+  setTorque(&T);
+  //print status
+  printf("New Torquer Status:\r\n");
+  print_torquer_status();
+  return 0;
+}
   
 
 //table of commands with help
@@ -562,5 +580,6 @@ const CMD_SPEC cmd_tbl[]={{"help"," [command]\r\n\t""get a list of commands or h
                      {"tstIGRF","\r\n\t""Test IGRF conversion",tst_IGRF_cmd},
                      {"shval3","year alt lat long\r\n\t""IGRF conversion",shval3Cmd},
                      {"status","\r\n\t""Print status information",statusCmd},
+                     {"rndt","\r\n\t""Set torquers to random torque",randomTorqueCmd},
                      //end of list
                      {NULL,NULL,NULL}};

@@ -4,6 +4,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <ARCbus.h>
+#include <stdlib.h>
 #include <Error.h>
 #include "timerA.h"
 #include <terminal.h>
@@ -22,7 +23,7 @@ unsigned stack2[1+512+1];
 unsigned stack3[1+64+1];   
 
 //print stack bytes remaining
-int stackCmd(char **argv,unsigned short agrc){
+/*int stackCmd(char **argv,unsigned short agrc){
   unsigned *(stacks[])={stack1,stack2,stack3};
   size_t sizes[]={sizeof(stack1),sizeof(stack2),sizeof(stack3)};
   char *(names[])={"stack1","stack2","stack3"};
@@ -40,7 +41,7 @@ int stackCmd(char **argv,unsigned short agrc){
     }
   }
   return 0;
-}
+}*/
 
 //make printf and friends use async
 int __putchar(int c){
@@ -57,7 +58,6 @@ int main(void){
 
   //setup mmc interface
   mmcInit_msp();
- 
 
   //setup torquer driver pins
   driverInit();
@@ -88,6 +88,9 @@ int main(void){
   ctl_task_run(&tasks[0],BUS_PRI_LOW,ACDS_events,NULL,"cmd_parse",sizeof(stack1)/sizeof(stack1[0])-2,stack1+1,0);
   ctl_task_run(&tasks[1],BUS_PRI_NORMAL,terminal,(void*)&uart_term,"terminal",sizeof(stack2)/sizeof(stack2[0])-2,stack2+1,0);
   ctl_task_run(&tasks[2],BUS_PRI_HIGH,sub_events,NULL,"sub_events",sizeof(stack3)/sizeof(stack3[0])-2,stack3+1,0);
+  
+  //seed random number generator
+  srand(get_ticker_time());
   
   mainLoop();
 }
