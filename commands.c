@@ -547,6 +547,7 @@ int randomTorqueCmd(char **argv,unsigned short argc){
     //generate random torque
     T.elm[i]=(rand()%5-2)*2;
   }
+  printf("Torque = (%+i,%+i,%+i)\r\n",(int)T.c.x,(int)T.c.y,(int)T.c.z);
   //print old status
   printf("Previous Torquer Status:\r\n");
   print_torquer_status();

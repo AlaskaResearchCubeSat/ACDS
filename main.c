@@ -90,7 +90,7 @@ int main(void){
   ctl_task_run(&tasks[2],BUS_PRI_HIGH,sub_events,NULL,"sub_events",sizeof(stack3)/sizeof(stack3[0])-2,stack3+1,0);
   
   //seed random number generator
-  srand(get_ticker_time());
+  srand(TAR);
   
   mainLoop();
 }
