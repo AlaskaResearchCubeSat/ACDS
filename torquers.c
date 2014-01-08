@@ -408,9 +408,9 @@ int drive_torquers(const int* num,const int* dir){
   unsigned char p_old,fb1,fb2;
   CTL_TIME_t ct;
   int i,d,rtval=RET_SUCCESS;
-  //get the needed ports based on which torquer is used
+  //calculate mask values
   for(i=0;i<3;i++){
-    //check which torquer is being flipped
+    //check which torquer is being flipped and use appropriate port
     if(num[i]<=2){
       //use first port
       port[i]=ports[i][1];
@@ -418,9 +418,6 @@ int drive_torquers(const int* num,const int* dir){
       //use second port
       port[i]=ports[i][2];
     }
-  }
-  //calculate mask values
-  for(i=0;i<3;i++){
     //get direction
     d=dir[i];
     //flip direction for X-axis
