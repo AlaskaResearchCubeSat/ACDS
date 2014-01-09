@@ -413,10 +413,10 @@ int drive_torquers(const int* num,const int* dir){
     //check which torquer is being flipped and use appropriate port
     if(num[i]<=2){
       //use first port
-      port[i]=ports[i][1];
+      port[i]=ports[i][0];
     }else{
       //use second port
-      port[i]=ports[i][2];
+      port[i]=ports[i][1];
     }
     //get direction
     d=dir[i];
