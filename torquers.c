@@ -435,6 +435,10 @@ int drive_torquers(const int* num,const int* dir){
         }else if(d==M_MINUS){
           //drive 1 high 0 low
           val[i]=TQ_OUT1_H|TQ_OUT0_L;
+        }else{
+          val[i]=0;
+          report_error(ERR_LEV_ERROR,ACDS_ERR_SRC_TORQUERS,TQ_ERR_BAD_DIR,d);
+          //TODO: perhaps abort here
         }
       break;
       case 2:
@@ -446,6 +450,10 @@ int drive_torquers(const int* num,const int* dir){
         }else if(d==M_MINUS){
           //drive 1 high, 2 low
           val[i]=TQ_OUT1_H|TQ_OUT2_L;
+        }else{
+          val[i]=0;
+          report_error(ERR_LEV_ERROR,ACDS_ERR_SRC_TORQUERS,TQ_ERR_BAD_DIR,d);
+          //TODO: perhaps abort here
         }
       break;
       case 0:

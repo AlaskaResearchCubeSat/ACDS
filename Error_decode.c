@@ -33,6 +33,9 @@ char *err_decode(char buf[150], unsigned short source,int err, unsigned short ar
         case TQ_ERR_BAD_TORQUER:
           sprintf(buf,"Torquers : Bad Torquer %i",argument);
         return buf;
+        case TQ_ERR_BAD_DIR:
+          sprintf(buf,"Torquers : Bad Direction %i",argument);
+        return buf;
         case TQ_ERR_COMP:
           sprintf(buf,"Torquers : comparitor error for %c-axis",axis(argument));
         return buf;
