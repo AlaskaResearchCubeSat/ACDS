@@ -55,9 +55,10 @@ int main(void){
   ARC_setup(); 
   
   //setup system specific peripherals
-
+#ifndef DEV_BUILD
   //setup mmc interface
   mmcInit_msp();
+#endif
 
   //setup torquer driver pins
   driverInit();

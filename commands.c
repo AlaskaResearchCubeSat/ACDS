@@ -562,7 +562,10 @@ int randomTorqueCmd(char **argv,unsigned short argc){
 
 //table of commands with help
 const CMD_SPEC cmd_tbl[]={{"help"," [command]\r\n\t""get a list of commands or help on a spesific command.",helpCmd},
-                     CTL_COMMANDS,ARC_COMMANDS,ERROR_COMMANDS,MMC_COMMANDS,
+                     CTL_COMMANDS,ARC_COMMANDS,ERROR_COMMANDS,
+                     #ifndef DEV_BUILD
+                     MMC_COMMANDS,
+                     #endif
                      {"flip","[X Y Z]\r\n\t""Flip a torquer in each axis.",flipCmd},
                      {"setTorque"," Xtorque Ytorque Ztorque\r\n\tFlip torquers to set the torque in the X, Y and Z axis",setTorqueCmd},
                      {"drive"," axis num dir\r\n\tdrive a torquer in the given axis in a given direction",driveCmd},
