@@ -193,6 +193,18 @@ int tqstatCmd(char **argv,unsigned short argc){
   return 0;
 }
 
+int statcodeCmd(char **argv,unsigned short argc){
+  int set=TQ_SET_NONE,i;
+  if(argc>2){
+    printf("Error : %s takes no arguments\r\n",argv[0]);
+    return -1;
+  }
+  //print torquer status
+  print_torquer_stat_code();
+  printf("\r\n");
+  return 0;
+}
+
 int initCmd(char **argv,unsigned short argc){
   torqueInit();
   return 0;
@@ -569,7 +581,8 @@ const CMD_SPEC cmd_tbl[]={{"help"," [command]\r\n\t""get a list of commands or h
                      {"flip","[X Y Z]\r\n\t""Flip a torquer in each axis.",flipCmd},
                      {"setTorque"," Xtorque Ytorque Ztorque\r\n\tFlip torquers to set the torque in the X, Y and Z axis",setTorqueCmd},
                      {"drive"," axis num dir\r\n\tdrive a torquer in the given axis in a given direction",driveCmd},
-                     {"tqstat","[B|S|all|current]\r\n\t""Get torquer status",tqstatCmd},
+                     {"tqstat","\r\n\t""Print torquer status",tqstatCmd},
+                     {"statcode","\r\n\t""Print torquer status in machine readable form",statcodeCmd},
                      {"init","\r\n\t""initialize torquers",initCmd},
                      {"comp","\r\n\t""print feedback comparitor status",compCmd},
                      {"tst","\r\n\t""axis num dir\r\n\t""do a test flip of given torquer to see if it is connected",tstCmd},
