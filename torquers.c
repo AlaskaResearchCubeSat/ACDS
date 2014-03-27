@@ -85,6 +85,63 @@ void torqueInit(void){
   }
 }
 
+//set torquers to initialized state
+void torqueReinit(void){
+  int i,j;
+  int num[3],dir[3],target,flip;
+  
+  //check if torquers have been initialized
+  if(!checkTorqueInit()){
+    if(output_type==HUMAN_OUTPUT){
+      printf("Torquers Not initialized\r\n");
+    }
+    torqueInit();
+    return;
+  }
+  
+  //print out status
+  if(output_type==HUMAN_OUTPUT){
+    printf("Previous Torquer Status:\r\n");
+    print_torquer_status();
+  }
+  for(i=0;i<4;i++){
+    target=i>=2?M_MINUS:M_PLUS;
+    flip=0;
+    for(j=0;j<3;j++){
+      //check direction
+      if(target==M_PLUS){
+        //flip if torquer in the - direction
+        dir[j]=tq_stat.elm[j].status&stat_mask[i]?0:M_PLUS;
+      }else{
+        //flip if torquer in the + direction
+        dir[j]=tq_stat.elm[j].status&stat_mask[i]?M_MINUS:0;
+      }
+      if(dir[j]){
+        //set torquer number to flip
+        num[j]=i+1;
+        flip=1;
+      }else{
+        //no flip needed, zero torquer number
+        num[j]=0;
+      }
+    }
+    if(flip){
+      //drive torquers
+      drive_torquers(num,dir);
+      //print status
+      if(output_type==HUMAN_OUTPUT){
+        printf("New Torquer Status:\r\n");
+        print_torquer_status();
+      }
+    }
+  }
+  //print status
+  if(output_type==HUMAN_OUTPUT){
+    printf("Final Torquer Status:\r\n");
+    print_torquer_status();
+  }
+}
+
 //init pins for torquer drivers
 void driverInit(void){
 //skip init for DEV_BUILD

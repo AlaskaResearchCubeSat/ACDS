@@ -118,6 +118,7 @@ enum{TQ_ERR_BAD_SET=-1,TQ_ERR_BAD_TORQUER=-2,TQ_ERR_BAD_DIR=-3,TQ_ERR_COMP=1,TQ_
 int setTorque(const VEC *T);
 int drive_torquer(int axis,unsigned char num,unsigned char dir);
 void torqueInit(void);
+void torqueReinit(void);
 void driverInit(void);
 int drive_torquers(const int* num,const int* dir);
 void print_torquer_status(void);

@@ -210,6 +210,11 @@ int initCmd(char **argv,unsigned short argc){
   return 0;
 }
 
+int reinitCmd(char **argv,unsigned short argc){
+  torqueReinit();
+  return 0;
+}
+
 int compCmd(char **argv,unsigned short argc){
   unsigned char fb;
   int i;
@@ -584,6 +589,7 @@ const CMD_SPEC cmd_tbl[]={{"help"," [command]\r\n\t""get a list of commands or h
                      {"tqstat","\r\n\t""Print torquer status",tqstatCmd},
                      {"statcode","\r\n\t""Print torquer status in machine readable form",statcodeCmd},
                      {"init","\r\n\t""initialize torquers",initCmd},
+                     {"reinit","\r\n\t""Set torquers to initialized state",reinitCmd},
                      {"comp","\r\n\t""print feedback comparitor status",compCmd},
                      {"tst","\r\n\t""axis num dir\r\n\t""do a test flip of given torquer to see if it is connected",tstCmd},
                      {"srun","[time count]\r\n\t""tell LEDL to start taking sensor data.",sensorRunCmd},
