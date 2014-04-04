@@ -51,6 +51,9 @@ char *err_decode(char buf[150], unsigned short source,int err, unsigned short ar
         case TQ_ERROR_INVALID_STATUS:
           sprintf(buf,"Torquers : Invalid Status %u",argument);
         return buf;
+        case TQ_INFO_TQFB:
+          sprintf(buf,"Torquers : fb1 = 0x%02X  fb2 = 0x%02X",(argument>>8),(argument&0xFF));
+        return buf;
         default:
           sprintf(buf,"Torquers : Unknown Error #%i, argument = %i",err,argument);
         return buf;

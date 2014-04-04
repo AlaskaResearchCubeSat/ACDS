@@ -601,6 +601,7 @@ int drive_torquers(const int* num,const int* dir){
    //restore old priority
    ctl_task_set_priority(ctl_task_executing,p_old);
    //TODO: save feedback for ground analysis
+   report_error(ERR_LEV_INFO,ACDS_ERR_SRC_TORQUERS,TQ_INFO_TQFB,((fb1<<8)|fb2));
    //printf("fb1 0x%02X\r\nfb2 0x%02X\r\n",fb1,fb2);
    //Look at torquer feedback for each axis and add error bits to status if nessissary
    //TODO: think deep thoughts about what error bits should be set here
