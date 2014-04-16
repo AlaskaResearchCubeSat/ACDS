@@ -68,8 +68,8 @@ int main(void){
   //setup LED's
   init_LED();
   
-  //turn on LED 3
-  LED_on(3);
+  //turn power LED
+  PWR_LED_on();
   
   //TESTING: set log level to report everything by default
   set_error_level(0);

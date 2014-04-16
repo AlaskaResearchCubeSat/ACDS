@@ -31,6 +31,15 @@ void LED_off(int LED){
   }
   P7OUT&=~(1<<LED);
 }
+
+//Toggle an LED
+void LED_toggle(int LED){
+  if(LED>7 || LED<0){
+    printf("Error: can\'t turn on unknown LED number %i\r\n",LED);
+    return;
+  }
+  P7OUT^=1<<LED;
+}
 #else
 
 void init_LED(void){
@@ -87,6 +96,27 @@ void LED_off(int LED){
     break;
     case 4:
       P2OUT&=~BIT0;
+    break;
+    default:
+      printf("Error: can\'t turn off unknown LED number %i\r\n",LED);
+    break;
+  }
+}
+
+//Toggle an LED
+void LED_toggle(int LED){
+  switch(LED){
+    case 1:
+      P4OUT^=BIT1;
+    break;
+    case 2:
+      P4OUT^=BIT0;
+    break;
+    case 3:
+      P2OUT^=BIT1;
+    break;
+    case 4:
+      P2OUT^=BIT0;
     break;
     default:
       printf("Error: can\'t turn off unknown LED number %i\r\n",LED);

@@ -10,6 +10,7 @@
 #include "output_type.h"
 #include "ACDSerr.h"
 #include "ACDS.h"
+#include "LED.h"
 
 //structures to track torquer status
 TQ_SET tq_stat;
@@ -600,6 +601,8 @@ int drive_torquers(const int* num,const int* dir){
    #endif
    //restore old priority
    ctl_task_set_priority(ctl_task_executing,p_old);
+   //toggle LED
+   FLIP_LED_toggle();
    //TODO: save feedback for ground analysis
    report_error(ERR_LEV_INFO,ACDS_ERR_SRC_TORQUERS,TQ_INFO_TQFB,((fb1<<8)|fb2));
    //printf("fb1 0x%02X\r\nfb2 0x%02X\r\n",fb1,fb2);
@@ -649,7 +652,7 @@ int drive_torquers(const int* num,const int* dir){
        //check if charged
        case 0x02:
         //check if torquer should have been flipped
-        if(num[i]!=0){
+        if(num[i]!=0){ 
            //error flipping torquer, set error flag
            tq_stat.elm[i].status|=err_mask[num[i]-1];
            //Cap not discharged, flip questionable
