@@ -353,103 +353,6 @@ int sensorStopCmd(char **argv,unsigned short argc){
   return 0;
 }
 
-//magnetomitor interface
-int magCmd(char **argv,unsigned short argc){
-  printf("TODO: write \"%s\" command\r\n",argv[0]);
-  return -1;
-}
-
-enum{CAL_LOAD,CAL_DUMP,CAL_WRITE,CAL_TST};
-  
-float magCal[4];
-float torqueCal[64];  
-
-//calibration data command
-/*int calCmd(char **argv,unsigned short argc){
-  int action;
-  if(argc!=1){
-    printf("Error : %s requires only one argument\r\n",argv[0]);
-    return -1;
-  }
-  if(!strcmp(argv[1],"load")){
-    action=CAL_LOAD;
-  }else if(!strcmp(argv[1],"dump")){
-    action=CAL_DUMP;
-  }else if(!strcmp(argv[1],"write")){
-    action=CAL_DUMP;
-  }else if(!strcmp(argv[1],"test")){
-    action=CAL_DUMP;
-  }else{
-    printf("Unknown action \"%s\"\r\n",argv[1]);
-    return -2;
-  }
-  return 0;
-}*/
-
-
-
-//int stackCmd(char **argv,unsigned short agrc);
-
-int calCmd(char **argv,unsigned short argc){
-  unsigned short time=32768,count=0;
-  unsigned char buff[BUS_I2C_HDR_LEN+3+BUS_I2C_CRC_LEN],*ptr;
-  int res;
-  unsigned int e;
-  VEC T={0,0,0};
-  extern int cal_stat;
-  //reset calibration state
-  cal_stat=0;
-  ACDS_mode=ACDS_CAL_MODE;
-  //reset torquers to initial status
-  resetTorqueStatus();
-
-  //set four times to get all needed torquer flips
-  setTorque(&T);
-  setTorque(&T);
-  setTorque(&T);
-  setTorque(&T);
-  //wait
-  ctl_timeout_wait(ctl_get_current_time()+2048);
-  //send sample command
-  ptr=BUS_cmd_init(buff,CMD_MAG_SAMPLE_CONFIG);
-  //set command
-  *ptr++=MAG_SAMPLE_START;
-  //set time MSB
-  *ptr++=time>>8;
-  //set time LSB
-  *ptr++=time;
-  //set count
-  *ptr++=count;
-  //send packet
-  res=BUS_cmd_tx(BUS_ADDR_LEDL,buff,4,0,BUS_I2C_SEND_FOREGROUND);
-  //check result
-  if(res<0){
-    printf("Error communicating with LEDL : %s\r\n",BUS_error_str(res));
-    //return error
-    return 1;
-  } 
-  //wait until calibration is complete before returning
-  e=ctl_events_wait(CTL_EVENT_WAIT_ANY_EVENTS_WITH_AUTO_CLEAR,&ACDS_evt,ADCS_EVT_CAL_COMPLETE,CTL_TIMEOUT_DELAY,2500000);
-  if(e!=ADCS_EVT_CAL_COMPLETE){
-    printf("Error : timeout\r\n");
-  }else{
-    printf("Calibration complete\r\n");
-  }
-  //setup for sending stop command
-  ptr=BUS_cmd_init(buff,CMD_MAG_SAMPLE_CONFIG);
-  //set command
-  *ptr++=MAG_SAMPLE_STOP;
-  //send packet
-  res=BUS_cmd_tx(BUS_ADDR_LEDL,buff,1,0,BUS_I2C_SEND_FOREGROUND);
-  //check result
-  if(res<0){
-    printf("Error stopping data collection : %s\r\n",BUS_error_str(res));
-    //return error
-    return 1;
-  }
-  return 0;
-}
-
 int clrErrCmd(char **argv,unsigned short argc){
   ERR_LED_off();
   return 0;
@@ -595,8 +498,6 @@ const CMD_SPEC cmd_tbl[]={{"help"," [command]\r\n\t""get a list of commands or h
                      {"srun","[time count]\r\n\t""tell LEDL to start taking sensor data.",sensorRunCmd},
                      {"sstop","\r\n\t""tell LEDL to stop taking sensor data.",sensorStopCmd},
                      {"gain","type [g1 g2 g3]\r\n\t""set gain of algorithm",gainCmd},
-                     {"mag","\r\n\t""Read From The magnetomitor",magCmd},
-                     {"cal","load|dump|write|test\r\n\t""do things with the magnetometer calibration",calCmd},
                      {"log","[level]\r\n\t""get/set log level",logCmd},
                      {"clrerr","\r\n\t""Clear error LED",clrErrCmd},
                      {"output","[output type]\r\n\tchange output between human and machine readable",outputTypeCmd},
