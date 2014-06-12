@@ -635,7 +635,7 @@ int unpackCmd(char **argv,unsigned short argc){
 const CMD_SPEC cmd_tbl[]={{"help"," [command]\r\n\t""get a list of commands or help on a spesific command.",helpCmd},
                      CTL_COMMANDS,ARC_COMMANDS,ERROR_COMMANDS,
                      #ifndef DEV_BUILD
-                     MMC_COMMANDS,
+                     MMC_COMMANDS,MMC_DREAD_COMMAND,
                      #endif
                      {"flip","[X Y Z]\r\n\t""Flip a torquer in each axis.",flipCmd},
                      {"setTorque"," Xtorque Ytorque Ztorque\r\n\tFlip torquers to set the torque in the X, Y and Z axis",setTorqueCmd},

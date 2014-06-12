@@ -48,6 +48,11 @@ int __putchar(int c){
   return async_TxChar(c);
 }
 
+//make printf and friends use async
+int __getchar(void){
+  return async_Getc();
+}
+
 int main(void){
   //spesifications for the terminal
   const TERM_SPEC uart_term={"ACDS Test Program ready",async_Getc};
