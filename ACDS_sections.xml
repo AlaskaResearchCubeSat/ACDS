@@ -1,0 +1,27 @@
+<!DOCTYPE Linker_Placement_File>
+<Root name="MSP430 Section Placement">
+  <MemorySegment name="RAM">
+    <ProgramSection load="Yes" start="0x0" name=".abs"/>
+    <ProgramSection name="IDATA0"/>
+    <ProgramSection name="UDATA0"/>
+    <ProgramSection name="THREAD"/>
+  </MemorySegment>
+  <MemorySegment name="INFO_A">
+    <ProgramSection load="Yes" name="INFO_A"/>
+  </MemorySegment>
+  <MemorySegment name="INFO_B">
+    <ProgramSection load="Yes" name="INFO_B"/>
+  </MemorySegment>
+  <MemorySegment name="INFO_C">
+    <ProgramSection load="Yes" name="INFO_C"/>
+  </MemorySegment>
+  <MemorySegment name="INFO_D">
+    <ProgramSection load="Yes" name="INFO_D"/>
+  </MemorySegment>
+  <MemorySegment name="FLASH">
+    <ProgramSection load="Yes" name="ISR"/>
+    <ProgramSection load="Yes" name="CONST"/>
+    <ProgramSection load="Yes" name="CODE"/>
+    <ProgramSection size="64" load="Yes" start="0xFFC0" name="INTVEC"/>
+  </MemorySegment>
+</Root>
