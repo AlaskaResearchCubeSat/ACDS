@@ -10,6 +10,7 @@
 #include <SDlib.h>
 #include <errno.h>
 #include <commandLib.h>
+#include <math.h>
 #include "torquers.h"
 #include "output_type.h"
 #include "SensorDataInterface.h"
@@ -478,6 +479,156 @@ int randomTorqueCmd(char **argv,unsigned short argc){
   print_torquer_status();
   return 0;
 }
+
+enum{COR_X_BASE=0,COR_Y_BASE=2,COR_Z_BASE=4,COR_PLUS_OFFSET=1,COR_MINUS_OFFSET=0};
+
+const char *(cor_axis_names[])={"X-","X+","Y-","Y+","Z-","Z+"};
+
+//corection point
+typedef union{
+  struct {
+    SCL a,b;
+  }c;
+  SCL elm[2];
+} CPOINT;
+
+typedef struct{
+    SCL scl[4];
+    CPOINT baseOS,osX[16],osY[16],osZ[16];
+} C_AXIS;
+
+
+int unpackCmd(char **argv,unsigned short argc){
+    unsigned long sector;
+    unsigned char *buffer=NULL;
+    C_AXIS *dest;
+    unsigned short check_c,check_s;
+    int i,resp,idx;
+    if(argc<1){
+        printf("Error: too few arguments\r\n");
+        return -1;
+    }
+    if(argc>1){
+        printf("Error: too many arguments\r\n");
+        return -2;
+    }
+    //read sector
+    if(1!=sscanf(argv[1],"%lu",&sector)){
+      //print error
+      printf("Error parsing sector \"%s\"\r\n",argv[1]);
+      return -3;
+    }
+    //get buffer, set a timeout of 2 secconds
+    buffer=BUS_get_buffer(CTL_TIMEOUT_DELAY,2048);
+    //check for error
+    if(buffer==NULL){
+        printf("Error : Timeout while waiting for buffer.\r\n");
+        return -1;
+    }
+    //read block
+    resp=mmcReadBlock(sector,(unsigned char*)buffer);
+    //check if block was read
+    if(resp){
+        printf("%s\r\n",SD_error_str(resp));
+        //free buffer
+        BUS_free_buffer();
+        //return
+        return resp;
+    }
+    //calculate check
+    for(i=0,check_c=0;i<510;i++){
+        check_c+=buffer[i];
+    }
+    //read check
+    check_s=buffer[510]|(((unsigned short)buffer[511])<<8);
+    //print out header
+    printf("%c%c%c%c%c%c\r\n",buffer[0],buffer[1],buffer[2],buffer[3],buffer[4],buffer[5]);
+    //check check
+    if(check_c!=check_s){
+        printf("Error: checksum failed. stored = %u calculated = %u\r\n",check_s,check_c);
+        BUS_free_buffer();
+        return 1;
+    }
+    //check header
+    if(buffer[0]!='C' || buffer[1]!='O' ||buffer[2]!='R' ||buffer[3]!=' '){
+        printf("Error: incorrect header\r\n");
+        BUS_free_buffer();
+        return 2;
+    }
+    switch(buffer[4]){
+        case 'X':
+            //X-axis
+            idx=COR_X_BASE;
+        break;
+        case 'Y':
+            //Y-axis
+            idx=COR_Y_BASE;
+        break;
+        case 'Z':
+            //Z-axis
+            idx=COR_Z_BASE;
+        break;
+        default:
+            printf("Error : unknown axis \'%c\'\r\n",buffer[4]);
+    }
+    switch(buffer[5]){
+        case '+':
+            //+ direction
+            idx+=COR_PLUS_OFFSET;
+        break;
+        case '-':
+            //- direction
+            idx+=COR_MINUS_OFFSET;
+        break;
+        default:
+            printf("Error : unknown direction \'%c\'\r\n",buffer[5]);
+    }
+    dest=(C_AXIS*)(buffer+512);
+    printf("Unpacking correction data for the %s axis\r\n",cor_axis_names[idx]);
+    //get correction values
+    dest->scl[0]=*((float*)(buffer+ 6));
+    dest->scl[1]=*((float*)(buffer+10));
+    dest->scl[2]=*((float*)(buffer+14));
+    dest->scl[3]=*((float*)(buffer+18));
+    dest->baseOS.c.a=*((float*)(buffer+22));
+    dest->baseOS.c.b=*((float*)(buffer+26));
+    //get X offsets
+    for(i=0;i<16;i++){
+        dest->osX[i].c.a=*((float*)(buffer+ 30+4*i));
+        dest->osX[i].c.b=*((float*)(buffer+222+4*i));
+    }
+    //get Y offsets
+    for(i=0;i<16;i++){
+        dest->osY[i].c.a=*((float*)(buffer+ 30+16*4+4*i));
+        dest->osY[i].c.b=*((float*)(buffer+222+16*4+4*i));
+    }
+    //get Z offsets
+    for(i=0;i<16;i++){
+        dest->osZ[i].c.a=*((float*)(buffer+ 30+16*4*2+4*i));
+        dest->osZ[i].c.b=*((float*)(buffer+222+16*4*2+4*i));
+    }
+    //TESTING : print out data for comparison
+    for(i=0;i<4;i++){
+        printf("scl[%i] = %E\r\n",i,dest->scl[i]);
+    }
+    printf("Base Offsets:\r\n%.2f %.2f\r\n",dest->baseOS.c.a,dest->baseOS.c.b);
+    printf("X offsets:\r\n");
+    for(i=0;i<16;i++){
+        printf("%.2f %.2f\r\n",dest->osX[i].c.a,dest->osX[i].c.b);
+    }
+    printf("Y offsets:\r\n");
+    for(i=0;i<16;i++){
+        printf("%.2f %.2f\r\n",dest->osY[i].c.a,dest->osY[i].c.b);
+    }
+    printf("Z offsets:\r\n");
+    for(i=0;i<16;i++){
+        printf("%.2f %.2f\r\n",dest->osZ[i].c.a,dest->osZ[i].c.b);
+    }
+    printf("Correction size = %u\r\n",sizeof(C_AXIS));
+    //free buffer
+    BUS_free_buffer();
+    return 0;
+}
   
 
 //table of commands with help
@@ -505,5 +656,6 @@ const CMD_SPEC cmd_tbl[]={{"help"," [command]\r\n\t""get a list of commands or h
                      {"shval3","year alt lat long\r\n\t""IGRF conversion",shval3Cmd},
                      {"status","\r\n\t""Print status information",statusCmd},
                      {"rndt","\r\n\t""Set torquers to random torque",randomTorqueCmd},
+                     {"unpack","sector""\r\n\t""Unpack calibration/correction data stored in a given sector",unpackCmd},
                      //end of list
                      {NULL,NULL,NULL}};
