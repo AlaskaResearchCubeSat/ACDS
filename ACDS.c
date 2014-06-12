@@ -12,11 +12,22 @@
 #include "algorithm.h"
 #include "torquers.h"
 #include "ACDSerr.h"
+#include <SDlib.h>
 
 ACDS_STAT status;
 
 //spesifications for the terminal
 const TERM_SPEC async_term={"ACDS Test Program ready",async_Getc};
+    
+typedef struct{
+        CTL_MUTEX_t lock;
+        int action;
+        union {
+            unsigned long sector;
+        } parm;
+    }SPI_DATA_ACTION;
+    
+SPI_DATA_ACTION spi_action;
 
 void sub_events(void *p) __toplevel{
   unsigned int e,len;
@@ -53,14 +64,49 @@ void sub_events(void *p) __toplevel{
     }
     if(e&SUB_EV_SPI_DAT){
       puts("SPI data recived:\r\n");
+      if(!ctl_mutex_lock(&spi_action.lock,CTL_TIMEOUT_DELAY,2048)){
+          puts("\tUnable to get SPI data action\r\n");
+          //free buffer
+          BUS_free_buffer_from_event();
+          continue;
+      }
       //get length
       len=arcBus_stat.spi_stat.len;
-      //print out data
-      for(i=0;i<len;i++){
-        //printf("0x%02X ",rx[i]);
-        printf("%03i ",arcBus_stat.spi_stat.rx[i]);
-      }
-      printf("\r\n");
+      switch(spi_action.action){
+          case SPI_DAT_ACTION_INVALID:
+            puts("\tInvalid SPI data action\r\n");
+          break;
+          case SPI_DAT_ACTION_SD_WRITE:
+            //check packet length
+            if(len%512!=0){
+                printf("\tError : SD packet is not a whole number of sectors\r\n");
+                break;
+            }
+            //calculate number of sectors
+            len=len/512;
+            if(len==1){
+                resp=mmcWriteBlock(spi_action.parm.sector,(unsigned char*)arcBus_stat.spi_stat.rx);
+            }else{
+                resp=mmcWriteMultiBlock(spi_action.parm.sector,(unsigned char*)arcBus_stat.spi_stat.rx,len);
+            }
+            if(resp){
+                printf("Unable to write SPI data to SD card : %s\r\n",SD_error_str(resp));
+            }
+          break;
+          default:
+            printf("\tUnknown SPI data action %i\r\n",spi_action.action);
+            //print out data
+            for(i=0;i<len;i++){
+                //printf("0x%02X ",rx[i]);
+                printf("%03i ",arcBus_stat.spi_stat.rx[i]);
+            }
+            printf("\r\n");
+          break;
+        }
+      //clear action
+      spi_action.action=SPI_DAT_ACTION_INVALID;
+      //unlock action
+      ctl_mutex_unlock(&spi_action.lock);
       //free buffer
       BUS_free_buffer_from_event();
     }
@@ -145,6 +191,7 @@ CTL_EVENT_SET_t ACDS_evt;
 //handle ACDS specific commands
 int SUB_parseCmd(unsigned char src,unsigned char cmd,unsigned char *dat,unsigned short len){
   int i;
+  unsigned long sector;
   switch(cmd){
     case CMD_MAG_DATA:
       //check packet length
@@ -156,6 +203,28 @@ int SUB_parseCmd(unsigned char src,unsigned char cmd,unsigned char *dat,unsigned
       memcpy(magData,dat,sizeof(magData));
       //sensor data recieved set event
       ctl_events_set_clear(&ACDS_evt,ACDS_EVT_DAT_REC,0);
+    return RET_SUCCESS;
+    case CMD_SPI_DATA_ACTION:
+        if(len==0){
+            return ERR_PK_LEN;
+        }
+        switch(dat[0]){
+            case SPI_DAT_ACTION_SD_WRITE:
+                if(len!=5){
+                    return ERR_PK_LEN;
+                }
+                sector=((unsigned long)dat[1]<<24)|((unsigned long)dat[2]<<16)|((unsigned long)dat[3]<<8)|((unsigned long)dat[4]);
+                //get lock on action
+                if(!ctl_mutex_lock(&spi_action.lock,CTL_TIMEOUT_DELAY,10)){
+                    return ERR_SPI_BUSY;
+                }
+                spi_action.action=dat[0];
+                spi_action.parm.sector=sector;
+                ctl_mutex_unlock(&spi_action.lock);
+            break;
+            default:
+                return ERR_UNKNOWN_CMD;
+        }
     return RET_SUCCESS;
   }
   //Return Error
