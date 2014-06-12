@@ -42,6 +42,9 @@
     <folder Name="System Files">
       <file file_name="$(StudioDir)/ctl/source/threads.js"/>
     </folder>
+    <folder Name="Section Placement" file_name="">
+      <file file_name="ACDS_sections.xml"/>
+    </folder>
   </project>
   <configuration Name="MSP430 Debug" inherited_configurations="MSP430;Debug" linker_additional_files="" linker_output_format="hex"/>
   <configuration Name="MSP430" Platform="MSP430" hidden="Yes"/>
