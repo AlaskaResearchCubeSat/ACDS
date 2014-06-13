@@ -19,6 +19,7 @@
 #include "ACDS.h"
 #include "LED.h"
 #include "IGRF/igrf.h"
+#include "corrections.h"
 
 
 //define printf formats
@@ -484,20 +485,6 @@ enum{COR_X_BASE=0,COR_Y_BASE=2,COR_Z_BASE=4,COR_PLUS_OFFSET=1,COR_MINUS_OFFSET=0
 
 const char *(cor_axis_names[])={"X-","X+","Y-","Y+","Z-","Z+"};
 
-//corection point
-typedef union{
-  struct {
-    SCL a,b;
-  }c;
-  SCL elm[2];
-} CPOINT;
-
-typedef struct{
-    SCL scl[4];
-    CPOINT baseOS,osX[16],osY[16],osZ[16];
-} C_AXIS;
-
-
 int unpackCmd(char **argv,unsigned short argc){
     unsigned long sector;
     unsigned char *buffer=NULL;
@@ -624,7 +611,8 @@ int unpackCmd(char **argv,unsigned short argc){
     for(i=0;i<16;i++){
         printf("%.2f %.2f\r\n",dest->osZ[i].c.a,dest->osZ[i].c.b);
     }
-    printf("Correction size = %u\r\n",sizeof(C_AXIS));
+    printf("Writing Corrections data\r\n");
+    write_correction_dat(idx,dest);
     //free buffer
     BUS_free_buffer();
     return 0;

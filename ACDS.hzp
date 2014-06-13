@@ -38,6 +38,8 @@
       </folder>
       <file file_name="quat.h"/>
       <file file_name="quat.c"/>
+      <file file_name="corrections.c"/>
+      <file file_name="corrections.h"/>
     </folder>
     <folder Name="System Files">
       <file file_name="$(StudioDir)/ctl/source/threads.js"/>
