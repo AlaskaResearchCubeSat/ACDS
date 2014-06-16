@@ -489,6 +489,7 @@ int unpackCmd(char **argv,unsigned short argc){
     unsigned long sector;
     unsigned char *buffer=NULL;
     C_AXIS *dest;
+    int ret;
     unsigned short check_c,check_s;
     int i,resp,idx;
     if(argc<1){
@@ -612,7 +613,73 @@ int unpackCmd(char **argv,unsigned short argc){
         printf("%.2f %.2f\r\n",dest->osZ[i].c.a,dest->osZ[i].c.b);
     }
     printf("Writing Corrections data\r\n");
-    write_correction_dat(idx,dest);
+    ret=write_correction_dat(idx,dest);
+    if(ret==RET_SUCCESS){
+        printf("Correction Data Written\r\n");
+    }else{
+        printf("Error writing correction data %i returned\r\n",ret);
+    }
+    //free buffer
+    BUS_free_buffer();
+    return 0;
+}
+
+int corchkCmd(char **argv,unsigned short argc){
+    int i,ret;
+    for(i=0;i<6;i++){
+        ret=check_cor(i);
+        if(ret==0){
+            printf("%s correction data present\r\n",cor_axis_names[i]);
+        }else{
+            printf("%s corrections data is invalid\r\n",cor_axis_names[i]);
+        }
+    }
+    return 0;
+}
+    
+int dummycorCmd(char **argv,unsigned short argc){
+    unsigned long sector;
+    unsigned char *buffer=NULL;
+    C_AXIS *dest;
+    int ret;
+    unsigned short check_c,check_s;
+    int i,resp,idx;
+    if(argc<1){
+        printf("Error: too few arguments\r\n");
+        return -1;
+    }
+    if(argc>1){
+        printf("Error: too many arguments\r\n");
+        return -2;
+    }
+    //read sector
+    if(1!=sscanf(argv[1],"%u",&idx)){
+      //print error
+      printf("Error parsing index \"%s\"\r\n",argv[1]);
+      return -3;
+    }
+    if(idx>=6){
+      printf("Error : index too large\r\n");
+      return -5;
+    }
+    //get buffer, set a timeout of 2 secconds
+    buffer=BUS_get_buffer(CTL_TIMEOUT_DELAY,2048);
+    //check for error
+    if(buffer==NULL){
+        printf("Error : Timeout while waiting for buffer.\r\n");
+        return -1;
+    }
+    dest=(C_AXIS*)(buffer+512);
+    //clear data
+    memset(dest,0,sizeof(C_AXIS));
+    
+    printf("Writing dummy Corrections data for %s axis\r\n",cor_axis_names[idx]);
+    ret=write_correction_dat(idx,dest);
+    if(ret==RET_SUCCESS){
+        printf("Correction Data Written\r\n");
+    }else{
+        printf("Error writing correction data %i returned\r\n",ret);
+    }
     //free buffer
     BUS_free_buffer();
     return 0;
@@ -645,5 +712,7 @@ const CMD_SPEC cmd_tbl[]={{"help"," [command]\r\n\t""get a list of commands or h
                      {"status","\r\n\t""Print status information",statusCmd},
                      {"rndt","\r\n\t""Set torquers to random torque",randomTorqueCmd},
                      {"unpack","sector""\r\n\t""Unpack calibration/correction data stored in a given sector",unpackCmd},
+                     {"corchk","\r\n\t""Check correction data for all axis\r\n",corchkCmd},
+                     {"dcor","idx""\r\n\t""write corrections data for the given index",dummycorCmd},
                      //end of list
                      {NULL,NULL,NULL}};
