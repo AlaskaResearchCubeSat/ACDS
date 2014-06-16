@@ -22,7 +22,7 @@
     <ProgramSection load="Yes" name="ISR"/>
     <ProgramSection load="Yes" name="CONST"/>
     <ProgramSection load="Yes" name="CODE"/>
-    <ProgramSection size="3072" load="No" start="0xF3C0" name="COR"/>
+    <ProgramSection size="3072" load="No" start="0xF200" name="COR"/>
     <ProgramSection size="64" load="Yes" start="0xFFC0" name="INTVEC"/>
   </MemorySegment>
 </Root>
