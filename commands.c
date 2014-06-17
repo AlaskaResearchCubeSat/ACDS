@@ -638,7 +638,6 @@ int corchkCmd(char **argv,unsigned short argc){
 }
     
 int dummycorCmd(char **argv,unsigned short argc){
-    unsigned long sector;
     unsigned char *buffer=NULL;
     C_AXIS *dest;
     int ret;
@@ -652,12 +651,20 @@ int dummycorCmd(char **argv,unsigned short argc){
         printf("Error: too many arguments\r\n");
         return -2;
     }
-    //read sector
-    if(1!=sscanf(argv[1],"%u",&idx)){
-      //print error
-      printf("Error parsing index \"%s\"\r\n",argv[1]);
-      return -3;
+    for(i=0;i<6;i++){
+        if(!strcmp(argv[1],cor_axis_names[i])){
+            idx=i;
+            break;
+        }
     }
+    if(idx==-1){
+        if(1!=sscanf(argv[1],"%u",&idx)){
+            //print error
+            printf("Error parsing index \"%s\"\r\n",argv[1]);
+            return -3;
+        }
+    }
+    //sanity check index
     if(idx>=6){
       printf("Error : index too large\r\n");
       return -5;
@@ -670,7 +677,7 @@ int dummycorCmd(char **argv,unsigned short argc){
         return -1;
     }
     dest=(C_AXIS*)(buffer+512);
-    //clear data
+    //zero all data
     memset(dest,0,sizeof(C_AXIS));
     
     printf("Writing dummy Corrections data for %s axis\r\n",cor_axis_names[idx]);
