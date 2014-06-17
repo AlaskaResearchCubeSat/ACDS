@@ -101,7 +101,7 @@ int check_cor(int idx){
 int applyCor(CPOINT *meas,int idx){
     const C_AXIS *cor=&correction_data[idx].dat.cor;
     SCL a,b;
-    int xidx,yidx,zidx;
+    int xidx,yidx,zidx,rt;
     //get idx for all axis
     xidx=stat2Idx(X_AXIS);
     yidx=stat2Idx(Y_AXIS);
@@ -115,9 +115,14 @@ int applyCor(CPOINT *meas,int idx){
         a+=cor->osX[xidx].c.a+cor->osY[yidx].c.a+cor->osZ[zidx].c.a;
         b+=cor->osX[xidx].c.b+cor->osY[yidx].c.b+cor->osZ[zidx].c.b;
         //success!
-        return RET_SUCCESS;
+        rt=RET_SUCCESS;
     }else{
         //error with correction, only base offsets used
-        return TQ_ERROR_INVALID_STATUS;
+        rt=TQ_ERROR_INVALID_STATUS;
     } 
+    //store measurement
+    meas->c.a=a;
+    meas->c.b=b;
+    //return result
+    return rt;
 }
