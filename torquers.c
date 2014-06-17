@@ -32,6 +32,17 @@ short checkTorqueInit(void){
   return !(tq_stat.c.x.status&(T_STAT_UNINIT_1|T_STAT_UNINIT_2|T_STAT_UNINIT_3|T_STAT_UNINIT_4) || tq_stat.c.y.status&(T_STAT_UNINIT_1|T_STAT_UNINIT_2|T_STAT_UNINIT_3|T_STAT_UNINIT_4) || tq_stat.c.z.status&(T_STAT_UNINIT_1|T_STAT_UNINIT_2|T_STAT_UNINIT_3|T_STAT_UNINIT_4));
 }
 
+//give correction value index based on status of a given index
+int stat2Idx(int idx){
+    int stat=tq_stat.elm[idx].status;
+    //check for uninitialized torquers
+    if(stat&T_STAT_INIT_MASK){
+        return -1;
+    }
+    //return status with only torquer bit present
+    return stat&T_STAT_TQ_MASK;
+}
+
 //generate beacon status info
 void tqstat2stat(unsigned char *dest){
   int i;

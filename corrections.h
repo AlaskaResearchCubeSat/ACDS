@@ -37,6 +37,8 @@
     short write_correction_dat(int idx,const C_AXIS *dat);
     //check if corrections data is present
     int check_cor(int idx);
+    //apply corrections to measurement
+    int applyCor(CPOINT *meas,int idx);
 
 #endif
     

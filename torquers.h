@@ -130,4 +130,6 @@ void resetTorqueStatus(void);
 unsigned char get_torquer_fb(void);
 void tqstat2stat(unsigned char *dest);
 
+int stat2Idx(int idx);
+
 #endif
