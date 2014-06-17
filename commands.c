@@ -679,6 +679,11 @@ int dummycorCmd(char **argv,unsigned short argc){
     dest=(C_AXIS*)(buffer+512);
     //zero all data
     memset(dest,0,sizeof(C_AXIS));
+    //set scale factors to datasheet nominal
+    dest->scl[0]=dest->scl[3]=1/(2*65535*1e-3*95.3);
+    //set cross axis factors to +/-1%
+    dest->scl[1]=-0.01*dest->scl[0];
+    dest->scl[2]=0.01*dest->scl[3];
     
     printf("Writing dummy Corrections data for %s axis\r\n",cor_axis_names[idx]);
     ret=write_correction_dat(idx,dest);
