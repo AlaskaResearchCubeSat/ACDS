@@ -747,6 +747,59 @@ int dumpcorCmd(char **argv,unsigned short argc){
     //DONE!
     return 0;
 }
+
+int ctstCmd(char **argv,unsigned short argc){
+    CPOINT meas;
+    int idx=-1,i;
+    char *end;
+    if(argc!=3){
+        printf("Error : %s requires 3 arguments but %i given\r\n",argv[0],argc);
+        return -1;
+    }
+    for(i=0;i<6;i++){
+        if(!strcmp(argv[1],cor_axis_names[i])){
+            idx=i;
+            break;
+        }
+    }
+    if(idx==-1){
+        if(1!=sscanf(argv[1],"%u",&idx)){
+            //print error
+            printf("Error parsing axis \"%s\"\r\n",argv[1]);
+            return -3;
+        }
+    }
+    //parse first value
+    meas.c.a=strtof(argv[2],&end);
+    if(end==argv[2]){
+        printf("Error : could not parse \"%s\"\r\n",argv[2]);
+        return -4;
+    }
+    if(*end!=0){
+        printf("Error : unknown suffix \"%s\" found while paresing \"%s\"\r\n",end,argv[2]);
+        return -5;
+    }
+    //parse second value
+    meas.c.b=strtof(argv[3],&end);
+    if(end==argv[3]){
+        printf("Error : could not parse \"%s\"\r\n",argv[3]);
+        return -4;
+    }
+    if(*end!=0){
+        printf("Error : unknown suffix \"%s\" found while paresing \"%s\"\r\n",end,argv[3]);
+        return -5;
+    }
+    printf("Correcting measurements for the %s axis:\r\n%f %f\r\n",cor_axis_names[idx],meas.c.a,meas.c.b);
+    if(RET_SUCCESS!=applyCor(&meas,idx)){
+        printf("warning : invalid torquer status, calibration incomplete\r\n");
+    }
+    //check valididity of the correction
+    if(RET_SUCCESS!=check_cor(idx)){
+        printf("warning : invalid correction for %s axis\r\n",cor_axis_names[idx]);
+    }
+    printf("Corrected measurements for the %s axis:\r\n%f %f\r\n",cor_axis_names[idx],meas.c.a,meas.c.b);
+    return 0;
+}
   
 
 //table of commands with help
@@ -778,5 +831,6 @@ const CMD_SPEC cmd_tbl[]={{"help"," [command]\r\n\t""get a list of commands or h
                      {"corchk","\r\n\t""Check correction data for all axis\r\n",corchkCmd},
                      {"dummycor","idx""\r\n\t""write corrections data for the given index",dummycorCmd},
                      {"dcor","idx""\r\n\t""write corrections data for the given index",dumpcorCmd},
+                     {"ctst","axis aval bval""\r\n\t""apply corrections to a set of measurments",ctstCmd},
                      //end of list
                      {NULL,NULL,NULL}};
