@@ -595,23 +595,6 @@ int unpackCmd(char **argv,unsigned short argc){
         dest->osZ[i].c.a=*((float*)(buffer+ 30+16*4*2+4*i));
         dest->osZ[i].c.b=*((float*)(buffer+222+16*4*2+4*i));
     }
-    //TESTING : print out data for comparison
-    for(i=0;i<4;i++){
-        printf("scl[%i] = %E\r\n",i,dest->scl[i]);
-    }
-    printf("Base Offsets:\r\n%.2f %.2f\r\n",dest->baseOS.c.a,dest->baseOS.c.b);
-    printf("X offsets:\r\n");
-    for(i=0;i<16;i++){
-        printf("%.2f %.2f\r\n",dest->osX[i].c.a,dest->osX[i].c.b);
-    }
-    printf("Y offsets:\r\n");
-    for(i=0;i<16;i++){
-        printf("%.2f %.2f\r\n",dest->osY[i].c.a,dest->osY[i].c.b);
-    }
-    printf("Z offsets:\r\n");
-    for(i=0;i<16;i++){
-        printf("%.2f %.2f\r\n",dest->osZ[i].c.a,dest->osZ[i].c.b);
-    }
     printf("Writing Corrections data\r\n");
     ret=write_correction_dat(idx,dest);
     if(ret==RET_SUCCESS){
@@ -696,6 +679,74 @@ int dummycorCmd(char **argv,unsigned short argc){
     BUS_free_buffer();
     return 0;
 }
+
+int dumpcorCmd(char **argv,unsigned short argc){
+    const C_AXIS *src;
+    int i,idx;
+    //check for too few arguments
+    if(argc<1){
+        printf("Error: too few arguments\r\n");
+        return -1;
+    }
+    //check for too many arguments
+    if(argc>1){
+        printf("Error: too many arguments\r\n");
+        return -2;
+    }
+    //look for symbolic axis name
+    for(i=0;i<6;i++){
+        if(!strcmp(argv[1],cor_axis_names[i])){
+            idx=i;
+            break;
+        }
+    }
+    //check if axis name found
+    if(idx==-1){
+        //parse numerical axis name
+        if(1!=sscanf(argv[1],"%u",&idx)){
+            //print error
+            printf("Error parsing index \"%s\"\r\n",argv[1]);
+            return -3;
+        }
+    }
+    //sanity check index
+    if(idx>=6){
+      printf("Error : index too large\r\n");
+      return -5;
+    }
+    //check correction validity
+    if(RET_SUCCESS!=check_cor(idx)){
+        printf("%s corrections data is invalid\r\n",cor_axis_names[idx]);
+    }
+    //get pointer to source data
+    src=&correction_data[idx].dat.cor;
+    // print out scale factors
+    for(i=0;i<4;i++){
+        printf("scl[%i] = %E\r\n",i,src->scl[i]);
+    }
+    //print base offsets
+    printf("Base Offsets:\r\n%.2f %.2f\r\n",src->baseOS.c.a,src->baseOS.c.b);
+    
+    printf("X offsets:\r\n");
+    //print offsets for X torquers
+    for(i=0;i<16;i++){
+        printf("%.2f %.2f\r\n",src->osX[i].c.a,src->osX[i].c.b);
+    }
+    
+    printf("Y offsets:\r\n");
+    //print offsets for Z torquers
+    for(i=0;i<16;i++){
+        printf("%.2f %.2f\r\n",src->osY[i].c.a,src->osY[i].c.b);
+    }
+    
+    printf("Z offsets:\r\n");
+    //print offsets for Z torquers
+    for(i=0;i<16;i++){
+        printf("%.2f %.2f\r\n",src->osZ[i].c.a,src->osZ[i].c.b);
+    }
+    //DONE!
+    return 0;
+}
   
 
 //table of commands with help
@@ -725,6 +776,7 @@ const CMD_SPEC cmd_tbl[]={{"help"," [command]\r\n\t""get a list of commands or h
                      {"rndt","\r\n\t""Set torquers to random torque",randomTorqueCmd},
                      {"unpack","sector""\r\n\t""Unpack calibration/correction data stored in a given sector",unpackCmd},
                      {"corchk","\r\n\t""Check correction data for all axis\r\n",corchkCmd},
-                     {"dcor","idx""\r\n\t""write corrections data for the given index",dummycorCmd},
+                     {"dummycor","idx""\r\n\t""write corrections data for the given index",dummycorCmd},
+                     {"dcor","idx""\r\n\t""write corrections data for the given index",dumpcorCmd},
                      //end of list
                      {NULL,NULL,NULL}};
