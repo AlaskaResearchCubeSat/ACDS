@@ -748,21 +748,26 @@ int dumpcorCmd(char **argv,unsigned short argc){
     return 0;
 }
 
+//correction test command given hypothetical mag values it 
 int ctstCmd(char **argv,unsigned short argc){
     CPOINT meas;
     int idx=-1,i;
     char *end;
+    //check number of arguments
     if(argc!=3){
         printf("Error : %s requires 3 arguments but %i given\r\n",argv[0],argc);
         return -1;
     }
+    //figure out which axis is being usesd
     for(i=0;i<6;i++){
         if(!strcmp(argv[1],cor_axis_names[i])){
             idx=i;
             break;
         }
     }
+    //check if symbolic name was found
     if(idx==-1){
+        //read numeric name
         if(1!=sscanf(argv[1],"%u",&idx)){
             //print error
             printf("Error parsing axis \"%s\"\r\n",argv[1]);
@@ -789,14 +794,19 @@ int ctstCmd(char **argv,unsigned short argc){
         printf("Error : unknown suffix \"%s\" found while paresing \"%s\"\r\n",end,argv[3]);
         return -5;
     }
+    //print values and axis
     printf("Correcting measurements for the %s axis:\r\n%f %f\r\n",cor_axis_names[idx],meas.c.a,meas.c.b);
+    //apply correction and check if full correction was applied
     if(RET_SUCCESS!=applyCor(&meas,idx)){
+        //print warning
         printf("warning : invalid torquer status, calibration incomplete\r\n");
     }
     //check valididity of the correction
     if(RET_SUCCESS!=check_cor(idx)){
+        //print warning
         printf("warning : invalid correction for %s axis\r\n",cor_axis_names[idx]);
     }
+    //print measurments
     printf("Corrected measurements for the %s axis:\r\n%f %f\r\n",cor_axis_names[idx],meas.c.a,meas.c.b);
     return 0;
 }
