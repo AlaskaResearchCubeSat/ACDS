@@ -8,6 +8,14 @@
     //return values for write_correction_dat
     enum{WR_COR_ERROR_WRITE_ERROR=-1,WR_COR_ERROR_CRC_MSIMATCH=-2,COR_CHK_ERROR_MAGIC=-3,COR_CHK_ERROR_CRC=-4,WR_COR_ERROR_ERASE_FAIL=-5};
     
+    //magnetometer point
+    typedef union{
+      struct {
+        short a,b;
+      }c;
+      short elm[2];
+    } MAG_POINT;
+    
     //corection point
     typedef union{
       struct {
@@ -15,6 +23,11 @@
       }c;
       SCL elm[2];
     } CPOINT;
+    
+    typedef struct{
+        unsigned short flags;
+        MAG_POINT meas[6];
+    }MAG_DAT;
     
     //corrections structure
     typedef struct{
@@ -38,7 +51,7 @@
     //check if corrections data is present
     int check_cor(int idx);
     //apply corrections to measurement
-    int applyCor(CPOINT *meas,int idx);
+    int applyCor(CPOINT *dest,const MAG_POINT *src,int idx);
 
 #endif
     

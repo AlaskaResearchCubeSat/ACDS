@@ -751,6 +751,7 @@ int dumpcorCmd(char **argv,unsigned short argc){
 //correction test command given hypothetical mag values it 
 int ctstCmd(char **argv,unsigned short argc){
     CPOINT meas;
+    MAG_POINT mag;
     int idx=-1,i;
     char *end;
     //check number of arguments
@@ -775,7 +776,7 @@ int ctstCmd(char **argv,unsigned short argc){
         }
     }
     //parse first value
-    meas.c.a=strtof(argv[2],&end);
+    mag.c.a=strtof(argv[2],&end);
     if(end==argv[2]){
         printf("Error : could not parse \"%s\"\r\n",argv[2]);
         return -4;
@@ -785,7 +786,7 @@ int ctstCmd(char **argv,unsigned short argc){
         return -5;
     }
     //parse second value
-    meas.c.b=strtof(argv[3],&end);
+    mag.c.b=strtof(argv[3],&end);
     if(end==argv[3]){
         printf("Error : could not parse \"%s\"\r\n",argv[3]);
         return -4;
@@ -795,9 +796,9 @@ int ctstCmd(char **argv,unsigned short argc){
         return -5;
     }
     //print values and axis
-    printf("Correcting measurements for the %s axis:\r\n%f %f\r\n",cor_axis_names[idx],meas.c.a,meas.c.b);
+    printf("Correcting measurements for the %s axis:\r\n%f %f\r\n",cor_axis_names[idx],mag.c.a,mag.c.b);
     //apply correction and check if full correction was applied
-    if(RET_SUCCESS!=applyCor(&meas,idx)){
+    if(RET_SUCCESS!=applyCor(&meas,&mag,idx)){
         //print warning
         printf("warning : invalid torquer status, calibration incomplete\r\n");
     }

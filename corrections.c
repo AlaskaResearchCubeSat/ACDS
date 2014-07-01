@@ -98,7 +98,7 @@ int check_cor(int idx){
     return RET_SUCCESS;
 }
 
-int applyCor(CPOINT *meas,int idx){
+int applyCor(CPOINT *dest,const MAG_POINT *src,int idx){
     const C_AXIS *cor=&correction_data[idx].dat.cor;
     SCL a,b;
     int xidx,yidx,zidx,rt;
@@ -107,8 +107,8 @@ int applyCor(CPOINT *meas,int idx){
     yidx=stat2Idx(Y_AXIS);
     zidx=stat2Idx(Z_AXIS);
     //compute base measurements
-    a=cor->scl[0]*meas->c.a+cor->scl[1]*meas->c.b+cor->baseOS.c.a;
-    b=cor->scl[2]*meas->c.a+cor->scl[3]*meas->c.b+cor->baseOS.c.b;
+    a=cor->scl[0]*src->c.a+cor->scl[1]*src->c.b+cor->baseOS.c.a;
+    b=cor->scl[2]*src->c.a+cor->scl[3]*src->c.b+cor->baseOS.c.b;
     //check for valid index
     if(xidx>=0 && yidx>=0 && zidx>=0){
         //compute first measurements
@@ -121,8 +121,8 @@ int applyCor(CPOINT *meas,int idx){
         rt=TQ_ERROR_INVALID_STATUS;
     } 
     //store measurement
-    meas->c.a=a;
-    meas->c.b=b;
+    dest->c.a=a;
+    dest->c.b=b;
     //return result
     return rt;
 }
