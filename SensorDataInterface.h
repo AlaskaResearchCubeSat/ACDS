@@ -6,7 +6,7 @@
   //TODO: set this better
   enum{CMD_MAG_DATA=20,CMD_MAG_SAMPLE_CONFIG};
   
-  enum{MAG_SAMPLE_START,MAG_SAMPLE_STOP};
+  enum{MAG_SAMPLE_START,MAG_SAMPLE_STOP,MAG_SINGLE_SAMPLE};
     
 #endif
       

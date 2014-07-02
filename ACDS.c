@@ -220,7 +220,7 @@ int ACDS_mode=ACDS_HOLD_MODE;
 
 void ACDS_events(void *p) __toplevel{
   unsigned int e;
-  int i;
+  int i,xnum,ynum,znum;
   const VEC zero={0,0,0};
   VEC Flux,mag;
   CPOINT pt;
@@ -239,12 +239,67 @@ void ACDS_events(void *p) __toplevel{
     e=ctl_events_wait(CTL_EVENT_WAIT_ANY_EVENTS_WITH_AUTO_CLEAR,&ACDS_evt,ACDS_EVT_ALL,CTL_TIMEOUT_NONE,0);
     //magnetometer data event
     if(e&ACDS_EVT_DAT_REC){
+      //clear flux
+      Flux.c.x=Flux.c.y=Flux.c.z=0;
+      //clear axes sample number
+      xnum=ynum=znum=0;
       //apply correction
-      applyCor(&pt,&magData.meas[0],1);
-      //calculate flux Vector
-      Flux.c.x=pt.c.a;
-      Flux.c.y=pt.c.b;
-      Flux.c.z=0;
+      for(i=0;i<6;i++){
+          if(magData.flags&(1<<(i*2)) && magData.flags&(1<<(i*2+1))){
+              //apply correction
+              applyCor(&pt,&magData.meas[i],i);
+              switch(i){
+                  //X- axis
+                  case 0:
+                    Flux.c.y-=pt.c.a;
+                    ynum++;
+                    Flux.c.z-=pt.c.b;
+                    znum++;
+                  break;
+                  //X+ axis
+                  case 1:
+                    Flux.c.y+=pt.c.a;
+                    ynum++;
+                    Flux.c.z-=pt.c.b;
+                    znum++;
+                  break;
+                  //Y- axis
+                  case 2:
+                    Flux.c.x+=pt.c.a;
+                    xnum++;
+                    Flux.c.z-=pt.c.b;
+                    znum++;
+                  break;
+                  //Y+ axis
+                  case 3:
+                    Flux.c.x-=pt.c.a;
+                    xnum++;
+                    Flux.c.z-=pt.c.b;
+                    znum++;
+                  break;
+                  //Z- axis
+                  case 4:
+                    //TODO: double check these axes
+                    Flux.c.x-=pt.c.a;
+                    xnum++;
+                    Flux.c.y+=pt.c.b;
+                    ynum++;
+                  break;
+                  //Z+ axis
+                  case 5:
+                    //TODO: double check these axies
+                    Flux.c.x-=pt.c.a;
+                    xnum++;
+                    Flux.c.y+=pt.c.b;
+                    ynum++;
+                  break;
+              }
+          }
+      }
+      //calculate average
+      Flux.c.x/=xnum;
+      Flux.c.y/=ynum;
+      Flux.c.z/=znum;
       //set flux in status packet
       status.mag[0]=32767/2*Flux.elm[0];
       status.mag[1]=32767/2*Flux.elm[1];
@@ -267,13 +322,15 @@ void ACDS_events(void *p) __toplevel{
             for(i=0;i<6;i++){
                 if(magData.flags&(1<<(i*2)) && magData.flags&(1<<(i*2+1))){
                     //apply correction
-                    applyCor(&pt,&magData.meas[i],1);
+                    applyCor(&pt,&magData.meas[i],i);
                     printf("%i : %f %f\r\n",i,pt.c.a,pt.c.b);
                 }else{
                     //print error
                     printf("%i : ### ###\r\n",i);
                 }
             }
+            printf("Fux = %f %f %f\r\n",Flux.c.x,Flux.c.y,Flux.c.z);
+            ctl_events_set_clear(&ACDS_evt,ADCS_EVD_COMMAND_SENSOR_READ,0);
         break;
                 
       }

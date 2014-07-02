@@ -811,6 +811,80 @@ int ctstCmd(char **argv,unsigned short argc){
     printf("Corrected measurements for the %s axis:\r\n%f %f\r\n",cor_axis_names[idx],meas.c.a,meas.c.b);
     return 0;
 }
+
+int magCmd(char **argv,unsigned short argc){
+    int single=0;
+    unsigned short time=32768,count=0;
+    int i,res;
+    CTL_EVENT_SET_t e;
+    unsigned char buff[BUS_I2C_HDR_LEN+3+BUS_I2C_CRC_LEN],*ptr;
+    //parse arguments
+    for(i=1;i<=argc;i++){
+        if(!strcmp("single",argv[i])){
+            single=1;
+        }else{
+            printf("Error Unknown argument \'%s\'.\r\n",argv[i]);
+            return -1;
+        }
+    }
+    //set ACDS mode
+    ACDS_mode=ACDS_COMMAND_MODE;
+    //setup command
+    ptr=BUS_cmd_init(buff,CMD_MAG_SAMPLE_CONFIG);
+    //check if reading a single sample
+    if(single){
+        //set command
+        *ptr++=MAG_SINGLE_SAMPLE;
+        //send packet
+        res=BUS_cmd_tx(BUS_ADDR_LEDL,buff,1,0,BUS_I2C_SEND_FOREGROUND);
+    }else{
+        //set command
+        *ptr++=MAG_SAMPLE_START;
+        //set time MSB
+        *ptr++=time>>8;
+        //set time LSB
+        *ptr++=time;
+        //set count
+        *ptr++=count;
+        //send packet
+        res=BUS_cmd_tx(BUS_ADDR_LEDL,buff,4,0,BUS_I2C_SEND_FOREGROUND);
+    }
+    //check result
+    if(res<0){
+        printf("Error communicating with LEDL : %s\r\n",BUS_error_str(res));
+        //return error
+        return 1;
+    }
+    if(single){
+        //wait for measurement
+        e=ctl_events_wait(CTL_EVENT_WAIT_ANY_EVENTS_WITH_AUTO_CLEAR,&ACDS_evt,ADCS_EVD_COMMAND_SENSOR_READ,CTL_TIMEOUT_DELAY,2048);
+        if(!e){
+            printf("Error : Timeout while waiting for data\r\n");
+            return 2;
+        }
+    }else{
+        printf("Reading Magnetometer, press any key to stop\r\n");
+        //get keypress
+        getchar();
+        //setup command
+        ptr=BUS_cmd_init(buff,CMD_MAG_SAMPLE_CONFIG);
+        //set command
+        *ptr++=MAG_SAMPLE_STOP;
+        //send packet
+        res=BUS_cmd_tx(BUS_ADDR_LEDL,buff,1,0,BUS_I2C_SEND_FOREGROUND);
+        //check result
+        if(res<0){
+            printf("Error communicating with LEDL : %s\r\n",BUS_error_str(res));
+            //return error
+            return 1;
+        }
+        //clear event flag
+        ctl_events_set_clear(&ACDS_evt,0,ADCS_EVD_COMMAND_SENSOR_READ);
+        //wait for straggalers
+        ctl_events_wait(CTL_EVENT_WAIT_ANY_EVENTS_WITH_AUTO_CLEAR,&ACDS_evt,ADCS_EVD_COMMAND_SENSOR_READ,CTL_TIMEOUT_DELAY,900);
+    }
+    return 0;
+}
   
 
 //table of commands with help
@@ -843,5 +917,6 @@ const CMD_SPEC cmd_tbl[]={{"help"," [command]\r\n\t""get a list of commands or h
                      {"dummycor","idx""\r\n\t""write corrections data for the given index",dummycorCmd},
                      {"dcor","idx""\r\n\t""write corrections data for the given index",dumpcorCmd},
                      {"ctst","axis aval bval""\r\n\t""apply corrections to a set of measurments",ctstCmd},
+                     {"mag","[raw single]""\r\n\t""read data from magnetomiters",magCmd},
                      //end of list
                      {NULL,NULL,NULL}};
