@@ -887,7 +887,67 @@ int magCmd(char **argv,unsigned short argc){
     }
     return 0;
 }
-  
+
+int modeCmd(char **argv,unsigned short argc){
+    unsigned short time=32768,count=0,mode;
+    int i,res;
+    char *end;
+    CTL_EVENT_SET_t e;
+    unsigned char buff[BUS_I2C_HDR_LEN+3+BUS_I2C_CRC_LEN],*ptr;
+    //check number of arguments
+    if(argc!=1){
+        printf("Error : %s requires 1 argument but %i given\r\n",argv[0],argc);
+        return 1;
+    }
+    //parse arguments
+    mode=strtoul(argv[1],&end,10);
+    if(end==argv[1]){
+      printf("Error : could not parse torquer number \'%s\'\r\n",argv[1]);
+      return -1;
+    }else if(*end!=0){
+      printf("Error : unknown suffix \'%s\' on torque \'%s\'\r\n",end,argv[1]);
+      return -2;
+    }
+    //set ACDS mode
+    ACDS_mode=mode;
+    //setup command
+    ptr=BUS_cmd_init(buff,CMD_MAG_SAMPLE_CONFIG);
+    //set command
+    *ptr++=MAG_SAMPLE_START;
+    //set time MSB
+    *ptr++=time>>8;
+    //set time LSB
+    *ptr++=time;
+    //set count
+    *ptr++=count;
+    //send packet
+    res=BUS_cmd_tx(BUS_ADDR_LEDL,buff,4,0,BUS_I2C_SEND_FOREGROUND);
+    //check result
+    if(res<0){
+        printf("Error communicating with LEDL : %s\r\n",BUS_error_str(res));
+        //return error
+        return 1;
+    }
+    //refresh correction data status
+    read_cor_stat();
+    //print message
+    printf("Running ACDS in mode %i, press any key to stop\r\n",mode);
+    //get keypress
+    getchar();
+    //setup command
+    ptr=BUS_cmd_init(buff,CMD_MAG_SAMPLE_CONFIG);
+    //set command
+    *ptr++=MAG_SAMPLE_STOP;
+    //send packet
+    res=BUS_cmd_tx(BUS_ADDR_LEDL,buff,1,0,BUS_I2C_SEND_FOREGROUND);
+    //check result
+    if(res<0){
+        printf("Error communicating with LEDL : %s\r\n",BUS_error_str(res));
+        //return error
+        return 1;
+    }
+    return 0;
+}
 
 //table of commands with help
 const CMD_SPEC cmd_tbl[]={{"help"," [command]\r\n\t""get a list of commands or help on a spesific command.",helpCmd},
@@ -920,5 +980,6 @@ const CMD_SPEC cmd_tbl[]={{"help"," [command]\r\n\t""get a list of commands or h
                      {"dcor","idx""\r\n\t""write corrections data for the given index",dumpcorCmd},
                      {"ctst","axis aval bval""\r\n\t""apply corrections to a set of measurments",ctstCmd},
                      {"mag","[raw single]""\r\n\t""read data from magnetomiters",magCmd},
+                     {"mode","mode""\r\n\t""run ACDS in given mode",modeCmd},
                      //end of list
                      {NULL,NULL,NULL}};
