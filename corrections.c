@@ -13,6 +13,9 @@ const COR_STORE correction_data[6];
 #pragma constseg(default)
 #pragma zeroedseg(default)
 
+//status flags for correction data
+unsigned char cor_stat=0;
+
 short write_correction_dat(int idx,const C_AXIS *dat){
     int en,i;
     unsigned short crc;
@@ -88,13 +91,34 @@ short write_correction_dat(int idx,const C_AXIS *dat){
     return RET_SUCCESS;
 }
 
+//read correction data status for all axes
+void read_cor_stat(void){
+    int i;
+    //loop through all sets
+    for(i=0;i<6;i++){
+        //check correction
+        check_cor(i);
+    }
+}
+
 int check_cor(int idx){
+    //check magic
     if(correction_data[idx].magic!=COR_MAGIC){
+        //clear status bit
+        cor_stat&=~(1<<idx);
+        //return error
         return COR_CHK_ERROR_MAGIC;
     }
+    //check CRC
     if(correction_data[idx].crc!=crc16((const unsigned char*)&correction_data[idx].dat.cor,sizeof(C_AXIS))){
+        //clear status bit
+        cor_stat&=~(1<<idx);
+        //return error
         return COR_CHK_ERROR_CRC;
     }
+    //set status bit
+    cor_stat|=(1<<idx);
+    //return success
     return RET_SUCCESS;
 }
 

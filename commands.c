@@ -855,6 +855,8 @@ int magCmd(char **argv,unsigned short argc){
         //return error
         return 1;
     }
+    //refresh correction data status
+    read_cor_stat();
     if(single){
         //wait for measurement
         e=ctl_events_wait(CTL_EVENT_WAIT_ANY_EVENTS_WITH_AUTO_CLEAR,&ACDS_evt,ADCS_EVD_COMMAND_SENSOR_READ,CTL_TIMEOUT_DELAY,2048);

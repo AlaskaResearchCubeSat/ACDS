@@ -5,6 +5,7 @@
 #include <string.h>
 #include <terminal.h>
 #include <stdlib.h>
+#include <math.h> //needed for NAN
 #include "SensorDataInterface.h"
 #include "ACDS.h"
 #include "LED.h"
@@ -234,6 +235,9 @@ void ACDS_events(void *p) __toplevel{
   vec_zero(&status.rates);
   //init event
   ctl_events_init(&ACDS_evt,0);
+  //check correction data status
+  read_cor_stat();
+  //endless loop
   for(;;){
     //wait for events
     e=ctl_events_wait(CTL_EVENT_WAIT_ANY_EVENTS_WITH_AUTO_CLEAR,&ACDS_evt,ACDS_EVT_ALL,CTL_TIMEOUT_NONE,0);
@@ -245,7 +249,8 @@ void ACDS_events(void *p) __toplevel{
       xnum=ynum=znum=0;
       //apply correction
       for(i=0;i<6;i++){
-          if(magData.flags&(1<<(i*2)) && magData.flags&(1<<(i*2+1))){
+          //check that data was read and correction is valid
+          if(magData.flags&(1<<(i*2)) && magData.flags&(1<<(i*2+1)) && cor_stat&(1<<i)){
               //apply correction
               applyCor(&pt,&magData.meas[i],i);
               switch(i){
@@ -297,9 +302,9 @@ void ACDS_events(void *p) __toplevel{
           }
       }
       //calculate average
-      Flux.c.x/=xnum;
-      Flux.c.y/=ynum;
-      Flux.c.z/=znum;
+      Flux.c.x=xnum>0?Flux.c.x/xnum:__float32_nan;
+      Flux.c.y=ynum>0?Flux.c.y/ynum:__float32_nan;
+      Flux.c.z=znum>0?Flux.c.z/znum:__float32_nan;
       //set flux in status packet
       status.mag[0]=32767/2*Flux.elm[0];
       status.mag[1]=32767/2*Flux.elm[1];
@@ -320,7 +325,7 @@ void ACDS_events(void *p) __toplevel{
         break;
         case ACDS_COMMAND_MODE:
             for(i=0;i<6;i++){
-                if(magData.flags&(1<<(i*2)) && magData.flags&(1<<(i*2+1))){
+                if(magData.flags&(1<<(i*2)) && magData.flags&(1<<(i*2+1)) && cor_stat&(1<<i)){
                     //apply correction
                     applyCor(&pt,&magData.meas[i],i);
                     printf("%i : %f %f\r\n",i,pt.c.a,pt.c.b);
