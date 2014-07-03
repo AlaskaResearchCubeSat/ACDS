@@ -325,10 +325,15 @@ void ACDS_events(void *p) __toplevel{
         break;
         case ACDS_COMMAND_MODE:
             for(i=0;i<6;i++){
-                if(magData.flags&(1<<(i*2)) && magData.flags&(1<<(i*2+1)) && cor_stat&(1<<i)){
-                    //apply correction
-                    applyCor(&pt,&magData.meas[i],i);
-                    printf("%i : %f %f\r\n",i,pt.c.a,pt.c.b);
+                if(magData.flags&(1<<(i*2)) && magData.flags&(1<<(i*2+1))){
+                    if(cor_stat&(1<<i)){
+                        //apply correction
+                        applyCor(&pt,&magData.meas[i],i);
+                        printf("%i : %f %f\r\n",i,pt.c.a,pt.c.b);
+                    }else{
+                        //print error
+                        printf("%i : --- ---\r\n",i);
+                    }
                 }else{
                     //print error
                     printf("%i : ### ###\r\n",i);
