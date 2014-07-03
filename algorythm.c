@@ -268,11 +268,8 @@ static short oldFluxValid=0;
 
 //run the B-dot control algorithm
 void bdot(const VEC *FluxVector,unsigned short step){
-   //torquer set to use
-  int set=TQ_SET_BIG;
   //commanded dipole moments
   VEC M_cmd;
-  vecPrint("Flux",FluxVector);
   //check if old flux is valid
   if(oldFluxValid){
     //compute B-dot
@@ -288,15 +285,6 @@ void bdot(const VEC *FluxVector,unsigned short step){
   vecPrint("M_cmd",&M_cmd);
   //flip torquers
   setTorque(&M_cmd);
-  if(output_type==HUMAN_OUTPUT){
-    //print new status
-    printf("New Torquer Status:\r\n");
-    print_torquer_status();
-    //print mode
-    printf("mode\t%i\r\n\r\n",mode);
-  }else{
-    print_torquer_stat_code();
-  }
   //save old flux
   vec_cp(&oldFlux,FluxVector);
   oldFluxValid=1;

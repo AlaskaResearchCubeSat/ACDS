@@ -311,8 +311,13 @@ void ACDS_events(void *p) __toplevel{
       status.mag[2]=32767/2*Flux.elm[2];
       switch(ACDS_mode){
         case ACDS_MODE_1:
+            //print flux vector
+            vecPrint("Flux",&Flux);
             //run B-dot algorithm
-            bdot(&Flux,32768);
+            bdot(&Flux,32768);  
+            //print out new torquer status
+            printf("New Torquer Status:\r\n");
+            print_torquer_status();
         break;
         case ACDS_MODE_2:
         break;
