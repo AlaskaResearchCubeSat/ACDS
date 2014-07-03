@@ -254,45 +254,45 @@ void ACDS_events(void *p) __toplevel{
               //apply correction
               applyCor(&pt,&magData.meas[i],i);
               switch(i){
-                  //X- axis
-                  case 0:
-                    Flux.c.y-=pt.c.a;
-                    ynum++;
-                    Flux.c.z-=pt.c.b;
-                    znum++;
-                  break;
                   //X+ axis
-                  case 1:
+                  case MAG_X_PLUS_IDX:
                     Flux.c.y+=pt.c.a;
                     ynum++;
                     Flux.c.z-=pt.c.b;
                     znum++;
                   break;
+                  //X- axis
+                  case MAG_X_MINUS_IDX:
+                    Flux.c.y-=pt.c.a;
+                    ynum++;
+                    Flux.c.z-=pt.c.b;
+                    znum++;
+                  break;
+                  //Y+ axis
+                  case MAG_Y_PLUS_IDX:
+                    Flux.c.x-=pt.c.a;
+                    xnum++;
+                    Flux.c.z-=pt.c.b;
+                    znum++;
+                    break;
                   //Y- axis
-                  case 2:
+                  case MAG_Y_MINUS_IDX:
                     Flux.c.x+=pt.c.a;
                     xnum++;
                     Flux.c.z-=pt.c.b;
                     znum++;
                   break;
-                  //Y+ axis
-                  case 3:
-                    Flux.c.x-=pt.c.a;
-                    xnum++;
-                    Flux.c.z-=pt.c.b;
-                    znum++;
-                  break;
-                  //Z- axis
-                  case 4:
+                  //Z+ axis
+                  case MAG_Z_PLUS_IDX:
                     //TODO: double check these axes
                     Flux.c.x-=pt.c.a;
                     xnum++;
                     Flux.c.y+=pt.c.b;
                     ynum++;
                   break;
-                  //Z+ axis
-                  case 5:
-                    //TODO: double check these axies
+                  //Z- axis
+                  case MAG_Z_MINUS_IDX:
+                    //TODO: double check these axes
                     Flux.c.x-=pt.c.a;
                     xnum++;
                     Flux.c.y+=pt.c.b;
