@@ -18,7 +18,7 @@
 CTL_TASK_t tasks[3];
 
 //stacks for tasks
-unsigned stack1[1+256+1];          
+unsigned stack1[1+356+1];          
 unsigned stack2[1+512+1];
 unsigned stack3[1+100+1];   
 
