@@ -112,7 +112,7 @@ VEC Km={10000*0.00024,10000*0.00024,10000*0.00015};
   
 //B-dot gain
 //multiply by 10,000 to use gauss
-VEC Kb={1000000000.0,1000000000.0,1000000000.0};
+VEC Kb={200.0,200.0,200.0};
   
 //programed rates (rad/sec)?
 VEC Omega_CMD={0,0,0.0011};
