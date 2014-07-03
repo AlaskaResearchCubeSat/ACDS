@@ -309,11 +309,10 @@ void ACDS_events(void *p) __toplevel{
       status.mag[0]=32767/2*Flux.elm[0];
       status.mag[1]=32767/2*Flux.elm[1];
       status.mag[2]=32767/2*Flux.elm[2];
-      printf("ACDS mode = %i\r\n",ACDS_mode);
       switch(ACDS_mode){
         case ACDS_MODE_1:
-          //run B-dot algorithm
-          bdot(&Flux,32768);
+            //run B-dot algorithm
+            bdot(&Flux,32768);
         break;
         case ACDS_MODE_2:
         break;
