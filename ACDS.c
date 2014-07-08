@@ -17,9 +17,6 @@
 #include "corrections.h"
 
 ACDS_STAT status;
-
-//spesifications for the terminal
-const TERM_SPEC async_term={"ACDS Test Program ready",async_Getc};
     
 typedef struct{
         CTL_MUTEX_t lock;
@@ -123,7 +120,7 @@ void sub_events(void *p) __toplevel{
       //print message
       printf("Async Opened from 0x%02X\r\n",async_addr);
       //setup UART terminal        
-      ctl_task_run(&tasks[1],BUS_PRI_NORMAL,terminal,(void*)&async_term,"terminal",sizeof(stack2)/sizeof(stack2[0])-2,stack2+1,0);
+      ctl_task_run(&tasks[1],BUS_PRI_NORMAL,terminal,"ACDS Test Program ready","terminal",sizeof(stack2)/sizeof(stack2[0])-2,stack2+1,0);
       //async_close();
     }
     if(e&SUB_EV_ASYNC_CLOSE){
