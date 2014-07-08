@@ -940,12 +940,21 @@ int modeCmd(char **argv,unsigned short argc){
         if(e&ADCS_EVD_COMMAND_SENSOR_READ){
             printf("\r\n=========================================================================\r\n");
             print_acds_dat(&acds_dat);
+            //message recived, reduce timeout count
+            if(timeout>-10){
+                timeout--;
+            }
         }else{
-            timeout++;
-            if(timeout>5){
+            //message timeout, increase timeout count
+            timeout+=4;
+            //check if too many time outs have happened
+            if(timeout>20){
+                //print error 
                 printf("Error : timeout while waiting for sensor data\r\n");            
+                //exit loop
                 break;
             }
+            //if not aborting, print a warning
             printf("Warning : timeout while waiting for sensor data\r\n"); 
         }
     }
