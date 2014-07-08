@@ -890,7 +890,7 @@ int magCmd(char **argv,unsigned short argc){
 
 int modeCmd(char **argv,unsigned short argc){
     unsigned short time=32768,count=0,mode;
-    int i,res;
+    int i,res,timeout=0;
     char *end;
     CTL_EVENT_SET_t e;
     unsigned char buff[BUS_I2C_HDR_LEN+3+BUS_I2C_CRC_LEN],*ptr;
@@ -932,8 +932,23 @@ int modeCmd(char **argv,unsigned short argc){
     read_cor_stat();
     //print message
     printf("Running ACDS in mode %i, press any key to stop\r\n",mode);
-    //get keypress
-    getchar();
+    //run while no keys pressed
+    while(async_CheckKey()==EOF){
+        //wait for data from LEDL
+        e=ctl_events_wait(CTL_EVENT_WAIT_ANY_EVENTS_WITH_AUTO_CLEAR,&ACDS_evt,ADCS_EVD_COMMAND_SENSOR_READ,CTL_TIMEOUT_DELAY,1800);
+        //check if data was received
+        if(e&ADCS_EVD_COMMAND_SENSOR_READ){
+            printf("\r\n=========================================================================\r\n");
+            print_acds_dat(&acds_dat);
+        }else{
+            timeout++;
+            if(timeout>5){
+                printf("Error : timeout while waiting for sensor data\r\n");            
+                break;
+            }
+            printf("Warning : timeout while waiting for sensor data\r\n"); 
+        }
+    }
     //setup command
     ptr=BUS_cmd_init(buff,CMD_MAG_SAMPLE_CONFIG);
     //set command

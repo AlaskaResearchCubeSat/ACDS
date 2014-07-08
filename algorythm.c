@@ -300,3 +300,19 @@ void bdot(const VEC *FluxVector,unsigned short step){
 }
 
 
+void print_acds_dat(const ACDS_DAT *dat){
+    //print ACDS mode
+    printf("Mode : %i\r\n",dat->mode);
+    //print magnetic flux vector
+    vecPrint("Flux",&dat->flux);
+    //print mode specific data
+    switch(dat->mode){
+        case 1:
+            vecPrint("B-dot",&dat->mdat.mode1.B_dot);
+        break;
+    }
+    //print commanded dipole moment
+    vecPrint("Mcmd",&dat->M_cmd);
+    //print new torquer status
+    print_tqstat(&dat->tq_stat);
+}

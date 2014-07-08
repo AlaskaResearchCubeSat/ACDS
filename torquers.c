@@ -384,13 +384,18 @@ char torquer_dir(int st,int n){
 //print the staus of a torquer set for easy reading by a human
 void print_torquer_status(void){
   //print status
+  print_tqstat(&tq_stat);
+}
+    
+void print_tqstat(const TQ_SET *stat){
+  //print status
   printf("\t""Axis\t""M\t""status\t""last0\t""last1\t""last2\t""last3\t""error\r\n"
         "\tx\t%s\t%c%c%c%c\t%i\t%i\t%i\t%i\t%s\r\n"
         "\ty\t%s\t%c%c%c%c\t%i\t%i\t%i\t%i\t%s\r\n"
         "\tz\t%s\t%c%c%c%c\t%i\t%i\t%i\t%i\t%s\r\n",
-        stat_to_torque(tq_stat.c.x.status),torquer_dir(tq_stat.c.x.status,1),torquer_dir(tq_stat.c.x.status,2),torquer_dir(tq_stat.c.x.status,3),torquer_dir(tq_stat.c.x.status,4),getLast(tq_stat.c.x,0),getLast(tq_stat.c.x,1),getLast(tq_stat.c.x,2),getLast(tq_stat.c.x,3),stat_err(tq_stat.c.x.status),
-        stat_to_torque(tq_stat.c.y.status),torquer_dir(tq_stat.c.y.status,1),torquer_dir(tq_stat.c.y.status,2),torquer_dir(tq_stat.c.y.status,3),torquer_dir(tq_stat.c.y.status,4),getLast(tq_stat.c.y,0),getLast(tq_stat.c.y,1),getLast(tq_stat.c.y,2),getLast(tq_stat.c.y,3),stat_err(tq_stat.c.y.status),
-        stat_to_torque(tq_stat.c.z.status),torquer_dir(tq_stat.c.z.status,1),torquer_dir(tq_stat.c.z.status,2),torquer_dir(tq_stat.c.z.status,3),torquer_dir(tq_stat.c.z.status,4),getLast(tq_stat.c.z,0),getLast(tq_stat.c.z,1),getLast(tq_stat.c.z,2),getLast(tq_stat.c.z,3),stat_err(tq_stat.c.z.status));
+        stat_to_torque(stat->c.x.status),torquer_dir(stat->c.x.status,1),torquer_dir(stat->c.x.status,2),torquer_dir(stat->c.x.status,3),torquer_dir(stat->c.x.status,4),getLast(stat->c.x,0),getLast(stat->c.x,1),getLast(stat->c.x,2),getLast(stat->c.x,3),stat_err(stat->c.x.status),
+        stat_to_torque(stat->c.y.status),torquer_dir(stat->c.y.status,1),torquer_dir(stat->c.y.status,2),torquer_dir(stat->c.y.status,3),torquer_dir(stat->c.y.status,4),getLast(stat->c.y,0),getLast(stat->c.y,1),getLast(stat->c.y,2),getLast(stat->c.y,3),stat_err(stat->c.y.status),
+        stat_to_torque(stat->c.z.status),torquer_dir(stat->c.z.status,1),torquer_dir(stat->c.z.status,2),torquer_dir(stat->c.z.status,3),torquer_dir(stat->c.z.status,4),getLast(stat->c.z,0),getLast(stat->c.z,1),getLast(stat->c.z,2),getLast(stat->c.z,3),stat_err(stat->c.z.status));
 }
 
 //print the status of a torquer set so that it can be easily parsed on the other end by software

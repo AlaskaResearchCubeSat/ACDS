@@ -51,4 +51,6 @@ int setpointCmd(char **argv,unsigned short argc);
 //gain command
 int gainCmd(char **argv,unsigned short argc);
 
+void print_acds_dat(const ACDS_DAT *dat);
+
 #endif
