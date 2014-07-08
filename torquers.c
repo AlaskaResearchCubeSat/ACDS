@@ -11,6 +11,7 @@
 #include "ACDSerr.h"
 #include "ACDS.h"
 #include "LED.h"
+#include "bias.h"
 
 //structures to track torquer status
 TQ_SET tq_stat;
@@ -415,16 +416,16 @@ int setTorque(const VEC *T){
   int stat,set,num;
   //loop through torquer axis and set torque
   for(i=0;i<3;i++){
-    if(T->elm[i]<-3){
+    if(T->elm[i]<-3*M_CmdLim_b){
       //set torque to -4
       num=0;
-    }else if(T->elm[i]>3){
+    }else if(T->elm[i]>3*M_CmdLim_b){
       //set torque to +4
       num=4;
-    }else if(T->elm[i]<-1){
+    }else if(T->elm[i]<-1*M_CmdLim_b){
       //set torque to -2
       num=1;
-    }else if(T->elm[i]>1){
+    }else if(T->elm[i]>1*M_CmdLim_b){
       //set torque to +2
       num=3;
     }else{
