@@ -32,6 +32,10 @@ short checkTorqueInit(void){
   return !(tq_stat.c.x.status&(T_STAT_UNINIT_1|T_STAT_UNINIT_2|T_STAT_UNINIT_3|T_STAT_UNINIT_4) || tq_stat.c.y.status&(T_STAT_UNINIT_1|T_STAT_UNINIT_2|T_STAT_UNINIT_3|T_STAT_UNINIT_4) || tq_stat.c.z.status&(T_STAT_UNINIT_1|T_STAT_UNINIT_2|T_STAT_UNINIT_3|T_STAT_UNINIT_4));
 }
 
+void get_stat(TQ_SET *dest){
+    memcpy(dest,&tq_stat,sizeof(TQ_SET));
+}
+
 //give correction value index based on status of a given index
 int stat2Idx(int idx){
     int stat=tq_stat.elm[idx].status;

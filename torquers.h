@@ -132,4 +132,6 @@ void tqstat2stat(unsigned char *dest);
 
 int stat2Idx(int idx);
 
+void get_stat(TQ_SET *dest);
+
 #endif
