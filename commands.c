@@ -624,7 +624,7 @@ int dummycorCmd(char **argv,unsigned short argc){
     unsigned char *buffer=NULL;
     C_AXIS *dest;
     int ret;
-    unsigned short check_c,check_s;
+    unsigned short check_c,check_s,all=0;
     int i,resp,idx;
     if(argc<1){
         printf("Error: too few arguments\r\n");
@@ -638,6 +638,12 @@ int dummycorCmd(char **argv,unsigned short argc){
         if(!strcmp(argv[1],cor_axis_names[i])){
             idx=i;
             break;
+        }
+    }
+    if(idx==-1){
+        if(!strcmp(argv[1],"all")){
+            all=1;
+            idx=0;
         }
     }
     if(idx==-1){
@@ -660,20 +666,23 @@ int dummycorCmd(char **argv,unsigned short argc){
         return -1;
     }
     dest=(C_AXIS*)(buffer);
-    //zero all data
-    memset(dest,0,sizeof(C_AXIS));
-    //set scale factors to datasheet nominal
-    dest->scl[0]=dest->scl[3]=1/(2*65535*1e-3*95.3);
-    //set cross axis factors to +/-1%
-    dest->scl[1]=-0.01*dest->scl[0];
-    dest->scl[2]=0.01*dest->scl[3];
+    for(;idx<6 && all;idx++){
+        //zero all data
+        memset(dest,0,sizeof(C_AXIS));
+        //set scale factors to datasheet nominal
+        dest->scl[0]=dest->scl[3]=1/(2*65535*1e-3*95.3);
+        //set cross axis factors to +/-1%
+        dest->scl[1]=-0.01*dest->scl[0];
+        dest->scl[2]=0.01*dest->scl[3];
     
-    printf("Writing dummy Corrections data for %s axis\r\n",cor_axis_names[idx]);
-    ret=write_correction_dat(idx,dest);
-    if(ret==RET_SUCCESS){
-        printf("Correction Data Written\r\n");
-    }else{
-        printf("Error writing correction data %i returned\r\n",ret);
+        printf("Writing dummy Corrections data for %s axis\r\n",cor_axis_names[idx]);
+        ret=write_correction_dat(idx,dest);
+        if(ret==RET_SUCCESS){
+            printf("Correction Data Written\r\n");
+        }else{
+            printf("Error writing correction data %i returned\r\n",ret);
+            break;
+        }
     }
     //free buffer
     BUS_free_buffer();
