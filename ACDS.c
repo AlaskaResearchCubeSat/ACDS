@@ -281,15 +281,13 @@ void ACDS_events(void *p) __toplevel{
                   break;
                   //Z+ axis
                   case MAG_Z_PLUS_IDX:
-                    //TODO: double check these axes
-                    Flux.c.x-=pt.c.a;
+                    Flux.c.y+=pt.c.a;
                     xnum++;
-                    Flux.c.y+=pt.c.b;
+                    Flux.c.x+=pt.c.b;
                     ynum++;
                   break;
                   //Z- axis
                   case MAG_Z_MINUS_IDX:
-                    //TODO: double check these axes
                     Flux.c.x-=pt.c.a;
                     xnum++;
                     Flux.c.y+=pt.c.b;
