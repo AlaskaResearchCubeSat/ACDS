@@ -659,7 +659,7 @@ int dummycorCmd(char **argv,unsigned short argc){
         printf("Error : Timeout while waiting for buffer.\r\n");
         return -1;
     }
-    dest=(C_AXIS*)(buffer+512);
+    dest=(C_AXIS*)(buffer);
     //zero all data
     memset(dest,0,sizeof(C_AXIS));
     //set scale factors to datasheet nominal
