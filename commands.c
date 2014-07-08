@@ -634,7 +634,7 @@ int dummycorCmd(char **argv,unsigned short argc){
         printf("Error: too many arguments\r\n");
         return -2;
     }
-    for(i=0;i<6;i++){
+    for(i=0,idx=-1;i<6;i++){
         if(!strcmp(argv[1],cor_axis_names[i])){
             idx=i;
             break;
@@ -694,7 +694,7 @@ int dumpcorCmd(char **argv,unsigned short argc){
         return -2;
     }
     //look for symbolic axis name
-    for(i=0;i<6;i++){
+    for(i=0,idx=-1;i<6;i++){
         if(!strcmp(argv[1],cor_axis_names[i])){
             idx=i;
             break;
