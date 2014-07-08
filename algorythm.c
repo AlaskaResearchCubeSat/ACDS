@@ -11,6 +11,9 @@
 
 const float pi=3.14159265358979323846;
 
+//current ACDS data
+ACDS_DAT acds_dat;
+
 //outputs values of {2,1,-2}*qval according to Figure 14 in Mench 2011
 //may be combined into torquer firing routine
 VEC* quantize(VEC* val,SCL qval){
@@ -279,12 +282,18 @@ void bdot(const VEC *FluxVector,unsigned short step){
     //use zero vector for B-dot
     vec_zero(&M_cmd);
   }
-  vecPrint("Bdot",&M_cmd);
+  //set mode 1
+  acds_dat.mode=1;
+  //save magnetic field derivative
+  vec_cp(&acds_dat.mdat.mode1.B_dot,&M_cmd);
   //apply gain
   vec_eemul(&M_cmd,&Kb);
-  vecPrint("M_cmd",&M_cmd);
+  //save commanded dipole moment
+  vec_cp(&acds_dat.M_cmd,&M_cmd);
   //flip torquers
   setTorque(&M_cmd);
+  //save status
+  get_stat(&acds_dat.tq_stat);
   //save old flux
   vec_cp(&oldFlux,FluxVector);
   oldFluxValid=1;

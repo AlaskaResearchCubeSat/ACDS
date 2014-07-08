@@ -306,15 +306,17 @@ void ACDS_events(void *p) __toplevel{
       status.mag[0]=32767/2*Flux.elm[0];
       status.mag[1]=32767/2*Flux.elm[1];
       status.mag[2]=32767/2*Flux.elm[2];
+      vec_cp(&acds_dat.flux,&Flux);
+      //do things based on mode
       switch(ACDS_mode){
         case ACDS_MODE_1:
             //print flux vector
-            vecPrint("Flux",&Flux);
+            //vecPrint("Flux",&Flux);
             //run B-dot algorithm
             bdot(&Flux,32768);  
             //print out new torquer status
-            printf("New Torquer Status:\r\n");
-            print_torquer_status();
+            //printf("New Torquer Status:\r\n");
+            //print_torquer_status();
         break;
         case ACDS_MODE_2:
         break;
@@ -325,7 +327,7 @@ void ACDS_events(void *p) __toplevel{
           setTorque(&zero);
         break;
         case ACDS_COMMAND_MODE:
-            for(i=0;i<6;i++){
+            /*for(i=0;i<6;i++){
                 if(magData.flags&(1<<(i*2)) && magData.flags&(1<<(i*2+1))){
                     if(cor_stat&(1<<i)){
                         //apply correction
@@ -339,12 +341,12 @@ void ACDS_events(void *p) __toplevel{
                     //print error
                     printf("%i : ### ###\r\n",i);
                 }
-            }
+            }*/
             printf("Fux = %f %f %f\r\n",Flux.c.x,Flux.c.y,Flux.c.z);
-            ctl_events_set_clear(&ACDS_evt,ADCS_EVD_COMMAND_SENSOR_READ,0);
         break;
                 
       }
+      ctl_events_set_clear(&ACDS_evt,ADCS_EVD_COMMAND_SENSOR_READ,0);
       tqstat2stat(status.tqstat);
     }
   }

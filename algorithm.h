@@ -3,12 +3,34 @@
 
 #include "vector.h"
 #include "bias.h"
+#include "torquers.h"
 
+typedef struct{
+    unsigned char mode;
+    unsigned char flags;
+    VEC flux;
+    VEC M_cmd;
+    TQ_SET tq_stat;
+    union{
+        struct{
+            VEC B_dot;
+            
+        } mode1;
+        struct{
+            short window;
+        } mode2;
+        struct{
+            short window;
+        } mode3;
+    }mdat;
+}ACDS_DAT;
 
 //current mode of operation
 extern unsigned short mode;
 //allow mode switching logic to function
 extern unsigned short upgrade;
+//ACDS status
+extern ACDS_DAT acds_dat;
 
 extern float lat,lat_old;
 
