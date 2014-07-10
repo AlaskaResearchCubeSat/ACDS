@@ -402,11 +402,16 @@ void print_tqstat(const TQ_SET *stat){
 //print the status of a torquer set so that it can be easily parsed on the other end by software
 void print_torquer_stat_code(void){
   //print status
+  print_tqstat_code(&tq_stat);
+}
+  
+void print_tqstat_code(const TQ_SET *stat){
+  //print status
   printf("%c%c%c%c\t%c%c%c%c\t%c%c%c%c\t%i\t%i\t%i\t",
-      torquer_dir(tq_stat.c.x.status,1),torquer_dir(tq_stat.c.x.status,2),torquer_dir(tq_stat.c.x.status,3),torquer_dir(tq_stat.c.x.status,4),
-      torquer_dir(tq_stat.c.y.status,1),torquer_dir(tq_stat.c.y.status,2),torquer_dir(tq_stat.c.y.status,3),torquer_dir(tq_stat.c.y.status,4),
-      torquer_dir(tq_stat.c.z.status,1),torquer_dir(tq_stat.c.z.status,2),torquer_dir(tq_stat.c.z.status,3),torquer_dir(tq_stat.c.z.status,4),
-      tq_stat.c.x.last,tq_stat.c.y.last,tq_stat.c.z.last);
+      torquer_dir(stat->c.x.status,1),torquer_dir(stat->c.x.status,2),torquer_dir(stat->c.x.status,3),torquer_dir(stat->c.x.status,4),
+      torquer_dir(stat->c.y.status,1),torquer_dir(stat->c.y.status,2),torquer_dir(stat->c.y.status,3),torquer_dir(stat->c.y.status,4),
+      torquer_dir(stat->c.z.status,1),torquer_dir(stat->c.z.status,2),torquer_dir(stat->c.z.status,3),torquer_dir(stat->c.z.status,4),
+      stat->c.x.last,stat->c.y.last,stat->c.z.last);
 }
 
 //TODO: fix for four torquers

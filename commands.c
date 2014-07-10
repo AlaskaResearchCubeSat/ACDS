@@ -947,7 +947,9 @@ int modeCmd(char **argv,unsigned short argc){
         e=ctl_events_wait(CTL_EVENT_WAIT_ANY_EVENTS_WITH_AUTO_CLEAR,&ACDS_evt,ADCS_EVD_COMMAND_SENSOR_READ,CTL_TIMEOUT_DELAY,1800);
         //check if data was received
         if(e&ADCS_EVD_COMMAND_SENSOR_READ){
-            printf("\r\n=========================================================================\r\n");
+            if(output_type==HUMAN_OUTPUT){
+                printf("\r\n=========================================================================\r\n");
+            }
             print_acds_dat(&acds_dat);
             //message recived, reduce timeout count
             if(timeout>-10){
