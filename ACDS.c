@@ -343,12 +343,13 @@ void ACDS_events(void *p) __toplevel{
                     printf("%i : ### ###\r\n",i);
                 }
             }*/
-            printf("Fux = %f %f %f\r\n",Flux.c.x,Flux.c.y,Flux.c.z);
+            //printf("Fux = %f %f %f\r\n",Flux.c.x,Flux.c.y,Flux.c.z);
         break;
                 
       }
-      ctl_events_set_clear(&ACDS_evt,ADCS_EVD_COMMAND_SENSOR_READ,0);
+      //save status
       tqstat2stat(status.tqstat);
+      ctl_events_set_clear(&ACDS_evt,ADCS_EVD_COMMAND_SENSOR_READ,0);
     }
   }
 }

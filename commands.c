@@ -824,7 +824,7 @@ int ctstCmd(char **argv,unsigned short argc){
 int magCmd(char **argv,unsigned short argc){
     int single=0;
     unsigned short time=32768,count=0;
-    int i,res;
+    int i,res,timeout=0;
     CTL_EVENT_SET_t e;
     unsigned char buff[BUS_I2C_HDR_LEN+3+BUS_I2C_CRC_LEN],*ptr;
     //parse arguments
@@ -867,16 +867,55 @@ int magCmd(char **argv,unsigned short argc){
     //refresh correction data status
     read_cor_stat();
     if(single){
-        //wait for measurement
-        e=ctl_events_wait(CTL_EVENT_WAIT_ANY_EVENTS_WITH_AUTO_CLEAR,&ACDS_evt,ADCS_EVD_COMMAND_SENSOR_READ,CTL_TIMEOUT_DELAY,2048);
+        do{
+            //wait for measurement
+            e=ctl_events_wait(CTL_EVENT_WAIT_ANY_EVENTS_WITH_AUTO_CLEAR,&ACDS_evt,ADCS_EVD_COMMAND_SENSOR_READ,CTL_TIMEOUT_DELAY,2048);
+            if(!e){
+                //send packet again
+                res=BUS_cmd_tx(BUS_ADDR_LEDL,buff,1,0,BUS_I2C_SEND_FOREGROUND);     
+                //increse timeout count
+                timeout++;
+            }
+        }while(!e && timeout<5);
         if(!e){
-            printf("Error : Timeout while waiting for data\r\n");
+            printf("Error : timeout while waiting for sensor data\r\n");
             return 2;
+        }
+        //print out flux values   
+        vecPrint("Flux",&acds_dat.flux);
+        if(output_type==MACHINE_OUTPUT){   
+            printf("\r\n");
         }
     }else{
         printf("Reading Magnetometer, press any key to stop\r\n");
-        //get keypress
-        getchar();
+        //run while no keys pressed
+        while(async_CheckKey()==EOF){
+            //wait for data from LEDL
+            e=ctl_events_wait(CTL_EVENT_WAIT_ANY_EVENTS_WITH_AUTO_CLEAR,&ACDS_evt,ADCS_EVD_COMMAND_SENSOR_READ,CTL_TIMEOUT_DELAY,1800);
+            //check if data was received
+            if(e&ADCS_EVD_COMMAND_SENSOR_READ){
+                vecPrint("Flux",&acds_dat.flux);
+                if(output_type==MACHINE_OUTPUT){   
+                    printf("\r\n");
+                }
+                //message recived, reduce timeout count
+                if(timeout>-10){
+                    timeout--;
+                }
+            }else{
+                //message timeout, increase timeout count
+                timeout+=4;
+                //check if too many time outs have happened
+                if(timeout>20){
+                    //print error 
+                    printf("Error : timeout while waiting for sensor data\r\n");            
+                    //exit loop
+                    break;
+                }
+                //if not aborting, print a warning
+                printf("Warning : timeout while waiting for sensor data\r\n"); 
+            }
+        }
         //setup command
         ptr=BUS_cmd_init(buff,CMD_MAG_SAMPLE_CONFIG);
         //set command
