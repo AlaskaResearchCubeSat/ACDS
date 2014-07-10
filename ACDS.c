@@ -304,7 +304,10 @@ void ACDS_events(void *p) __toplevel{
       status.mag[0]=32767/2*Flux.elm[0];
       status.mag[1]=32767/2*Flux.elm[1];
       status.mag[2]=32767/2*Flux.elm[2];
-      vec_cp(&acds_dat.flux,&Flux);
+      //set flux vector
+      vec_cp(&acds_dat.flux,&Flux);      
+      //set mode
+      acds_dat.mode=ACDS_mode;
       //do things based on mode
       switch(ACDS_mode){
         case ACDS_MODE_1:
