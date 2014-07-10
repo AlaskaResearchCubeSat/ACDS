@@ -103,22 +103,22 @@ unsigned short mode=1;
 //allow mode switching logic to function
 unsigned short upgrade=MODE_UPGRADE;
 
-//detumble gain
-//VEC Ka={0.00024,0.00024,0.00015};
-//multiply by 10,000 to use gauss
-VEC Ka={10000*0.00024,10000*0.00024,10000*0.00015};
-
-//alignment gain
-//VEC Km={0.00024,0.00024,0.00015};
-//multiply by 10,000 to use gauss
-VEC Km={10000*0.00024,10000*0.00024,10000*0.00015};
-  
-//B-dot gain
-//multiply by 10,000 to use gauss
-VEC Kb={200.0,200.0,200.0};
-  
-//programed rates (rad/sec)?
-VEC Omega_CMD={0,0,0.0011};
+#pragma constseg("INFO_D")
+#pragma zeroedseg("INFO_D")
+const ACDS_SETTINGS_STORE ACDS_settings={ACDS_SETTINGS_MAGIC,{{
+                                    //detumble gain
+                                    {10000*0.00024,10000*0.00024,10000*0.00015},
+                                    //alignment gain
+                                    {10000*0.00024,10000*0.00024,10000*0.00015},
+                                    //B-dot gain
+                                    {200.0,200.0,200.0},
+                                    //programed rates (rad/sec)?
+                                    {0,0,0.0011}
+                                    }},
+                                    //CRC not correct
+                                    0};
+#pragma constseg(default)
+#pragma zeroedseg(default)
 
 //edit angular rate setpoint
 int setpointCmd(char **argv,unsigned short argc){
@@ -170,17 +170,17 @@ int gainCmd(char **argv,unsigned short argc){
   //if zero arguments given print both gains
   if(argc==0){      
     //detumble gain
-    vecPrint("Ka",&Ka);
+    vecPrint("Ka",&ACDS_settings.dat.settings.Ka);
     if(output_type==MACHINE_OUTPUT){
         printf("\r\n");
     }
     //alignment gain
-    vecPrint("Km",&Km);
+    vecPrint("Km",&ACDS_settings.dat.settings.Km);
     if(output_type==MACHINE_OUTPUT){
         printf("\r\n");
     }
     //alignment gain
-    vecPrint("Kb",&Kb);
+    vecPrint("Kb",&ACDS_settings.dat.settings.Kb);
     if(output_type==MACHINE_OUTPUT){
         printf("\r\n");
     }
@@ -188,11 +188,11 @@ int gainCmd(char **argv,unsigned short argc){
   }
   //determine which gian to set
   if(!strcmp(argv[1],"Ka")){
-    dest=&Ka;
+    dest=&ACDS_settings.dat.settings.Ka;
   }else if(!strcmp(argv[1],"Km")){
-    dest=&Km;
+    dest=&ACDS_settings.dat.settings.Km;
   }else if(!strcmp(argv[1],"Kb")){
-    dest=&Kb;
+    dest=&ACDS_settings.dat.settings.Kb;
   }else{
     printf("Error : Unknown Gain \"%s\" \r\n",argv[1]);
     return 5;
@@ -287,7 +287,7 @@ void bdot(const VEC *FluxVector,unsigned short step){
   //save magnetic field derivative
   vec_cp(&acds_dat.mdat.mode1.B_dot,&M_cmd);
   //apply gain
-  vec_eemul(&M_cmd,&Kb);
+  vec_eemul(&M_cmd,&ACDS_settings.dat.settings.Kb);
   //save commanded dipole moment
   vec_cp(&acds_dat.M_cmd,&M_cmd);
   //flip torquers

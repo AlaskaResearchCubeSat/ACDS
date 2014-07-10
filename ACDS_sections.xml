@@ -7,16 +7,16 @@
     <ProgramSection name="THREAD"/>
   </MemorySegment>
   <MemorySegment name="INFO_A">
-    <ProgramSection load="Yes" name="INFO_A"/>
+    <ProgramSection load="No" name="INFO_A"/>
   </MemorySegment>
   <MemorySegment name="INFO_B">
-    <ProgramSection load="Yes" name="INFO_B"/>
+    <ProgramSection load="No" name="INFO_B"/>
   </MemorySegment>
   <MemorySegment name="INFO_C">
-    <ProgramSection load="Yes" name="INFO_C"/>
+    <ProgramSection load="No" name="INFO_C"/>
   </MemorySegment>
   <MemorySegment name="INFO_D">
-    <ProgramSection load="Yes" name="INFO_D"/>
+    <ProgramSection load="No" name="INFO_D"/>
   </MemorySegment>
   <MemorySegment name="FLASH">
     <ProgramSection load="Yes" name="ISR"/>

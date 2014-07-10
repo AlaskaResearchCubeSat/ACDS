@@ -5,6 +5,8 @@
 #include "bias.h"
 #include "torquers.h"
 
+#define ACDS_SETTINGS_MAGIC       0xAA53
+
 typedef struct{
     unsigned char mode;
     unsigned char flags;
@@ -24,6 +26,26 @@ typedef struct{
         } mode3;
     }mdat;
 }ACDS_DAT;
+
+typedef struct{
+    //detumble gain
+    VEC Ka;
+    //alignment gain
+    VEC Km;  
+    //B-dot gain
+    VEC Kb;
+    //programed rates (rad/sec)?
+    VEC Omega_CMD;
+}ACDS_SETTINGS;
+
+typedef struct{
+    unsigned short magic;
+    union{
+        ACDS_SETTINGS settings;
+        char pad[60];
+    }dat;
+    unsigned short crc;
+}ACDS_SETTINGS_STORE;
 
 //current mode of operation
 extern unsigned short mode;
