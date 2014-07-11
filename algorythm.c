@@ -9,6 +9,10 @@
 #include "terminal.h"
 #include "output_type.h"
 
+#include <msp430.h>
+#include <ARCbus.h>
+#include <crc.h>
+
 const float pi=3.14159265358979323846;
 
 //current ACDS data
@@ -157,8 +161,53 @@ int setpointCmd(char **argv,unsigned short argc){
   return 0;
 }
 
+int flash_write(void *dest,const void *src,int size){
+    const unsigned short *s=src;
+    unsigned short *d=dest;
+    int en,i;
+    //compute size in words (round up)
+    size=(size+1)/2;
+    //disable interrupts
+    en = BUS_stop_interrupts();
+    //disable watchdog
+    WDT_STOP();
+    //unlock flash memory
+    FCTL3=FWKEY;
+    //setup flash for erase
+    FCTL1=FWKEY|ERASE;
+    //dummy write to indicate which segment to erase
+    *d=0;
+    //lock the flash again
+    FCTL3=FWKEY|LOCK;
+    //check fail flag and that the first and last bytes were erased
+    if(FCTL3&FAIL || *d!=0xFFFF || d[size-1]!=0xFFFF){
+        //re-enable interrupts if enabled before
+        BUS_restart_interrupts(en);
+        return -1;
+    }  
+    
+    for(i=0;i<size;i++){
+        //unlock flash memory
+        FCTL3=FWKEY; 
+        //enable writing
+        FCTL1=FWKEY|WRT;
+        //write settings
+        d[i]=s[i];
+        //disable writing
+        FCTL1=FWKEY;
+        //lock flash
+        FCTL3=FWKEY|LOCK;
+    }
+    
+    //re-enable interrupts if enabled before
+    BUS_restart_interrupts(en);
+    return RET_SUCCESS;
+}
+
 //set detumble and alignment gains
 int gainCmd(char **argv,unsigned short argc){
+  unsigned char *buffer=NULL;
+  ACDS_SETTINGS_STORE *tmp_settings;
   VEC tmp,*dest;
   char *end;
   int i;
@@ -186,13 +235,24 @@ int gainCmd(char **argv,unsigned short argc){
     }
     return 0;
   }
+  //get buffer, set a timeout of 2 secconds
+  buffer=BUS_get_buffer(CTL_TIMEOUT_DELAY,2048);
+  //check for error
+  if(buffer==NULL){
+      printf("Error : Timeout while waiting for buffer.\r\n");
+      return -1;
+  }
+  //set temporary settings pointer
+  tmp_settings=(ACDS_SETTINGS_STORE*)buffer;
+  //coppy settings into temp buffer
+  memcpy(tmp_settings,&ACDS_settings,sizeof(ACDS_SETTINGS_STORE));
   //determine which gian to set
   if(!strcmp(argv[1],"Ka")){
-    dest=&ACDS_settings.dat.settings.Ka;
+    dest=&(tmp_settings->dat.settings.Ka);
   }else if(!strcmp(argv[1],"Km")){
-    dest=&ACDS_settings.dat.settings.Km;
+    dest=&(tmp_settings->dat.settings.Km);
   }else if(!strcmp(argv[1],"Kb")){
-    dest=&ACDS_settings.dat.settings.Kb;
+    dest=&(tmp_settings->dat.settings.Kb);
   }else{
     printf("Error : Unknown Gain \"%s\" \r\n",argv[1]);
     return 5;
@@ -205,11 +265,15 @@ int gainCmd(char **argv,unsigned short argc){
     //check if value parsed correctly
     if(end==argv[i+2]){
         printf("Error : could not parse element \"%s\".\r\n",argv[i+2]);
+        //free buffer
+        BUS_free_buffer();
         return 2;
     }
     //check for unknown suffix
     if(*end!=0){
       printf("Error : unknown sufix \"%s\" at end of element \"%s\"\r\n",end,argv[i+2]);
+      //free buffer
+      BUS_free_buffer();  
       return 3;
     }   
   }
@@ -218,13 +282,27 @@ int gainCmd(char **argv,unsigned short argc){
     tmp.c.y=tmp.c.x;
     tmp.c.z=tmp.c.x;
   }
-  //store values
+  //store values in temp buffer
   vec_cp(dest,&tmp);
-  //print values
-  vecPrint(argv[1],dest);
+  //set magic
+  tmp_settings->magic=ACDS_SETTINGS_MAGIC;
+  //set CRC
+  tmp_settings->crc=crc16(&tmp_settings->dat,sizeof(ACDS_SETTINGS));
+  //write values to flash
+  flash_write((void*)&ACDS_settings,tmp_settings,sizeof(ACDS_SETTINGS_STORE));
+  //print values from flash
+  if(!strcmp(argv[1],"Ka")){
+    vecPrint(argv[1],&ACDS_settings.dat.settings.Ka);
+  }else if(!strcmp(argv[1],"Km")){
+    vecPrint(argv[1],&ACDS_settings.dat.settings.Km);
+  }else if(!strcmp(argv[1],"Kb")){
+    vecPrint(argv[1],&ACDS_settings.dat.settings.Kb);
+  }
   if(output_type==MACHINE_OUTPUT){
     printf("\r\n");
   }
+  //free buffer
+  BUS_free_buffer();
   return 0;
 }
 
