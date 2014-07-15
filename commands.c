@@ -666,7 +666,7 @@ int dummycorCmd(char **argv,unsigned short argc){
         return -1;
     }
     dest=(C_AXIS*)(buffer);
-    for(;idx<6 && all;idx++){
+    for(;idx<6;idx++){
         //zero all data
         memset(dest,0,sizeof(C_AXIS));
         //set scale factors to datasheet nominal
@@ -683,6 +683,8 @@ int dummycorCmd(char **argv,unsigned short argc){
             printf("Error writing correction data %i returned\r\n",ret);
             break;
         }
+        //exit loop if only erasing one axis
+        if(!all)break;
     }
     //free buffer
     BUS_free_buffer();
