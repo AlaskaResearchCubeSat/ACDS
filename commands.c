@@ -907,14 +907,14 @@ int magCmd(char **argv,unsigned short argc){
                         //apply correction
                         applyCor(&pt,&magData.meas[i],i);
                         //print result
-                        printf("%i : %f %f\r\n",i,pt.c.a,pt.c.b);
+                        printf(" %s : %f %f\r\n",cor_axis_names[i],pt.c.a,pt.c.b);
                     }else{
                         //print error
-                        printf("%i : --- ---\r\n",i);
+                        printf(" %s : --- ---\r\n",cor_axis_names[i]);
                     }
                 }else{
                     //print error
-                    printf("%i : ### ###\r\n",i);
+                    //printf(" %s : ### ###\r\n",cor_axis_names[i]);
                 }
             }
         }
@@ -945,14 +945,14 @@ int magCmd(char **argv,unsigned short argc){
                                 //apply correction
                                 applyCor(&pt,&magData.meas[i],i);
                                 //print result
-                                printf("%i : %f %f\r\n",i,pt.c.a,pt.c.b);
+                                printf(" %s : % f\t% f\r\n",cor_axis_names[i],pt.c.a,pt.c.b);
                             }else{
                                 //print error
-                                printf("%i : --- ---\r\n",i);
+                                printf(" %s : --- ---\r\n",cor_axis_names[i]);
                             }
                         }else{
                             //print error
-                            printf("%i : ### ###\r\n",i);
+                            //printf(" %s : ### ###\r\n",cor_axis_names[i]);
                         }
                     }
                     //print seperator                   
