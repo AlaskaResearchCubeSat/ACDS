@@ -483,7 +483,7 @@ int randomTorqueCmd(char **argv,unsigned short argc){
 
 enum{COR_X_BASE=0,COR_Y_BASE=2,COR_Z_BASE=4,COR_PLUS_OFFSET=0,COR_MINUS_OFFSET=1};
 
-const char *(cor_axis_names[])={"X+","X-","Y+","Y-","Z+","Z-"};
+const char * const (cor_axis_names[])={"X+","X-","Y+","Y-","Z+","Z-"};
 
 int unpackCmd(char **argv,unsigned short argc){
     unsigned long sector;
