@@ -61,6 +61,8 @@
     void read_cor_stat(void);
     //apply corrections to measurement
     int applyCor(CPOINT *dest,const MAG_POINT *src,int idx);
+    //erase corrections data for a given SPB index
+    short erase_correction_dat(int idx);
 
 #endif
     

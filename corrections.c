@@ -91,6 +91,32 @@ short write_correction_dat(int idx,const C_AXIS *dat){
     return RET_SUCCESS;
 }
 
+short erase_correction_dat(int idx){
+    int en;
+    //pointer to destination that is not constant so compiler does not complain
+    COR_STORE *dest=(COR_STORE*)&correction_data[idx];
+    //disable interrupts
+    en = BUS_stop_interrupts();
+    //disable watchdog
+    WDT_STOP();
+    //unlock flash memory
+    FCTL3=FWKEY;
+    //setup flash for erase
+    FCTL1=FWKEY|ERASE;
+    //dummy write to indicate which segment to erase
+    dest->magic=0;
+    //lock the flash again
+    FCTL3=FWKEY|LOCK;
+    //re-enable interrupts if enabled before
+    BUS_restart_interrupts(en);
+    //check fail flag and that the first and last bytes were erased
+    if(FCTL3&FAIL || dest->magic!=0xFFFF || dest->crc!=0xFFFF){
+        //return error
+        return WR_COR_ERROR_ERASE_FAIL;
+    }  
+    return RET_SUCCESS;
+}
+
 //read correction data status for all axes
 void read_cor_stat(void){
     int i;
