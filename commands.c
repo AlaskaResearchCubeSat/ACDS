@@ -1025,6 +1025,55 @@ int modeCmd(char **argv,unsigned short argc){
     return 0;
 }
 
+//erase corection data command
+int erase_cor_Cmd(char **argv,unsigned short argc){
+    int ret;
+    unsigned short all=0;
+    int i,resp,idx;
+    if(argc<1){
+        printf("Error: too few arguments\r\n");
+        return -1;
+    }
+    if(argc>1){
+        printf("Error: too many arguments\r\n");
+        return -2;
+    }
+    for(i=0,idx=-1;i<6;i++){
+        if(!strcmp(argv[1],cor_axis_names[i])){
+            idx=i;
+            break;
+        }
+    }
+    if(idx==-1){
+        if(!strcmp(argv[1],"all")){
+            all=1;
+            idx=0;
+        }
+    }
+    if(idx==-1){
+        if(1!=sscanf(argv[1],"%u",&idx)){
+            //print error
+            printf("Error parsing index \"%s\"\r\n",argv[1]);
+            return -3;
+        }
+    }
+    //sanity check index
+    if(idx>=6){
+      printf("Error : index too large\r\n");
+      return -5;
+    }
+    for(;idx<6;idx++){
+        ret=erase_correction_dat(idx);
+        if(ret){
+            printf("Error : failed to erase data for the %s axis\r\n",cor_axis_names[idx]);
+        }else{
+            printf("%s axis data erased\r\n",cor_axis_names[idx]);
+        } 
+        //exit loop if only erasing one axis
+        if(!all)break;
+    }
+}
+
 //table of commands with help
 const CMD_SPEC cmd_tbl[]={{"help"," [command]\r\n\t""get a list of commands or help on a spesific command.",helpCmd},
                      CTL_COMMANDS,ARC_COMMANDS,ERROR_COMMANDS,
@@ -1057,5 +1106,6 @@ const CMD_SPEC cmd_tbl[]={{"help"," [command]\r\n\t""get a list of commands or h
                      {"ctst","axis aval bval""\r\n\t""apply corrections to a set of measurments",ctstCmd},
                      {"mag","[raw single]""\r\n\t""read data from magnetomiters",magCmd},
                      {"mode","mode""\r\n\t""run ACDS in given mode",modeCmd},
+                     {"ecor","idx""\r\n\t""erase correction data for the given SPB",erase_cor_Cmd},
                      //end of list
                      {NULL,NULL,NULL}};
