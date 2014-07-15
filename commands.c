@@ -824,15 +824,19 @@ int ctstCmd(char **argv,unsigned short argc){
 }
 
 int magCmd(char **argv,unsigned short argc){
-    int single=0;
+    int single=0,print_sdata=0;
     unsigned short time=32768,count=0;
     int i,res,timeout=0;
     CTL_EVENT_SET_t e;
+    extern MAG_DAT magData;
+    CPOINT pt;
     unsigned char buff[BUS_I2C_HDR_LEN+3+BUS_I2C_CRC_LEN],*ptr;
     //parse arguments
     for(i=1;i<=argc;i++){
         if(!strcmp("single",argv[i])){
             single=1;
+        }else if(!strcmp("sdata",argv[i])){
+            print_sdata=1;
         }else{
             printf("Error Unknown argument \'%s\'.\r\n",argv[i]);
             return -1;
@@ -888,6 +892,32 @@ int magCmd(char **argv,unsigned short argc){
         if(output_type==MACHINE_OUTPUT){   
             printf("\r\n");
         }
+        //print out individual sensor data
+        if(print_sdata){
+            //print seperator
+            if(output_type==HUMAN_OUTPUT){   
+                printf("========================================================================================\r\n");
+            }
+            //loop through all SPBs
+            for(i=0;i<6;i++){
+                //check for valid measurements
+                if(magData.flags&(1<<(i*2)) && magData.flags&(1<<(i*2+1))){
+                    //check for correction data
+                    if(cor_stat&(1<<i)){
+                        //apply correction
+                        applyCor(&pt,&magData.meas[i],i);
+                        //print result
+                        printf("%i : %f %f\r\n",i,pt.c.a,pt.c.b);
+                    }else{
+                        //print error
+                        printf("%i : --- ---\r\n",i);
+                    }
+                }else{
+                    //print error
+                    printf("%i : ### ###\r\n",i);
+                }
+            }
+        }
     }else{
         printf("Reading Magnetometer, press any key to stop\r\n");
         //run while no keys pressed
@@ -899,6 +929,36 @@ int magCmd(char **argv,unsigned short argc){
                 vecPrint("Flux",&acds_dat.flux);
                 if(output_type==MACHINE_OUTPUT){   
                     printf("\r\n");
+                }
+                //print out individual sensor data
+                if(print_sdata){ 
+                    //print seperator
+                    if(output_type==HUMAN_OUTPUT){   
+                        printf("========================================================================================\r\n");
+                    }
+                    //loop through all SPBs
+                    for(i=0;i<6;i++){
+                        //check for valid measurements
+                        if(magData.flags&(1<<(i*2)) && magData.flags&(1<<(i*2+1))){
+                            //check for correction data
+                            if(cor_stat&(1<<i)){
+                                //apply correction
+                                applyCor(&pt,&magData.meas[i],i);
+                                //print result
+                                printf("%i : %f %f\r\n",i,pt.c.a,pt.c.b);
+                            }else{
+                                //print error
+                                printf("%i : --- ---\r\n",i);
+                            }
+                        }else{
+                            //print error
+                            printf("%i : ### ###\r\n",i);
+                        }
+                    }
+                    //print seperator                   
+                    if(output_type==HUMAN_OUTPUT){   
+                        printf("========================================================================================\r\n");
+                    }
                 }
                 //message recived, reduce timeout count
                 if(timeout>-10){
