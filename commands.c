@@ -824,7 +824,7 @@ int ctstCmd(char **argv,unsigned short argc){
 }
 
 int magCmd(char **argv,unsigned short argc){
-    int single=0,print_sdata=0;
+    int single=0,print_sdata=0,print_all=0;
     unsigned short time=32768,count=0;
     int i,res,timeout=0;
     CTL_EVENT_SET_t e;
@@ -837,6 +837,8 @@ int magCmd(char **argv,unsigned short argc){
             single=1;
         }else if(!strcmp("sdata",argv[i])){
             print_sdata=1;
+        }else if(!strcmp("all",argv[i])){
+            print_all=1;
         }else{
             printf("Error Unknown argument \'%s\'.\r\n",argv[i]);
             return -1;
@@ -912,9 +914,9 @@ int magCmd(char **argv,unsigned short argc){
                         //print error
                         printf(" %s : --- ---\r\n",cor_axis_names[i]);
                     }
-                }else{
+                }else if(print_all){
                     //print error
-                    //printf(" %s : ### ###\r\n",cor_axis_names[i]);
+                    printf(" %s : ### ###\r\n",cor_axis_names[i]);
                 }
             }
         }
@@ -950,9 +952,9 @@ int magCmd(char **argv,unsigned short argc){
                                 //print error
                                 printf(" %s : --- ---\r\n",cor_axis_names[i]);
                             }
-                        }else{
+                        }else if(print_all){
                             //print error
-                            //printf(" %s : ### ###\r\n",cor_axis_names[i]);
+                            printf(" %s : ### ###\r\n",cor_axis_names[i]);
                         }
                     }
                     //print seperator                   
