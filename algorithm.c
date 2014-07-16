@@ -124,43 +124,6 @@ const ACDS_SETTINGS_STORE ACDS_settings={ACDS_SETTINGS_MAGIC,{{
 #pragma constseg(default)
 #pragma zeroedseg(default)
 
-//edit angular rate setpoint
-int setpointCmd(char **argv,unsigned short argc){
-  VEC tmp;
-  char *end;
-  int i;
-  //check number of arguments
-  if(argc!=3 && argc!=0){
-    printf("Error : %s requiors 0 or 3 arguments but %i given.\r\n",argv[0],argc);
-    return -2;
-  }
-  //if 3 arguments given, parse and set
-  if(argc==3){
-    for(i=0;i<3;i++){
-      //get value
-      tmp.elm[i]=strtof(argv[i+1],&end);
-      //check if value parsed
-      if(end==argv[i+1]){
-          printf("Error : could not parse element \"%s\".\r\n",argv[i+1]);
-          return 2;
-      }
-      //check for unknown sufix
-      if(*end!=0){
-        printf("Error : unknown sufix \"%s\" at end of element \"%s\"\r\n",end,argv[i+1]);
-        return 3;
-      }   
-    }
-    //set value
-    vec_cp(&ACDS_settings.dat.settings.Omega_CMD,&tmp);
-  }
-  //print value
-  vecPrint("Omega_cmd",&ACDS_settings.dat.settings.Omega_CMD);
-  if(output_type==MACHINE_OUTPUT){
-    printf("\r\n");
-  }
-  return 0;
-}
-
 int flash_write(void *dest,const void *src,int size){
     int en,i;
     //disable interrupts
@@ -195,6 +158,66 @@ int flash_write(void *dest,const void *src,int size){
     //re-enable interrupts if enabled before
     BUS_restart_interrupts(en);
     return RET_SUCCESS;
+}
+
+//edit angular rate setpoint
+int setpointCmd(char **argv,unsigned short argc){
+  unsigned char *buffer=NULL;
+  ACDS_SETTINGS_STORE *tmp_settings;
+  char *end;
+  int i;
+  //check number of arguments
+  if(argc!=3 && argc!=0){
+    printf("Error : %s requiors 0 or 3 arguments but %i given.\r\n",argv[0],argc);
+    return -2;
+  }
+  //if 3 arguments given, parse and set
+  if(argc==3){
+    //get buffer, set a timeout of 2 secconds
+    buffer=BUS_get_buffer(CTL_TIMEOUT_DELAY,2048);
+    //check for error
+    if(buffer==NULL){
+        printf("Error : Timeout while waiting for buffer.\r\n");
+        return -1;
+    }
+    //set temporary settings pointer
+    tmp_settings=(ACDS_SETTINGS_STORE*)buffer;
+    //copy settings into temp buffer
+    memcpy(tmp_settings,&ACDS_settings,sizeof(ACDS_SETTINGS_STORE));
+    //read setpoint
+    for(i=0;i<3;i++){
+      //get value
+      tmp_settings->dat.settings.Omega_CMD.elm[i]=strtof(argv[i+1],&end);
+      //check if value parsed
+      if(end==argv[i+1]){
+          printf("Error : could not parse element \"%s\".\r\n",argv[i+1]);
+          //free buffer
+          BUS_free_buffer();  
+          return 2;
+      }
+      //check for unknown sufix
+      if(*end!=0){
+        printf("Error : unknown sufix \"%s\" at end of element \"%s\"\r\n",end,argv[i+1]);
+        //free buffer
+        BUS_free_buffer();  
+        return 3;
+      }   
+    }
+    //set magic
+    tmp_settings->magic=ACDS_SETTINGS_MAGIC;
+    //set CRC
+    tmp_settings->crc=crc16((void*)&tmp_settings->dat,sizeof(ACDS_SETTINGS));
+    //write values to flash
+    flash_write((void*)&ACDS_settings,tmp_settings,sizeof(ACDS_SETTINGS_STORE));
+    //free buffer
+    BUS_free_buffer();  
+  }
+  //print value
+  vecPrint("Omega_cmd",&ACDS_settings.dat.settings.Omega_CMD);
+  if(output_type==MACHINE_OUTPUT){
+    printf("\r\n");
+  }
+  return 0;
 }
 
 //set detumble and alignment gains
