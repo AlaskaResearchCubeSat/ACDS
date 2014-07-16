@@ -824,9 +824,9 @@ int ctstCmd(char **argv,unsigned short argc){
 }
 
 int magCmd(char **argv,unsigned short argc){
-    int single=0,print_sdata=0,print_all=0;
+    int single=0,print_sdata=0,print_all=0,single_axis=-1;
     unsigned short time=32768,count=0;
-    int i,res,timeout=0;
+    int i,j,res,timeout=0;
     CTL_EVENT_SET_t e;
     extern MAG_DAT magData;
     CPOINT pt;
@@ -839,9 +839,18 @@ int magCmd(char **argv,unsigned short argc){
             print_sdata=1;
         }else if(!strcmp("all",argv[i])){
             print_all=1;
-        }else{
-            printf("Error Unknown argument \'%s\'.\r\n",argv[i]);
-            return -1;
+        }else{                        
+            //look for symbolic axis name
+            for(j=0;j<6;j++){
+                if(!strcmp(argv[i],cor_axis_names[j])){
+                    single_axis=j;
+                    break;
+                }
+            }
+            if(single_axis==-1){
+                printf("Error Unknown argument \'%s\'.\r\n",argv[i]);
+                return -1;
+            }
         }
     }
     //set ACDS mode
@@ -889,36 +898,42 @@ int magCmd(char **argv,unsigned short argc){
             printf("Error : timeout while waiting for sensor data\r\n");
             return 2;
         }
-        //print out flux values   
-        vecPrint("Flux",&acds_dat.flux);
-        if(output_type==MACHINE_OUTPUT){   
-            printf("\r\n");
-        }
-        //print out individual sensor data
-        if(print_sdata){
-            //print seperator
-            if(output_type==HUMAN_OUTPUT){   
-                printf("========================================================================================\r\n");
+        if(single_axis==-1){
+            //print out flux values   
+            vecPrint("Flux",&acds_dat.flux);
+            if(output_type==MACHINE_OUTPUT){   
+                printf("\r\n");
             }
-            //loop through all SPBs
-            for(i=0;i<6;i++){
-                //check for valid measurements
-                if(magData.flags&(1<<(i*2)) && magData.flags&(1<<(i*2+1))){
-                    //check for correction data
-                    if(cor_stat&(1<<i)){
-                        //apply correction
-                        applyCor(&pt,&magData.meas[i],i);
-                        //print result
-                        printf(" %s : %f %f\r\n",cor_axis_names[i],pt.c.a,pt.c.b);
-                    }else{
+            //print out individual sensor data
+            if(print_sdata){
+                //print seperator
+                if(output_type==HUMAN_OUTPUT){   
+                    printf("========================================================================================\r\n");
+                }
+                //loop through all SPBs
+                for(i=0;i<6;i++){
+                    //check for valid measurements
+                    if(magData.flags&(1<<(i*2)) && magData.flags&(1<<(i*2+1))){
+                        //check for correction data
+                        if(cor_stat&(1<<i)){
+                            //apply correction
+                            applyCor(&pt,&magData.meas[i],i);
+                            //print result
+                            printf(" %s : %f %f\r\n",cor_axis_names[i],pt.c.a,pt.c.b);
+                        }else{
+                            //print error
+                            printf(" %s : --- ---\r\n",cor_axis_names[i]);
+                        }
+                    }else if(print_all){
                         //print error
-                        printf(" %s : --- ---\r\n",cor_axis_names[i]);
+                        printf(" %s : ### ###\r\n",cor_axis_names[i]);
                     }
-                }else if(print_all){
-                    //print error
-                    printf(" %s : ### ###\r\n",cor_axis_names[i]);
                 }
             }
+        }else{
+            applyCor(&pt,&magData.meas[single_axis],single_axis);
+            //print result
+            printf("%f\t%f\r\n",pt.c.a,pt.c.b);
         }
     }else{
         printf("Reading Magnetometer, press any key to stop\r\n");
@@ -928,39 +943,45 @@ int magCmd(char **argv,unsigned short argc){
             e=ctl_events_wait(CTL_EVENT_WAIT_ANY_EVENTS_WITH_AUTO_CLEAR,&ACDS_evt,ADCS_EVD_COMMAND_SENSOR_READ,CTL_TIMEOUT_DELAY,1800);
             //check if data was received
             if(e&ADCS_EVD_COMMAND_SENSOR_READ){
-                vecPrint("Flux",&acds_dat.flux);
-                if(output_type==MACHINE_OUTPUT){   
-                    printf("\r\n");
-                }
-                //print out individual sensor data
-                if(print_sdata){ 
-                    //print seperator
-                    if(output_type==HUMAN_OUTPUT){   
-                        printf("========================================================================================\r\n");
+                if(single_axis==-1){
+                    vecPrint("Flux",&acds_dat.flux);
+                    if(output_type==MACHINE_OUTPUT){   
+                        printf("\r\n");
                     }
-                    //loop through all SPBs
-                    for(i=0;i<6;i++){
-                        //check for valid measurements
-                        if(magData.flags&(1<<(i*2)) && magData.flags&(1<<(i*2+1))){
-                            //check for correction data
-                            if(cor_stat&(1<<i)){
-                                //apply correction
-                                applyCor(&pt,&magData.meas[i],i);
-                                //print result
-                                printf(" %s : % f\t% f\r\n",cor_axis_names[i],pt.c.a,pt.c.b);
-                            }else{
+                    //print out individual sensor data
+                    if(print_sdata){ 
+                        //print seperator
+                        if(output_type==HUMAN_OUTPUT){   
+                            printf("========================================================================================\r\n");
+                        }
+                        //loop through all SPBs
+                        for(i=0;i<6;i++){
+                            //check for valid measurements
+                            if(magData.flags&(1<<(i*2)) && magData.flags&(1<<(i*2+1))){
+                                //check for correction data
+                                if(cor_stat&(1<<i)){
+                                    //apply correction
+                                    applyCor(&pt,&magData.meas[i],i);
+                                    //print result
+                                    printf(" %s : % f\t% f\r\n",cor_axis_names[i],pt.c.a,pt.c.b);
+                                }else{
+                                    //print error
+                                    printf(" %s : --- ---\r\n",cor_axis_names[i]);
+                                }
+                            }else if(print_all){
                                 //print error
-                                printf(" %s : --- ---\r\n",cor_axis_names[i]);
+                                printf(" %s : ### ###\r\n",cor_axis_names[i]);
                             }
-                        }else if(print_all){
-                            //print error
-                            printf(" %s : ### ###\r\n",cor_axis_names[i]);
+                        }
+                        //print seperator                   
+                        if(output_type==HUMAN_OUTPUT){   
+                            printf("========================================================================================\r\n");
                         }
                     }
-                    //print seperator                   
-                    if(output_type==HUMAN_OUTPUT){   
-                        printf("========================================================================================\r\n");
-                    }
+                }else{
+                    applyCor(&pt,&magData.meas[single_axis],single_axis);
+                    //print result
+                    printf("%f\t%f\r\n",pt.c.a,pt.c.b);
                 }
                 //message recived, reduce timeout count
                 if(timeout>-10){
