@@ -56,9 +56,6 @@ extern ACDS_DAT acds_dat;
 
 extern float lat,lat_old;
 
-extern VEC Ka,Km;
-extern VEC Omega_CMD;
-
 enum{MODE_NO_UPGRADE=0,MODE_UPGRADE=1};
 
 //calculate rotation rates

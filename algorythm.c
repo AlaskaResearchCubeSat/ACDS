@@ -151,10 +151,10 @@ int setpointCmd(char **argv,unsigned short argc){
       }   
     }
     //set value
-    vec_cp(&Omega_CMD,&tmp);
+    vec_cp(&ACDS_settings.dat.settings.Omega_CMD,&tmp);
   }
   //print value
-  vecPrint("Omega_cmd",&Omega_CMD);
+  vecPrint("Omega_cmd",&ACDS_settings.dat.settings.Omega_CMD);
   if(output_type==MACHINE_OUTPUT){
     printf("\r\n");
   }
