@@ -162,11 +162,7 @@ int setpointCmd(char **argv,unsigned short argc){
 }
 
 int flash_write(void *dest,const void *src,int size){
-    const unsigned short *s=src;
-    unsigned short *d=dest;
     int en,i;
-    //compute size in words (round up)
-    size=(size+1)/2;
     //disable interrupts
     en = BUS_stop_interrupts();
     //disable watchdog
@@ -176,28 +172,25 @@ int flash_write(void *dest,const void *src,int size){
     //setup flash for erase
     FCTL1=FWKEY|ERASE;
     //dummy write to indicate which segment to erase
-    *d=0;
+    *(unsigned short*)(dest)=0;
     //lock the flash again
     FCTL3=FWKEY|LOCK;
     //check fail flag and that the first and last bytes were erased
-    if(FCTL3&FAIL || *d!=0xFFFF || d[size-1]!=0xFFFF){
+    if(FCTL3&FAIL || *(unsigned short*)(dest)!=0xFFFF || ((unsigned short*)(dest))[size-1]!=0xFFFF){
         //re-enable interrupts if enabled before
         BUS_restart_interrupts(en);
         return -1;
     }  
-    
-    for(i=0;i<size;i++){
-        //unlock flash memory
-        FCTL3=FWKEY; 
-        //enable writing
-        FCTL1=FWKEY|WRT;
-        //write settings
-        d[i]=s[i];
-        //disable writing
-        FCTL1=FWKEY;
-        //lock flash
-        FCTL3=FWKEY|LOCK;
-    }
+    //unlock flash memory
+    FCTL3=FWKEY; 
+    //enable writing
+    FCTL1=FWKEY|WRT;
+    //write settings
+    memcpy(dest,src,size);
+    //disable writing
+    FCTL1=FWKEY;
+    //lock flash
+    FCTL3=FWKEY|LOCK;
     
     //re-enable interrupts if enabled before
     BUS_restart_interrupts(en);
@@ -287,7 +280,7 @@ int gainCmd(char **argv,unsigned short argc){
   //set magic
   tmp_settings->magic=ACDS_SETTINGS_MAGIC;
   //set CRC
-  tmp_settings->crc=crc16(&tmp_settings->dat,sizeof(ACDS_SETTINGS));
+  tmp_settings->crc=crc16((void*)&tmp_settings->dat,sizeof(ACDS_SETTINGS));
   //write values to flash
   flash_write((void*)&ACDS_settings,tmp_settings,sizeof(ACDS_SETTINGS_STORE));
   //print values from flash

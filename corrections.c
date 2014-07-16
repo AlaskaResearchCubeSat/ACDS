@@ -49,30 +49,8 @@ short write_correction_dat(int idx,const C_AXIS *dat){
     FCTL1=FWKEY|WRT;
     //write magic
     dest->magic=COR_MAGIC;
-    //write CRC
-    dest->crc=crc;
-    //disable writing
-    FCTL1=FWKEY;
-    //lock flash
-    FCTL3=FWKEY|LOCK;
-    
-    for(i=0,s=(unsigned short*)dat,d=(unsigned short*)&dest->dat.cor;i<(sizeof(C_AXIS)+1)/2;i++){
-        //unlock flash memory
-        FCTL3=FWKEY; 
-        //enable writing
-        FCTL1=FWKEY|WRT;
-        //write settings
-        *d++=*s++;
-        //disable writing
-        FCTL1=FWKEY;
-        //lock flash
-        FCTL3=FWKEY|LOCK;
-    }
-    
-    //unlock flash memory
-    FCTL3=FWKEY; 
-    //enable writing
-    FCTL1=FWKEY|WRT;
+    //write data
+    memcpy(&dest->dat.cor,dat,sizeof(C_AXIS));
     //write CRC
     dest->crc=crc;
     //disable writing
