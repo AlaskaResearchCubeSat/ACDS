@@ -1154,6 +1154,7 @@ const CMD_SPEC cmd_tbl[]={{"help"," [command]\r\n\t""get a list of commands or h
                      {"srun","[time count]\r\n\t""tell LEDL to start taking sensor data.",sensorRunCmd},
                      {"sstop","\r\n\t""tell LEDL to stop taking sensor data.",sensorStopCmd},
                      {"gain","type [g1 g2 g3]\r\n\t""set gain of algorithm",gainCmd},
+                     {"setpoint","s1 s2 s3\r\n\t""get/set setpoint for rates",setpointCmd},
                      {"log","[level]\r\n\t""get/set log level",logCmd},
                      {"clrerr","\r\n\t""Clear error LED",clrErrCmd},
                      {"output","[output type]\r\n\tchange output between human and machine readable",outputTypeCmd},
