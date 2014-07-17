@@ -1157,6 +1157,22 @@ int erase_cor_Cmd(char **argv,unsigned short argc){
     }
 }
 
+//test stat2idx function
+int stat2idx_Cmd(char **argv,unsigned short argc){    
+    int axis;
+    if(argc<1){
+        printf("Error : too few arguments\r\n");
+        return -1;
+    }
+    if(argc>1){
+        printf("Error : too many arguments\r\n");
+        return -2;
+    }
+    axis=atoi(argv[1]);
+    printf("Idx = %i\r\n",stat2Idx(axis));
+    return 0;
+}
+
 //table of commands with help
 const CMD_SPEC cmd_tbl[]={{"help"," [command]\r\n\t""get a list of commands or help on a spesific command.",helpCmd},
                      CTL_COMMANDS,ARC_COMMANDS,ERROR_COMMANDS,
@@ -1191,5 +1207,6 @@ const CMD_SPEC cmd_tbl[]={{"help"," [command]\r\n\t""get a list of commands or h
                      {"mag","[raw single]""\r\n\t""read data from magnetomiters",magCmd},
                      {"mode","mode""\r\n\t""run ACDS in given mode",modeCmd},
                      {"ecor","idx""\r\n\t""erase correction data for the given SPB",erase_cor_Cmd},
+                     {"stat2idx","axis""\r\n\t""test stat2idx function",stat2idx_Cmd},
                      //end of list
                      {NULL,NULL,NULL}};
