@@ -787,7 +787,7 @@ int ctstCmd(char **argv,unsigned short argc){
         }
     }
     //parse first value
-    mag.c.a=strtof(argv[2],&end);
+    mag.c.a=strtol(argv[2],&end,10);
     if(end==argv[2]){
         printf("Error : could not parse \"%s\"\r\n",argv[2]);
         return -4;
@@ -797,7 +797,7 @@ int ctstCmd(char **argv,unsigned short argc){
         return -5;
     }
     //parse second value
-    mag.c.b=strtof(argv[3],&end);
+    mag.c.b=strtol(argv[3],&end,10);
     if(end==argv[3]){
         printf("Error : could not parse \"%s\"\r\n",argv[3]);
         return -4;
@@ -807,7 +807,7 @@ int ctstCmd(char **argv,unsigned short argc){
         return -5;
     }
     //print values and axis
-    printf("Correcting measurements for the %s axis:\r\n%f %f\r\n",cor_axis_names[idx],mag.c.a,mag.c.b);
+    printf("Correcting measurements for the %s axis:\r\n%i %i\r\n",cor_axis_names[idx],mag.c.a,mag.c.b);
     //apply correction and check if full correction was applied
     if(RET_SUCCESS!=applyCor(&meas,&mag,idx)){
         //print warning
