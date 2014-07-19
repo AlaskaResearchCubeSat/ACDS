@@ -824,7 +824,7 @@ int ctstCmd(char **argv,unsigned short argc){
 }
 
 int magCmd(char **argv,unsigned short argc){
-    int single=0,print_sdata=0,print_all=0,single_axis=-1;
+    int single=0,print_sdata=0,print_all=0,single_axis=-1,print_raw=0;
     unsigned short time=32768,count=0;
     int i,j,res,timeout=0;
     CTL_EVENT_SET_t e;
@@ -839,6 +839,8 @@ int magCmd(char **argv,unsigned short argc){
             print_sdata=1;
         }else if(!strcmp("all",argv[i])){
             print_all=1;
+        }else if(!strcmp("raw",argv[i])){
+            print_raw=1;
         }else{                        
             //look for symbolic axis name
             for(j=0;j<6;j++){
@@ -914,15 +916,19 @@ int magCmd(char **argv,unsigned short argc){
                 for(i=0;i<6;i++){
                     //check for valid measurements
                     if(magData.flags&(1<<(i*2)) && magData.flags&(1<<(i*2+1))){
-                        //check for correction data
-                        if(cor_stat&(1<<i)){
-                            //apply correction
-                            applyCor(&pt,&magData.meas[i],i);
-                            //print result
-                            printf(" %s : %f %f\r\n",cor_axis_names[i],pt.c.a,pt.c.b);
+                        if(print_raw){
+                            printf(" %s : % i % i\r\n",cor_axis_names[i],magData.meas[i].c.a,magData.meas[i].c.b);
                         }else{
-                            //print error
-                            printf(" %s : --- ---\r\n",cor_axis_names[i]);
+                            //check for correction data
+                            if(cor_stat&(1<<i)){
+                                //apply correction
+                                applyCor(&pt,&magData.meas[i],i);
+                                //print result
+                                printf(" %s : %f %f\r\n",cor_axis_names[i],pt.c.a,pt.c.b);
+                            }else{
+                                //print error
+                                printf(" %s : --- ---\r\n",cor_axis_names[i]);
+                            }
                         }
                     }else if(print_all){
                         //print error
@@ -931,9 +937,13 @@ int magCmd(char **argv,unsigned short argc){
                 }
             }
         }else{
-            applyCor(&pt,&magData.meas[single_axis],single_axis);
-            //print result
-            printf("%f\t%f\r\n",pt.c.a,pt.c.b);
+            if(print_raw){
+                printf("% i\t% i\r\n",magData.meas[single_axis].c.a,magData.meas[single_axis].c.b);
+            }else{
+                applyCor(&pt,&magData.meas[single_axis],single_axis);
+                //print result
+                printf("%f\t%f\r\n",pt.c.a,pt.c.b);
+            }
         }
     }else{
         printf("Reading Magnetometer, press any key to stop\r\n");
@@ -958,15 +968,19 @@ int magCmd(char **argv,unsigned short argc){
                         for(i=0;i<6;i++){
                             //check for valid measurements
                             if(magData.flags&(1<<(i*2)) && magData.flags&(1<<(i*2+1))){
-                                //check for correction data
-                                if(cor_stat&(1<<i)){
-                                    //apply correction
-                                    applyCor(&pt,&magData.meas[i],i);
-                                    //print result
-                                    printf(" %s : % f\t% f\r\n",cor_axis_names[i],pt.c.a,pt.c.b);
+                                if(print_raw){
+                                    printf(" %s : % i % i\r\n",cor_axis_names[i],magData.meas[i].c.a,magData.meas[i].c.b);
                                 }else{
-                                    //print error
-                                    printf(" %s : --- ---\r\n",cor_axis_names[i]);
+                                    //check for correction data
+                                    if(cor_stat&(1<<i)){
+                                        //apply correction
+                                        applyCor(&pt,&magData.meas[i],i);
+                                        //print result
+                                        printf(" %s : % f\t% f\r\n",cor_axis_names[i],pt.c.a,pt.c.b);
+                                    }else{
+                                        //print error
+                                        printf(" %s : --- ---\r\n",cor_axis_names[i]);
+                                    }
                                 }
                             }else if(print_all){
                                 //print error
@@ -979,9 +993,13 @@ int magCmd(char **argv,unsigned short argc){
                         }
                     }
                 }else{
-                    applyCor(&pt,&magData.meas[single_axis],single_axis);
-                    //print result
-                    printf("%f\t%f\r\n",pt.c.a,pt.c.b);
+                    if(print_raw){
+                        printf("% i\t% i\r\n",magData.meas[single_axis].c.a,magData.meas[single_axis].c.b);
+                    }else{
+                        applyCor(&pt,&magData.meas[single_axis],single_axis);
+                        //print result
+                        printf("%f\t%f\r\n",pt.c.a,pt.c.b);
+                    }
                 }
                 //message recived, reduce timeout count
                 if(timeout>-10){
