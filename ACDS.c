@@ -32,16 +32,47 @@ void sub_events(void *p) __toplevel{
   unsigned int e,len;
   int i,resp;
   extern CTL_TASK_t tasks[3];
+  unsigned short time=32768,count=0;
   unsigned char buf[BUS_I2C_HDR_LEN+sizeof(ACDS_STAT)+BUS_I2C_CRC_LEN],*ptr;
   for(;;){
     e=ctl_events_wait(CTL_EVENT_WAIT_ANY_EVENTS_WITH_AUTO_CLEAR,&SUB_events,SUB_EV_ALL|SUB_EV_ASYNC_OPEN|SUB_EV_ASYNC_CLOSE,CTL_TIMEOUT_NONE,0);
     if(e&SUB_EV_PWR_OFF){
-      //print message
-      puts("System Powering Down\r\n");
+        //print message
+        puts("System Powering Down\r\n");
+        //set ACDS mode
+        ACDS_mode=ACDS_IDLE_MODE;
+        //setup command
+        ptr=BUS_cmd_init(buf,CMD_MAG_SAMPLE_CONFIG);
+        //set command
+        *ptr++=MAG_SAMPLE_STOP;
+        //send packet
+        resp=BUS_cmd_tx(BUS_ADDR_LEDL,buf,1,0,BUS_I2C_SEND_FOREGROUND);
+        //check result
+        if(resp<0){
+            printf("Error communicating with LEDL : %s\r\n",BUS_error_str(resp));
+        }
     }
     if(e&SUB_EV_PWR_ON){
-      //print message
-      puts("System Powering Up\r\n");
+        //print message
+        puts("System Powering Up\r\n");
+        //set init ACDS mode
+        ACDS_mode=ACDS_INIT_MODE;
+        //setup command
+        ptr=BUS_cmd_init(buf,CMD_MAG_SAMPLE_CONFIG);
+        //set command
+        *ptr++=MAG_SAMPLE_START;
+        //set time MSB
+        *ptr++=time>>8;
+        //set time LSB
+        *ptr++=time;
+        //set count
+        *ptr++=count;
+        //send packet
+        resp=BUS_cmd_tx(BUS_ADDR_LEDL,buf,4,0,BUS_I2C_SEND_FOREGROUND);
+        //check result
+        if(resp<0){
+            printf("Error communicating with LEDL : %s\r\n",BUS_error_str(resp));
+        }
     }
     if(e&SUB_EV_SEND_STAT){
       //send status
@@ -344,6 +375,19 @@ void ACDS_events(void *p) __toplevel{
                 }
             }*/
             //printf("Fux = %f %f %f\r\n",Flux.c.x,Flux.c.y,Flux.c.z);
+        break;
+        case ACDS_IDLE_MODE:
+            //do nothing in idle mode
+        break;
+        case ACDS_INIT_MODE:
+            //check if torquers are initialized
+            if(!checkTorqueInit){
+                //flip torquers
+                setTorque(&zero);  
+            }else{
+                //switch to mode 1
+                ACDS_mode=ACDS_MODE_1;
+            }
         break;
                 
       }
