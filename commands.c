@@ -840,6 +840,7 @@ int magCmd(char **argv,unsigned short argc){
             print_sdata=1;
         }else if(!strcmp("all",argv[i])){
             print_all=1;
+            print_sdata=1;
         }else if(!strcmp("raw",argv[i])){
             print_raw=1;
         }else{                        
