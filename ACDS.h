@@ -12,6 +12,7 @@
     
   //structure for beacon data  
   typedef struct{
+      char addr;
       short mag[3];
       char gyro[3];
       unsigned char tqstat[3];
