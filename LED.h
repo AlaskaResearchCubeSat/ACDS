@@ -19,5 +19,9 @@ void LED_toggle(int LED);
 #define FLIP_LED_off()     LED_off(2)
 #define FLIP_LED_toggle()  LED_toggle(2)
 
+#define STAT_LED_on()            LED_on(1)
+#define STAT_LED_off()           LED_off(1)
+#define STAT_LED_toggle()        LED_toggle(1)
+
 #endif
 

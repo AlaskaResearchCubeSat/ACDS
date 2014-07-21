@@ -89,6 +89,9 @@ void sub_events(void *p) __toplevel{
       resp=BUS_cmd_tx(BUS_ADDR_CDH,buf,sizeof(ACDS_STAT),0,BUS_I2C_SEND_FOREGROUND);
       if(resp!=RET_SUCCESS){
         printf("Failed to send status %s\r\n",BUS_error_str(resp));
+        ERR_LED_on();
+      }else{
+        STAT_LED_toggle();
       }
     }
     if(e&SUB_EV_TIME_CHECK){
