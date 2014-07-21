@@ -824,6 +824,7 @@ int ctstCmd(char **argv,unsigned short argc){
 }
 
 int magCmd(char **argv,unsigned short argc){
+    const char *term=(output_type==MACHINE_OUTPUT)?"\t":"\r\n";
     int single=0,print_sdata=0,print_all=0,single_axis=-1,print_raw=0;
     unsigned short time=32768,count=0;
     int i,j,res,timeout=0;
@@ -903,9 +904,6 @@ int magCmd(char **argv,unsigned short argc){
         if(single_axis==-1){
             //print out flux values   
             vecPrint("Flux",&acds_dat.flux);
-            if(output_type==MACHINE_OUTPUT){   
-                printf("\r\n");
-            }
             //print out individual sensor data
             if(print_sdata){
                 //print seperator
@@ -917,24 +915,27 @@ int magCmd(char **argv,unsigned short argc){
                     //check for valid measurements
                     if(magData.flags&(1<<(i*2)) && magData.flags&(1<<(i*2+1))){
                         if(print_raw){
-                            printf(" %s : % i % i\r\n",cor_axis_names[i],magData.meas[i].c.a,magData.meas[i].c.b);
+                            printf(" %s : % i % i%s",cor_axis_names[i],magData.meas[i].c.a,magData.meas[i].c.b,term);
                         }else{
                             //check for correction data
                             if(cor_stat&(1<<i)){
                                 //apply correction
                                 applyCor(&pt,&magData.meas[i],i);
                                 //print result
-                                printf(" %s : %f %f\r\n",cor_axis_names[i],pt.c.a,pt.c.b);
+                                printf(" %s : %f %f%s",cor_axis_names[i],pt.c.a,pt.c.b,term);
                             }else{
                                 //print error
-                                printf(" %s : --- ---\r\n",cor_axis_names[i]);
+                                printf(" %s : --- ---%s",cor_axis_names[i],term);
                             }
                         }
                     }else if(print_all){
                         //print error
-                        printf(" %s : ### ###\r\n",cor_axis_names[i]);
+                        printf(" %s : ### ###%s",cor_axis_names[i],term);
                     }
                 }
+            }
+            if(output_type==MACHINE_OUTPUT){   
+                printf("\r\n");
             }
         }else{
             if(print_raw){
@@ -955,9 +956,6 @@ int magCmd(char **argv,unsigned short argc){
             if(e&ADCS_EVD_COMMAND_SENSOR_READ){
                 if(single_axis==-1){
                     vecPrint("Flux",&acds_dat.flux);
-                    if(output_type==MACHINE_OUTPUT){   
-                        printf("\r\n");
-                    }
                     //print out individual sensor data
                     if(print_sdata){ 
                         //print seperator
@@ -969,28 +967,31 @@ int magCmd(char **argv,unsigned short argc){
                             //check for valid measurements
                             if(magData.flags&(1<<(i*2)) && magData.flags&(1<<(i*2+1))){
                                 if(print_raw){
-                                    printf(" %s : % i % i\r\n",cor_axis_names[i],magData.meas[i].c.a,magData.meas[i].c.b);
+                                    printf(" %s : % i % i%s",cor_axis_names[i],magData.meas[i].c.a,magData.meas[i].c.b,term);
                                 }else{
                                     //check for correction data
                                     if(cor_stat&(1<<i)){
                                         //apply correction
                                         applyCor(&pt,&magData.meas[i],i);
                                         //print result
-                                        printf(" %s : % f\t% f\r\n",cor_axis_names[i],pt.c.a,pt.c.b);
+                                        printf(" %s : % f\t% f%s",cor_axis_names[i],pt.c.a,pt.c.b,term);
                                     }else{
                                         //print error
-                                        printf(" %s : --- ---\r\n",cor_axis_names[i]);
+                                        printf(" %s : --- ---%s",cor_axis_names[i],term);
                                     }
                                 }
                             }else if(print_all){
                                 //print error
-                                printf(" %s : ### ###\r\n",cor_axis_names[i]);
+                                printf(" %s : ### ###%s",cor_axis_names[i],term);
                             }
                         }
                         //print seperator                   
                         if(output_type==HUMAN_OUTPUT){   
                             printf("========================================================================================\r\n");
                         }
+                    }
+                    if(output_type==MACHINE_OUTPUT){   
+                        printf("\r\n");
                     }
                 }else{
                     if(print_raw){
