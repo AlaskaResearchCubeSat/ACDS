@@ -12,14 +12,12 @@
     
   //structure for beacon data  
   typedef struct{
-      char addr;
       short mag[3];
-      char gyro[3];
+      unsigned char mode;
       unsigned char tqstat[3];
       unsigned short flips[3];
-      unsigned short flags;
       IQUAT attitude;
-      VEC rates;
+      VEC_INT rates;
   }ACDS_STAT;
     
   //events for ACDS task

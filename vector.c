@@ -167,3 +167,11 @@ VEC* ivec2vec(VEC* dest,const VEC_INT* src){
   dest->c.z=src->c.z;
   return dest;
 }
+
+//set all vector elements to zero
+VEC_INT* ivec_zero(VEC_INT* v){
+    v->c.x=0;
+    v->c.y=0;
+    v->c.z=0;
+    return v;
+}

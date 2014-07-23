@@ -449,16 +449,13 @@ int tst_IGRF_cmd(char **argv,unsigned short argc){
 int statusCmd(char **argv,unsigned short argc){
   int i;
   printf("Status Size = %u\r\n",sizeof(ACDS_STAT));
-  printf("Quat Size = %u\r\n",sizeof(QUAT));
-  printf("Vec Size = %u\r\n",sizeof(VEC));
   //print status data
+  printf   ("Mode   \t%i\r\n",status.mode);
   printf   ("mag     \t%i, %i, %i\r\n",status.mag[0],status.mag[1],status.mag[2]);
-  printf   ("gyro    \t%i, %i, %i\r\n",status.gyro[0],status.gyro[1],status.gyro[2]);
   printf   ("tqstat  \t0x%02X, 0x%02X, 0x%02X\r\n",status.tqstat[0],status.tqstat[1],status.tqstat[2]);
   printf   ("flips   \t%u, %u, %u\r\n",status.flips[0],status.flips[1],status.flips[2]);
-  printf   ("flags   \t0x%04X\r\n",status.flags);
   iquatPrint("attitude",&status.attitude);
-  vecPrint ("rates   ",&status.rates);
+  ivecPrint ("rates   ",&status.rates);
   return 0;
 }  
 

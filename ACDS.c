@@ -260,13 +260,10 @@ void ACDS_events(void *p) __toplevel{
   CPOINT pt;
   //initialize status
   memset(status.mag,0,sizeof(status.mag));
-  memset(status.gyro,0,sizeof(status.gyro));
   memset(status.tqstat,0,sizeof(status.tqstat));
   memset(status.flips,0,sizeof(status.flips));
-  status.addr=BUS_ADDR_ACDS;
-  status.flags=0;
   iquat_zero(&status.attitude);
-  vec_zero(&status.rates);
+  ivec_zero(&status.rates);
   //init event
   ctl_events_init(&ACDS_evt,0);
   //check correction data status
