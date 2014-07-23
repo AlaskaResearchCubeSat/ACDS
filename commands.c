@@ -1190,6 +1190,14 @@ int stat2idx_Cmd(char **argv,unsigned short argc){
     return 0;
 }
 
+int build_Cmd(char **argv,unsigned short argc){
+    #ifdef DEV_BUILD
+        printf("Development Board Build\r\n");
+    #else
+        printf("Standard build\r\n");
+    #endif
+}
+
 //table of commands with help
 const CMD_SPEC cmd_tbl[]={{"help"," [command]\r\n\t""get a list of commands or help on a spesific command.",helpCmd},
                      CTL_COMMANDS,ARC_COMMANDS,ERROR_COMMANDS,
@@ -1225,5 +1233,6 @@ const CMD_SPEC cmd_tbl[]={{"help"," [command]\r\n\t""get a list of commands or h
                      {"mode","mode""\r\n\t""run ACDS in given mode",modeCmd},
                      {"ecor","idx""\r\n\t""erase correction data for the given SPB",erase_cor_Cmd},
                      {"stat2idx","axis""\r\n\t""test stat2idx function",stat2idx_Cmd},
+                     {"build","""\r\n\t""print build",build_Cmd},
                      //end of list
                      {NULL,NULL,NULL}};
