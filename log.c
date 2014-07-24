@@ -129,7 +129,7 @@ int log_store_data(LOG_DAT_STORE *data){
         return ACDS_LOG_ERR_UNINIT;
     }
     //store time
-    data->dat.acds_dat.time=get_ticker_time();
+    data->time=get_ticker_time();
     //compute CRC
     data->crc=crc16(data,sizeof(LOG_DAT_STORE)-sizeof(data->crc));
     //write block

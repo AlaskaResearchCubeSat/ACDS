@@ -12,7 +12,6 @@
     
     //structure for log data
     typedef struct{
-        ticker time;
         unsigned char mode;
         unsigned char flags;
         VEC flux;
@@ -37,6 +36,7 @@
         unsigned char version;
         unsigned char flags;
         unsigned short number;
+        ticker time;
         union{
             LOG_DAT acds_dat;
             unsigned char pad[504];
