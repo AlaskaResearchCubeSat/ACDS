@@ -14,6 +14,7 @@
 #include "SensorDataInterface.h"
 #include "ACDS.h"
 #include "stackcheck.h"
+#include "log.h"
 
 CTL_TASK_t tasks[3];
 
@@ -67,6 +68,9 @@ int main(void){
   driverInit();
   //setup comparitor pins
   torque_fb_init();
+  
+  //initialize logging 
+  log_init();
 
   //setup LED's
   init_LED();
