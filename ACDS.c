@@ -15,6 +15,7 @@
 #include "ACDSerr.h"
 #include <SDlib.h>
 #include "corrections.h"
+#include "log.h"
 
 ACDS_STAT status;
     
@@ -254,7 +255,7 @@ int ACDS_mode=ACDS_HOLD_MODE;
 
 void ACDS_events(void *p) __toplevel{
   unsigned int e;
-  int i,xnum,ynum,znum;
+  int i,xnum,ynum,znum,resp;
   const VEC zero={0,0,0};
   VEC Flux,mag;
   CPOINT pt;
@@ -268,6 +269,10 @@ void ACDS_events(void *p) __toplevel{
   ctl_events_init(&ACDS_evt,0);
   //check correction data status
   read_cor_stat();
+  //pause to let error log to be initialized first
+  ctl_timeout_wait(ctl_get_current_time()+2048);
+  //setup data logging
+  log_start();
   //endless loop
   for(;;){
     //wait for events
@@ -339,9 +344,9 @@ void ACDS_events(void *p) __toplevel{
       status.mag[1]=32767/2*Flux.elm[1];
       status.mag[2]=32767/2*Flux.elm[2];
       //set flux vector
-      vec_cp(&acds_dat.flux,&Flux);      
+      vec_cp(&acds_dat.dat.acds_dat.flux,&Flux);      
       //set mode
-      acds_dat.mode=ACDS_mode;
+      acds_dat.dat.acds_dat.mode=ACDS_mode;
       //do things based on mode
       switch(ACDS_mode){
         case ACDS_MODE_1:
@@ -397,6 +402,11 @@ void ACDS_events(void *p) __toplevel{
       //save status
       tqstat2stat(status.tqstat);
       ctl_events_set_clear(&ACDS_evt,ADCS_EVD_COMMAND_SENSOR_READ,0);
+      //write log data
+      resp=log_store_data(&acds_dat);
+      if(resp){
+          report_error(ERR_LEV_ERROR,ACDS_ERR_SRC_ALGORITHM,ACDS_ERR_ALG_LOG_FAIL,resp);
+      }
     }
   }
 }

@@ -8,26 +8,6 @@
 #define ACDS_SETTINGS_MAGIC       0xAA53
 
 typedef struct{
-    unsigned char mode;
-    unsigned char flags;
-    VEC flux;
-    VEC M_cmd;
-    TQ_SET tq_stat;
-    union{
-        struct{
-            VEC B_dot;
-            
-        } mode1;
-        struct{
-            short window;
-        } mode2;
-        struct{
-            short window;
-        } mode3;
-    }mdat;
-}ACDS_DAT;
-
-typedef struct{
     //detumble gain
     VEC Ka;
     //alignment gain
@@ -51,8 +31,6 @@ typedef struct{
 extern unsigned short mode;
 //allow mode switching logic to function
 extern unsigned short upgrade;
-//ACDS status
-extern ACDS_DAT acds_dat;
 
 extern float lat,lat_old;
 
@@ -69,7 +47,5 @@ short forceMode(unsigned short new_mode,unsigned short new_upgrade);
 int setpointCmd(char **argv,unsigned short argc);
 //gain command
 int gainCmd(char **argv,unsigned short argc);
-
-void print_acds_dat(const ACDS_DAT *dat);
 
 #endif
