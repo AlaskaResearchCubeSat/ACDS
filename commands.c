@@ -1202,8 +1202,19 @@ int build_Cmd(char **argv,unsigned short argc){
 int data_log_Cmd(char **argv,unsigned short argc){
     unsigned short num=0;
     unsigned long tmp;
+    int resp;
     char *end;
     if(argc>=1){
+        //check for actions
+        if(!strcmp(argv[1],"clear")){
+            resp=clear_log();
+            if(resp){
+                printf("Error erasing log : %s\r\n",SD_error_str(resp));
+            }else{
+                printf("Data log erase successfully!\r\n");
+            }
+            return 0;
+        }
         //parse number
         tmp=strtoul(argv[1],&end,10);
         if(end==argv[1]){
