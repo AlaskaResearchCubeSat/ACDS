@@ -155,6 +155,7 @@ int clear_log(void){
     next_log_idx=0;
     current_log_block=LOG_ADDR_START;
     acds_dat.flags=LOG_INIT_FLAGS;
+    acds_dat.number=0;
 }
 
 //print data from the log starting with the most recent ones
