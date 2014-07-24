@@ -367,8 +367,11 @@ static short oldFluxValid=0;
 void bdot(const VEC *FluxVector,unsigned short step){
   //commanded dipole moments
   VEC M_cmd;
+  short nan;
+  //check for nans in flux vector
+  nan=(isnan(FluxVector->c.x) || isnan(FluxVector->c.z) || isnan(FluxVector->c.z));
   //check if old flux is valid
-  if(oldFluxValid){
+  if(oldFluxValid && !nan){
     //compute B-dot
     vec_cp(&M_cmd,FluxVector);
     vec_dif(&M_cmd,&oldFlux);
@@ -388,9 +391,13 @@ void bdot(const VEC *FluxVector,unsigned short step){
   setTorque(&M_cmd);
   //save status
   get_stat(&acds_dat.tq_stat);
-  //save old flux
-  vec_cp(&oldFlux,FluxVector);
-  oldFluxValid=1;
+  if(nan){
+      oldFluxValid=0;
+  }else{
+      //save old flux
+      vec_cp(&oldFlux,FluxVector);
+      oldFluxValid=1;
+  }
 }
 
 
