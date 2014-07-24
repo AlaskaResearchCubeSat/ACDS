@@ -15,6 +15,7 @@
 #include "ACDSerr.h"
 #include <SDlib.h>
 #include "corrections.h"
+#include "log.h"
 
 ACDS_STAT status;
     
@@ -268,6 +269,8 @@ void ACDS_events(void *p) __toplevel{
   ctl_events_init(&ACDS_evt,0);
   //check correction data status
   read_cor_stat();
+  //setup data logging
+  log_start();
   //endless loop
   for(;;){
     //wait for events
@@ -339,9 +342,9 @@ void ACDS_events(void *p) __toplevel{
       status.mag[1]=32767/2*Flux.elm[1];
       status.mag[2]=32767/2*Flux.elm[2];
       //set flux vector
-      vec_cp(&acds_dat.flux,&Flux);      
+      vec_cp(&acds_dat.dat.acds_dat.flux,&Flux);      
       //set mode
-      acds_dat.mode=ACDS_mode;
+      acds_dat.dat.acds_dat.mode=ACDS_mode;
       //do things based on mode
       switch(ACDS_mode){
         case ACDS_MODE_1:
@@ -397,6 +400,8 @@ void ACDS_events(void *p) __toplevel{
       //save status
       tqstat2stat(status.tqstat);
       ctl_events_set_clear(&ACDS_evt,ADCS_EVD_COMMAND_SENSOR_READ,0);
+      //write log data
+      log_store_data(&acds_dat);
     }
   }
 }

@@ -8,6 +8,7 @@
 #include "torquers.h"
 #include "terminal.h"
 #include "output_type.h"
+#include "log.h"
 
 #include <msp430.h>
 #include <ARCbus.h>
@@ -15,8 +16,6 @@
 
 const float pi=3.14159265358979323846;
 
-//current ACDS data
-ACDS_DAT acds_dat;
 
 //outputs values of {2,1,-2}*qval according to Figure 14 in Mench 2011
 //may be combined into torquer firing routine
@@ -377,46 +376,19 @@ void bdot(const VEC *FluxVector,unsigned short step){
     vec_zero(&M_cmd);
   }
   //set mode 1
-  acds_dat.mode=1;
+  acds_dat.dat.acds_dat.mode=1;
   //save magnetic field derivative
-  vec_cp(&acds_dat.mdat.mode1.B_dot,&M_cmd);
+  vec_cp(&acds_dat.dat.acds_dat.mdat.mode1.B_dot,&M_cmd);
   //apply gain
   vec_eemul(&M_cmd,&ACDS_settings.dat.settings.Kb);
   //save commanded dipole moment
-  vec_cp(&acds_dat.M_cmd,&M_cmd);
+  vec_cp(&acds_dat.dat.acds_dat.M_cmd,&M_cmd);
   //flip torquers
   setTorque(&M_cmd);
   //save status
-  get_stat(&acds_dat.tq_stat);
+  get_stat(&acds_dat.dat.acds_dat.tq_stat);
   //save old flux
   vec_cp(&oldFlux,FluxVector);
   oldFluxValid=1;
 }
 
-
-void print_acds_dat(const ACDS_DAT *dat){
-    //print ACDS mode
-    if(output_type==HUMAN_OUTPUT){
-        printf("Mode : %i\r\n",dat->mode);
-    }else{
-        printf("M%i\t",dat->mode);
-    }
-    //print magnetic flux vector
-    vecPrint("Flux",&dat->flux);
-    //print mode specific data
-    switch(dat->mode){
-        case 1:
-            vecPrint("B-dot",&dat->mdat.mode1.B_dot);
-        break;
-    }
-    //print commanded dipole moment
-    vecPrint("Mcmd",&dat->M_cmd);
-    //print new torquer status
-    if(output_type==HUMAN_OUTPUT){
-        print_tqstat(&dat->tq_stat);
-    }else{
-        print_tqstat_code(&dat->tq_stat);
-        //print trailing newline
-        printf("\r\n");
-    }
-}

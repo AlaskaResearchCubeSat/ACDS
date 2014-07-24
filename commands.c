@@ -11,6 +11,7 @@
 #include <errno.h>
 #include <commandLib.h>
 #include <math.h>
+#include <limits.h>
 #include "torquers.h"
 #include "output_type.h"
 #include "SensorDataInterface.h"
@@ -20,7 +21,7 @@
 #include "LED.h"
 #include "IGRF/igrf.h"
 #include "corrections.h"
-
+#include "log.h"
 
 //define printf formats
 #define HEXOUT_STR    "%02X "
@@ -901,7 +902,7 @@ int magCmd(char **argv,unsigned short argc){
         }
         if(single_axis==-1){
             //print out flux values   
-            vecPrint("Flux",&acds_dat.flux);
+            vecPrint("Flux",&acds_dat.dat.acds_dat.flux);
             //print out individual sensor data
             if(print_sdata){
                 //print seperator
@@ -953,7 +954,7 @@ int magCmd(char **argv,unsigned short argc){
             //check if data was received
             if(e&ADCS_EVD_COMMAND_SENSOR_READ){
                 if(single_axis==-1){
-                    vecPrint("Flux",&acds_dat.flux);
+                    vecPrint("Flux",&acds_dat.dat.acds_dat.flux);
                     //print out individual sensor data
                     if(print_sdata){ 
                         //print seperator
@@ -1091,7 +1092,7 @@ int modeCmd(char **argv,unsigned short argc){
             if(output_type==HUMAN_OUTPUT){
                 printf("\r\n=========================================================================\r\n");
             }
-            print_acds_dat(&acds_dat);
+            print_log_dat(&acds_dat.dat.acds_dat);
             //message recived, reduce timeout count
             if(timeout>-10){
                 timeout--;
@@ -1197,6 +1198,34 @@ int build_Cmd(char **argv,unsigned short argc){
         printf("Standard build\r\n");
     #endif
 }
+    
+int data_log_Cmd(char **argv,unsigned short argc){
+    unsigned short num=0;
+    unsigned long tmp;
+    char *end;
+    if(argc>=1){
+        //parse number
+        tmp=strtoul(argv[1],&end,10);
+        if(end==argv[1]){
+            //print error
+            printf("Error parsing num \"%s\"\r\n",argv[1]);
+            return -1;
+        }
+        if(*end){
+            printf("Error : unknown suffix \"%s\" while parsing num \"%s\".\r\n",end,argv[1]);
+            return -2;
+        }
+        //saturate
+        if(tmp>USHRT_MAX){
+            num=USHRT_MAX;
+        }else{
+             num=tmp;
+        }
+    }
+    log_replay(num);
+}
+    
+    
 
 //table of commands with help
 const CMD_SPEC cmd_tbl[]={{"help"," [command]\r\n\t""get a list of commands or help on a spesific command.",helpCmd},
@@ -1234,5 +1263,6 @@ const CMD_SPEC cmd_tbl[]={{"help"," [command]\r\n\t""get a list of commands or h
                      {"ecor","idx""\r\n\t""erase correction data for the given SPB",erase_cor_Cmd},
                      {"stat2idx","axis""\r\n\t""test stat2idx function",stat2idx_Cmd},
                      {"build","""\r\n\t""print build",build_Cmd},
+                     {"dlog","[num]""\r\n\t""replay log data",data_log_Cmd},
                      //end of list
                      {NULL,NULL,NULL}};
