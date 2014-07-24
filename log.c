@@ -157,7 +157,7 @@ void log_replay(unsigned short num){
   unsigned short count=0;
     SD_blolck_addr start=current_log_block,addr=start;
     LOG_DAT_STORE *store;
-    unsigned long number=acds_dat.number;
+    unsigned short number=acds_dat.number;
     unsigned char *buf;
     int i,resp,last;
     if(addr==-1){
