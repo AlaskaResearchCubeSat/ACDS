@@ -1,5 +1,6 @@
 #include <Error.h>
 #include <commandLib.h>
+#include <SDlib.h>
 #include "ACDSerr.h"
 #include "torquers.h"
 
@@ -60,6 +61,11 @@ char *err_decode(char buf[150], unsigned short source,int err, unsigned short ar
       }
     break;
     case ACDS_ERR_SRC_ALGORITHM:
+        switch(err){
+            case ACDS_ERR_ALG_LOG_FAIL:
+                sprintf(buf,"Algorithm : Failed to write log : %s (%i)",SD_error_str(argument),argument);
+            return buf;
+        }
     break;
     case ACDS_ERR_SRC_SENSORS:
       switch(err){

@@ -255,7 +255,7 @@ int ACDS_mode=ACDS_HOLD_MODE;
 
 void ACDS_events(void *p) __toplevel{
   unsigned int e;
-  int i,xnum,ynum,znum;
+  int i,xnum,ynum,znum,resp;
   const VEC zero={0,0,0};
   VEC Flux,mag;
   CPOINT pt;
@@ -403,7 +403,10 @@ void ACDS_events(void *p) __toplevel{
       tqstat2stat(status.tqstat);
       ctl_events_set_clear(&ACDS_evt,ADCS_EVD_COMMAND_SENSOR_READ,0);
       //write log data
-      log_store_data(&acds_dat);
+      resp=log_store_data(&acds_dat);
+      if(resp){
+          report_error(ERR_LEV_ERROR,ACDS_ERR_SRC_ALGORITHM,ACDS_ERR_ALG_LOG_FAIL,resp);
+      }
     }
   }
 }
