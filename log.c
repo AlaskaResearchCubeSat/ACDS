@@ -205,6 +205,19 @@ void log_replay(unsigned short num){
                             //update number
                             number=store->number;
                         }
+                        
+                        if(output_type==HUMAN_OUTPUT){
+                            //print new line for separation
+                            printf("\r\n");
+                            //print first if present
+                            if(store->flags&LOG_FLAGS_FIRST){
+                                printf("First\r\n");
+                            }
+                            printf("Time : %li\r\n",store->time);
+                        }else{
+                            //print in machine readable form
+                            printf("0x%02X\t%li\t",store->flags,store->time);
+                        }
                         //print block
                         print_log_dat(&store->dat.acds_dat);
                         //check if we are counting
