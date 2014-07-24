@@ -159,11 +159,11 @@ int clear_log(void){
 //print only errors with a level greater than level up to a maximum of num errors 
 void log_replay(unsigned short num){
   unsigned short count=0;
-    SD_blolck_addr start=current_log_block,addr=start;
+    SD_blolck_addr start,addr;
     LOG_DAT_STORE *store;
     unsigned short number=acds_dat.number;
     unsigned char *buf;
-    int i,resp,last;
+    int i,resp,last=0;
     if(addr==-1){
         printf("Error : data log not initialized\r\n");
         return;
@@ -176,6 +176,14 @@ void log_replay(unsigned short num){
     }
     //get buffer 
     buf=BUS_get_buffer(CTL_TIMEOUT_DELAY,100);
+    //set start
+    start=current_log_block-1;
+    //check for wraparound
+    if(start<LOG_ADDR_START){
+        start=LOG_ADDR_END;
+    }
+    //set address to start
+    addr=start;
     //check if buffer acquired
     if(buf){
         for(;;){
