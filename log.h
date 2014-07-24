@@ -4,6 +4,7 @@
     #include "quat.h"
     #include "torquers.h"
     #include <error.h>
+    #include <ARCbus.h>
     
     #define ACDS_LOG_MAGIC      0xAA72
     
@@ -11,6 +12,7 @@
     
     //structure for log data
     typedef struct{
+        ticker time;
         unsigned char mode;
         unsigned char flags;
         VEC flux;
