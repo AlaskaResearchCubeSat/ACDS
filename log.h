@@ -8,7 +8,7 @@
     
     #define ACDS_LOG_MAGIC      0xAA72
     
-    #define ACDS_LOG_VERSION    1
+    #define ACDS_LOG_VERSION    2
     
     //structure for log data
     typedef struct{
@@ -39,7 +39,7 @@
         ticker time;
         union{
             LOG_DAT acds_dat;
-            unsigned char pad[504];
+            unsigned char pad[500];
         }dat;
         unsigned short crc;
     }LOG_DAT_STORE;
