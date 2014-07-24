@@ -208,6 +208,11 @@ void log_replay(unsigned short num){
                         printf("Error : invalid block CRC\r\n");
                     }
                 }else{
+                    //check if this block is expected to be the last
+                    if(last){
+                      //exit loop
+                      break;
+                    }
                     //block header is not valid
                     printf("Error : invalid block header\r\n");
                 }
