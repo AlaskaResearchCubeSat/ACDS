@@ -149,6 +149,9 @@ int log_store_data(LOG_DAT_STORE *data){
 
 int clear_log(void){
     return mmcErase(LOG_ADDR_START,LOG_ADDR_END);
+    next_log_idx=0;
+    current_log_block=LOG_ADDR_START;
+    acds_dat.flags=LOG_INIT_FLAGS;
 }
 
 //print data from the log starting with the most recent ones
