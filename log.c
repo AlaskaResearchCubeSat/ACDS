@@ -55,10 +55,8 @@ void log_start(void){
     LOG_DAT_STORE *blk;
     unsigned char *buf;
     unsigned short number;
-    for(i=0,resp=mmcLock();i<60 && resp!=MMC_SUCCESS;i++){
-        //lock card so that we can search uninterrupted
-        resp=mmcLock();
-    }
+    //lock card so that initialization is not interrupted
+    resp=mmcLock(CTL_TIMEOUT_DELAY,4096);
     //check if card was locked
     if(resp==MMC_SUCCESS){
       //initialize the card
@@ -106,7 +104,7 @@ void log_start(void){
           acds_dat.number=number+1;
         }else{
           //set address to first address
-          current_log_block=ERR_ADDR_START;
+          current_log_block=LOG_ADDR_START;
           //set number to zero
           acds_dat.number=0;
         }
@@ -167,7 +165,7 @@ void log_replay(unsigned short num){
         return;
     }
     //lock card so that we are not interrupted
-    resp=mmcLock();
+    resp=mmcLock(CTL_TIMEOUT_DELAY,10);
     //check if card was locked
     if(resp!=MMC_SUCCESS){
         printf("Error : Failed to lock SD card : %s\r\n",SD_error_str(resp));

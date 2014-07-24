@@ -269,6 +269,8 @@ void ACDS_events(void *p) __toplevel{
   ctl_events_init(&ACDS_evt,0);
   //check correction data status
   read_cor_stat();
+  //pause to let error log to be initialized first
+  ctl_timeout_wait(ctl_get_current_time()+2048);
   //setup data logging
   log_start();
   //endless loop
