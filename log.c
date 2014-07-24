@@ -143,6 +143,7 @@ int log_store_data(LOG_DAT_STORE *data){
             current_log_block=LOG_ADDR_START;
         }
     }
+    data->flags&=~LOG_FLAGS_FIRST;
     //return result from write
     return result;
 }
