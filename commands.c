@@ -1058,7 +1058,11 @@ int modeCmd(char **argv,unsigned short argc){
     }else if(*end!=0){
       printf("Error : unknown suffix \'%s\' on torque \'%s\'\r\n",end,argv[1]);
       return -2;
-    }
+    }        
+    //set last field value to NaN
+    acds_dat.dat.acds_dat.flux.c.x=__float32_nan;
+    acds_dat.dat.acds_dat.flux.c.y=__float32_nan;
+    acds_dat.dat.acds_dat.flux.c.z=__float32_nan;
     //set ACDS mode
     ACDS_mode=mode;
     //setup command

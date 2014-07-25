@@ -273,6 +273,10 @@ void ACDS_events(void *p) __toplevel{
   ctl_timeout_wait(ctl_get_current_time()+2048);
   //setup data logging
   log_start();
+  //set last field value to NaN
+  acds_dat.dat.acds_dat.flux.c.x=__float32_nan;
+  acds_dat.dat.acds_dat.flux.c.y=__float32_nan;
+  acds_dat.dat.acds_dat.flux.c.z=__float32_nan;
   //endless loop
   for(;;){
     //wait for events
