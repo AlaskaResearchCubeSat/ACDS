@@ -359,21 +359,20 @@ short forceMode(unsigned short new_mode,unsigned short new_upgrade){
   return 1;
 }
 
-static VEC oldFlux;
-static short oldFluxValid=0;
 
 //run the B-dot control algorithm
 void bdot(const VEC *FluxVector,unsigned short step){
   //commanded dipole moments
   VEC M_cmd;
-  short nan;
+  short flux_valid,old_flux_valid;
   //check for nans in flux vector
-  nan=(isnan(FluxVector->c.x) || isnan(FluxVector->c.z) || isnan(FluxVector->c.z));
+  flux_valid=(isfinite(FluxVector->c.x) && isfinite(FluxVector->c.z) && isfinite(FluxVector->c.z));
+  old_flux_valid=(isfinite(acds_dat.dat.acds_dat.flux.c.x) && isfinite(acds_dat.dat.acds_dat.flux.c.z) && isfinite(acds_dat.dat.acds_dat.flux.c.z));
   //check if old flux is valid
-  if(oldFluxValid && !nan){
+  if(old_flux_valid && flux_valid){
     //compute B-dot
     vec_cp(&M_cmd,FluxVector);
-    vec_dif(&M_cmd,&oldFlux);
+    vec_dif(&M_cmd,&acds_dat.dat.acds_dat.flux);
   }else{
     //use zero vector for B-dot
     vec_zero(&M_cmd);
@@ -386,16 +385,14 @@ void bdot(const VEC *FluxVector,unsigned short step){
   vec_eemul(&M_cmd,&ACDS_settings.dat.settings.Kb);
   //save commanded dipole moment
   vec_cp(&acds_dat.dat.acds_dat.M_cmd,&M_cmd);
+  //check if M_cmd is finite
+  if(!((isfinite(M_cmd.c.x) && isfinite(M_cmd.c.y) && isfinite(M_cmd.c.z)))){
+      //set torque to zero
+      vec_zero(&M_cmd);
+  }
   //flip torquers
   setTorque(&M_cmd);
   //save status
   get_stat(&acds_dat.dat.acds_dat.tq_stat);
-  if(nan){
-      oldFluxValid=0;
-  }else{
-      //save old flux
-      vec_cp(&oldFlux,FluxVector);
-      oldFluxValid=1;
-  }
 }
 
