@@ -106,6 +106,11 @@ int flipCmd(char **argv,unsigned short argc){
         return -3;
       }
       num[i]=tnum;
+      //check if not flipping a torquer
+      if(tnum==0){
+        //clear direction
+        dir[i]=0;
+      }
     }
   }
   if(output_type==HUMAN_OUTPUT){
