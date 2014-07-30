@@ -42,6 +42,7 @@
       <file file_name="algorithm.c"/>
       <file file_name="log.c"/>
       <file file_name="log.h"/>
+      <file file_name="mag.h"/>
     </folder>
     <folder Name="System Files">
       <file file_name="$(StudioDir)/ctl/source/threads.js"/>

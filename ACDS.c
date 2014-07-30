@@ -399,6 +399,8 @@ void ACDS_events(void *p) __toplevel{
         break;
                 
       }
+      //set raw mag data
+      memcpy(&acds_dat.dat.acds_dat.raw_mag,&magData,sizeof(magData));
       //set flux vector
       vec_cp(&acds_dat.dat.acds_dat.flux,&Flux);      
       //set mode

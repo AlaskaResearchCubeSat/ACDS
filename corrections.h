@@ -2,6 +2,7 @@
     #define __CORRECTIONS_H
     
     #include "vector.h"
+    #include "mag.h"
     
     #define COR_MAGIC       0xAA43
     
@@ -10,14 +11,7 @@
         
     //status flags for correction data
     enum{COR_ST_X_MINUS=1<<0,COR_ST_X_PLUS=1<<1,COR_ST_Y_MINUS=1<<2,COR_ST_Y_PLUS=1<<3,COR_ST_Z_MINUS=1<<4,COR_ST_Z_PLUS=1<<5};
-    
-    //magnetometer point
-    typedef union{
-      struct {
-        short a,b;
-      }c;
-      short elm[2];
-    } MAG_POINT;
+   
     
     //corection point
     typedef union{
@@ -26,11 +20,6 @@
       }c;
       SCL elm[2];
     } CPOINT;
-    
-    typedef struct{
-        unsigned short flags;
-        MAG_POINT meas[6];
-    }MAG_DAT;
     
     //corrections structure
     typedef struct{

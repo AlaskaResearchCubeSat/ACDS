@@ -3,12 +3,13 @@
     #include "vector.h"
     #include "quat.h"
     #include "torquers.h"
+    #include "mag.h"
     #include <error.h>
     #include <ARCbus.h>
     
     #define ACDS_LOG_MAGIC      0xAA72
     
-    #define ACDS_LOG_VERSION    2
+    #define ACDS_LOG_VERSION    3
     
     //structure for log data
     typedef struct{
@@ -17,6 +18,7 @@
         VEC flux;
         VEC M_cmd;
         TQ_SET tq_stat;
+        MAG_DAT raw_mag;
         union{
             struct{
                 VEC B_dot;
