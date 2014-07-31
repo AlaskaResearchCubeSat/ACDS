@@ -208,6 +208,10 @@ void log_replay(unsigned short num){
                             //update number
                             number=store->number;
                         }
+                        //check for version mismatch
+                        if(store->version!= ACDS_LOG_VERSION){
+                            printf("Warning : Version mismatch expected %i found %i\r\n",ACDS_LOG_VERSION,store->version);
+                        }
                         
                         if(output_type==HUMAN_OUTPUT){
                             //print new line for separation
