@@ -15,11 +15,29 @@ static SD_blolck_addr current_log_block;
 unsigned short next_log_idx;
 
 void print_log_dat(const LOG_DAT *dat){
+    int i;
+    short *mag;
     //print ACDS mode
     if(output_type==HUMAN_OUTPUT){
         printf("Mode : %i\r\n",dat->mode);
     }else{
         printf("M%i\t",dat->mode);
+    }
+    //print ACDS mode
+    if(output_type==HUMAN_OUTPUT){
+        printf("mag raw :");
+        for(i=0,mag=(short*)&dat->raw_mag.meas;i<12;i++){
+            //check if data is valid
+            if(dat->raw_mag.flags&(1<<(i))){
+                printf("\t%i",mag[i]);
+            }else{
+                printf("\t""error");
+            }
+            if(i==5){
+                printf("\r\n\t");
+            }
+        }
+        printf("\r\n");
     }
     //print magnetic flux vector
     vecPrint("Flux",&dat->flux);
