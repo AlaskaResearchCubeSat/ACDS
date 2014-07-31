@@ -277,6 +277,8 @@ void ACDS_events(void *p) __toplevel{
   acds_dat.dat.acds_dat.flux.c.x=__float32_nan;
   acds_dat.dat.acds_dat.flux.c.y=__float32_nan;
   acds_dat.dat.acds_dat.flux.c.z=__float32_nan;
+  //set version
+  acds_dat.version=ACDS_LOG_VERSION;
   //endless loop
   for(;;){
     //wait for events
