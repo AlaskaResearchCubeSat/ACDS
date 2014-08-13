@@ -1245,6 +1245,12 @@ int data_log_Cmd(char **argv,unsigned short argc){
     log_replay(num);
 }
     
+//print number of the first available sector on the SD card
+int first_free_sectorCmd(char **argv,unsigned short argc){
+    printf("%li\r\n",(long)SD_FIRST_FREE_ADDR);
+    return 0;
+}
+    
     
 
 //table of commands with help
@@ -1284,5 +1290,6 @@ const CMD_SPEC cmd_tbl[]={{"help"," [command]\r\n\t""get a list of commands or h
                      {"stat2idx","axis""\r\n\t""test stat2idx function",stat2idx_Cmd},
                      {"build","""\r\n\t""print build",build_Cmd},
                      {"dlog","[num]""\r\n\t""replay log data",data_log_Cmd},
+                     {"ffsector","""\r\n\t""Print the address of the first free sector on the SD card",first_free_sectorCmd},
                      //end of list
                      {NULL,NULL,NULL}};
