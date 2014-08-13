@@ -16,6 +16,8 @@ typedef struct{
     VEC Kb;
     //programed rates (rad/sec)?
     VEC Omega_CMD;
+    //black list SPBs
+    short blacklist;
 }ACDS_SETTINGS;
 
 typedef struct{
@@ -34,6 +36,8 @@ extern unsigned short upgrade;
 
 extern float lat,lat_old;
 
+extern const ACDS_SETTINGS_STORE ACDS_settings;
+
 enum{MODE_NO_UPGRADE=0,MODE_UPGRADE=1};
 
 //calculate rotation rates
@@ -47,5 +51,8 @@ short forceMode(unsigned short new_mode,unsigned short new_upgrade);
 int setpointCmd(char **argv,unsigned short argc);
 //gain command
 int gainCmd(char **argv,unsigned short argc);
+//write data to flash
+//TODO : move this to a more appropriat file
+int flash_write(void *dest,const void *src,int size);
 
 #endif

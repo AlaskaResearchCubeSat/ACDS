@@ -12,6 +12,7 @@
 #include <commandLib.h>
 #include <math.h>
 #include <limits.h>
+#include <crc.h>
 #include "torquers.h"
 #include "output_type.h"
 #include "SensorDataInterface.h"
@@ -1250,6 +1251,127 @@ int first_free_sectorCmd(char **argv,unsigned short argc){
     printf("%li\r\n",(long)SD_FIRST_FREE_ADDR);
     return 0;
 }
+
+int blacklist_Cmd(char **argv,unsigned short argc){
+    int i,j,found;
+    enum{BLACKLIST_RM,BLACKLIST_ADD,BLACKLIST_SET,BLACKLIST_SHOW,BLACKLIST_CLEAR};
+    int action=BLACKLIST_SHOW;
+    short blacklist=0;
+    unsigned char *buffer=NULL;
+    ACDS_SETTINGS_STORE *tmp_settings;
+    if(argc>0){
+        if(!strcmp("rm",argv[1])){
+            action=BLACKLIST_RM;
+        }else if(!strcmp("add",argv[1])){
+            action=BLACKLIST_ADD;
+        }else if(!strcmp("set",argv[1])){
+            action=BLACKLIST_SET;
+        }else if(!strcmp("show",argv[1])){
+            action=BLACKLIST_SHOW;
+        }else if(!strcmp("clear",argv[1])){
+            action=BLACKLIST_CLEAR;
+        }else{
+            printf("Error : unknown action %s\r\n",argv[1]);
+            return 1;
+        }
+    }
+    if(action!=BLACKLIST_SHOW){
+        //check number of arguments
+        //only BLACKLIST_CLEAR is alowed to have no extra arguments
+        if(argc<2 && action!=BLACKLIST_CLEAR){
+            printf("Error : too few arguments\r\n");
+            return 1;
+        }
+        //parse arguments
+        for(i=2;i<=argc;i++){
+            //compare first two chars to get SPB
+            for(j=0,found=0;j<12;j++){
+                if(!strncmp(cor_axis_names[j],argv[i],2)){
+                    found=1;
+                    break;
+                }
+            }
+            //check if SPB found
+            if(!found){
+                //check if all is given
+                if(!strcmp("all",argv[i])){
+                    blacklist|=(1<<12)-1;
+                    continue;
+                }
+                //unknown axis, give error
+                printf("Error : could not parse %s, unknown SPB\r\n",argv[i]);
+                return 2;
+            }
+            if(argv[i][2]==0){
+                //add whole SPB
+                blacklist|=3<<(j*2);
+            }else if(argv[i][2]=='a' && argv[i][3]==0){
+                //add a-axis sensor
+                blacklist|=1<<(j*2);
+            }else if(argv[i][2]=='b' && argv[i][3]==0){
+                blacklist|=1<<(j*2+1);
+            }else{
+                printf("Error : could not parse %s, unknown SPB axis\r\n",argv[i]);
+                return 4;
+            }
+        }
+        //get buffer, set a timeout of 2 secconds
+        buffer=BUS_get_buffer(CTL_TIMEOUT_DELAY,2048);
+        //check for error
+        if(buffer==NULL){
+            printf("Error : Timeout while waiting for buffer.\r\n");
+            return -1;
+        }
+        //set temporary settings pointer
+        tmp_settings=(ACDS_SETTINGS_STORE*)buffer;
+        //copy settings into temp buffer
+        memcpy(tmp_settings,&ACDS_settings,sizeof(ACDS_SETTINGS_STORE));
+        //check action and set new blacklist
+        switch(action){
+            case BLACKLIST_RM:
+                tmp_settings->dat.settings.blacklist&=~blacklist;
+            break;
+            case BLACKLIST_ADD:
+                tmp_settings->dat.settings.blacklist|=blacklist;
+            break;
+            case BLACKLIST_SET:
+                tmp_settings->dat.settings.blacklist=blacklist;
+            break;
+            case BLACKLIST_CLEAR:
+                tmp_settings->dat.settings.blacklist=blacklist;
+            break;
+            default:
+                printf("Internal Error : incorrect action %i\r\n",action);
+                //free buffer
+                BUS_free_buffer();  
+                return 3;
+        }
+        //set magic
+        tmp_settings->magic=ACDS_SETTINGS_MAGIC;
+        //set CRC
+        tmp_settings->crc=crc16((void*)&tmp_settings->dat,sizeof(ACDS_SETTINGS));
+        //write values to flash
+        flash_write((void*)&ACDS_settings,tmp_settings,sizeof(ACDS_SETTINGS_STORE));
+        //free buffer
+        BUS_free_buffer();  
+    }
+    if(ACDS_settings.dat.settings.blacklist==0){
+        //nothing in blacklist, print empty
+        printf("empty");
+    }else{
+        //check blacklist for entries
+        for(i=0;i<6;i++){
+            if(ACDS_settings.dat.settings.blacklist&(1<<(2*i))){
+                printf("%sa ",cor_axis_names[i]);
+            }
+            if(ACDS_settings.dat.settings.blacklist&(1<<(2*i+1))){
+                printf("%sb ",cor_axis_names[i]);
+            }
+        }
+    }
+    printf("\r\n");
+    return 0;
+}
     
     
 
@@ -1291,5 +1413,6 @@ const CMD_SPEC cmd_tbl[]={{"help"," [command]\r\n\t""get a list of commands or h
                      {"build","""\r\n\t""print build",build_Cmd},
                      {"dlog","[num]""\r\n\t""replay log data",data_log_Cmd},
                      {"ffsector","""\r\n\t""Print the address of the first free sector on the SD card",first_free_sectorCmd},
+                     {"blacklist","[rm|add|set|show] ""\r\n\t""show/edit SPB blacklist",blacklist_Cmd},
                      //end of list
                      {NULL,NULL,NULL}};

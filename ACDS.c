@@ -298,45 +298,69 @@ void ACDS_events(void *p) __toplevel{
               switch(i){
                   //X+ axis
                   case MAG_X_PLUS_IDX:
-                    Flux.c.y+=pt.c.a;
-                    ynum++;
-                    Flux.c.z-=pt.c.b;
-                    znum++;
+                    if(!(ACDS_settings.dat.settings.blacklist&(1<<(2*i)))){
+                        Flux.c.y+=pt.c.a;
+                        ynum++;
+                    }
+                    if(!(ACDS_settings.dat.settings.blacklist&(1<<(2*i+1)))){
+                        Flux.c.z-=pt.c.b;
+                        znum++;
+                    }
                   break;
                   //X- axis
                   case MAG_X_MINUS_IDX:
-                    Flux.c.y-=pt.c.a;
-                    ynum++;
-                    Flux.c.z-=pt.c.b;
-                    znum++;
+                    if(!(ACDS_settings.dat.settings.blacklist&(1<<(2*i)))){
+                        Flux.c.y-=pt.c.a;
+                        ynum++;
+                    }
+                    if(!(ACDS_settings.dat.settings.blacklist&(1<<(2*i+1)))){
+                        Flux.c.z-=pt.c.b;
+                        znum++;
+                    }
                   break;
                   //Y+ axis
                   case MAG_Y_PLUS_IDX:
-                    Flux.c.x-=pt.c.a;
-                    xnum++;
-                    Flux.c.z-=pt.c.b;
-                    znum++;
+                    if(!(ACDS_settings.dat.settings.blacklist&(1<<(2*i)))){
+                        Flux.c.x-=pt.c.a;
+                        xnum++;
+                    }
+                    if(!(ACDS_settings.dat.settings.blacklist&(1<<(2*i+1)))){
+                        Flux.c.z-=pt.c.b;
+                        znum++;
+                    }
                     break;
                   //Y- axis
                   case MAG_Y_MINUS_IDX:
-                    Flux.c.x+=pt.c.a;
-                    xnum++;
-                    Flux.c.z-=pt.c.b;
-                    znum++;
+                    if(!(ACDS_settings.dat.settings.blacklist&(1<<(2*i)))){
+                        Flux.c.x+=pt.c.a;
+                        xnum++;
+                    }
+                    if(!(ACDS_settings.dat.settings.blacklist&(1<<(2*i+1)))){
+                        Flux.c.z-=pt.c.b;
+                        znum++;
+                    }
                   break;
                   //Z+ axis
                   case MAG_Z_PLUS_IDX:
-                    Flux.c.y+=pt.c.a;
-                    xnum++;
-                    Flux.c.x+=pt.c.b;
-                    ynum++;
+                    if(!(ACDS_settings.dat.settings.blacklist&(1<<(2*i)))){
+                        Flux.c.y+=pt.c.a;
+                        xnum++;
+                    }
+                    if(!(ACDS_settings.dat.settings.blacklist&(1<<(2*i+1)))){
+                        Flux.c.x+=pt.c.b;
+                        ynum++;
+                    }
                   break;
                   //Z- axis
                   case MAG_Z_MINUS_IDX:
-                    Flux.c.x-=pt.c.a;
-                    xnum++;
-                    Flux.c.y+=pt.c.b;
-                    ynum++;
+                    if(!(ACDS_settings.dat.settings.blacklist&(1<<(2*i)))){
+                        Flux.c.x-=pt.c.a;
+                        xnum++;
+                    }
+                    if(!(ACDS_settings.dat.settings.blacklist&(1<<(2*i+1)))){
+                        Flux.c.y+=pt.c.b;
+                        ynum++;
+                    }
                   break;
               }
           }
