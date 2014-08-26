@@ -4,6 +4,7 @@
 #include "vector.h"
 #include "bias.h"
 #include "torquers.h"
+#include "filter.h"
 
 #define ACDS_SETTINGS_MAGIC       0xAA53
 
@@ -28,6 +29,8 @@ typedef struct{
     }dat;
     unsigned short crc;
 }ACDS_SETTINGS_STORE;
+
+extern IIR_FILTER bdot_filter;
 
 //current mode of operation
 extern unsigned short mode;

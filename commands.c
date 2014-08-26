@@ -1372,7 +1372,52 @@ int blacklist_Cmd(char **argv,unsigned short argc){
     printf("\r\n");
     return 0;
 }
-    
+
+int filter_Cmd(char **argv,unsigned short argc){
+    int i;
+    if(argc>0){
+        //process arguments
+        if(!strcmp("on",argv[1])){
+        }else if(!strcmp("off",argv[1])){
+            //turn filter off    
+            bdot_filter.status=FILTER_OFF;
+        }else if(!strcmp("on",argv[1])){
+            //turn filter on
+            bdot_filter.status=FILTER_ON;
+        }else if(!strcmp("new",argv[1])){
+            //upload new filter
+            printf("Ready for filter upload\r\n");
+        }else if(!strcmp("show",argv[1])){
+            //fall through to printing
+        }else{
+            printf("Error : unknown argument \"%s\"\r\n",argv[1]);
+            return 1;
+        }
+    }
+    //print filter status
+    switch(bdot_filter.status){
+        case FILTER_ON:
+            printf("Filter is on\r\n");
+        break;    
+        case FILTER_OFF:
+            printf("Filter is off\r\n");
+        break;    
+        default:
+            printf("unknown filter status = %i\r\n",bdot_filter.status);
+        break;
+    }
+    //print filter coefficents
+    printf("a[%i] = ",bdot_filter.na);
+    for(i=0;i<bdot_filter.na;i++){
+        printf("%f\t",bdot_filter.a[i]);
+    }
+    printf("\r\n""b[%i] = ",bdot_filter.nb);
+    for(i=0;i<bdot_filter.nb;i++){
+        printf("%f\t",bdot_filter.b[i]);
+    }
+    printf("\r\n");
+    return 0;
+}
     
 
 //table of commands with help
@@ -1414,5 +1459,6 @@ const CMD_SPEC cmd_tbl[]={{"help"," [command]\r\n\t""get a list of commands or h
                      {"dlog","[num]""\r\n\t""replay log data",data_log_Cmd},
                      {"ffsector","""\r\n\t""Print the address of the first free sector on the SD card",first_free_sectorCmd},
                      {"blacklist","[rm|add|set|show] ""\r\n\t""show/edit SPB blacklist",blacklist_Cmd},
+                     {"filter","[show|on|off|new] ""\r\n\t""Edit filter and filter settings",filter_Cmd},
                      //end of list
                      {NULL,NULL,NULL}};

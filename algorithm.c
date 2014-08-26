@@ -17,6 +17,9 @@
 const float pi=3.14159265358979323846;
 
 
+//filter coefficents for B-dot filter
+IIR_FILTER bdot_filter={FILTER_ON,2,3,{1,0.5,0.25},{1,0.5,0.25}};
+
 //outputs values of {2,1,-2}*qval according to Figure 14 in Mench 2011
 //may be combined into torquer firing routine
 VEC* quantize(VEC* val,SCL qval){

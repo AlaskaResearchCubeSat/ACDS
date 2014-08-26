@@ -43,6 +43,8 @@
       <file file_name="log.c"/>
       <file file_name="log.h"/>
       <file file_name="mag.h"/>
+      <file file_name="filter.c"/>
+      <file file_name="filter.h"/>
     </folder>
     <folder Name="System Files">
       <file file_name="$(StudioDir)/ctl/source/threads.js"/>
