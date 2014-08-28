@@ -4,12 +4,13 @@
     #include "quat.h"
     #include "torquers.h"
     #include "mag.h"
+    #include "filter.h"
     #include <error.h>
     #include <ARCbus.h>
     
     #define ACDS_LOG_MAGIC      0xAA72
     
-    #define ACDS_LOG_VERSION    3
+    #define ACDS_LOG_VERSION    4
     
     //structure for log data
     typedef struct{
@@ -22,7 +23,7 @@
         union{
             struct{
                 VEC B_dot;
-            
+                float z_xmag[FILTER_MAX_A],z_ymag[FILTER_MAX_A],z_zmag[FILTER_MAX_A];
             } mode1;
             struct{
                 short window;

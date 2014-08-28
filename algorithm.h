@@ -30,7 +30,7 @@ typedef struct{
     unsigned short crc;
 }ACDS_SETTINGS_STORE;
 
-extern IIR_FILTER bdot_filter;
+extern const FILTER_STORE bdot_filter;
 
 //current mode of operation
 extern unsigned short mode;

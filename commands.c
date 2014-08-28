@@ -23,6 +23,7 @@
 #include "IGRF/igrf.h"
 #include "corrections.h"
 #include "log.h"
+#include "crc.h"
 
 //define printf formats
 #define HEXOUT_STR    "%02X "
@@ -1373,20 +1374,146 @@ int blacklist_Cmd(char **argv,unsigned short argc){
     return 0;
 }
 
-int filter_Cmd(char **argv,unsigned short argc){
+//gets a line from input and checks for overflow
+char *getline(char *dest,size_t size){
     int i;
+    for(i=0;i<size;i++){
+        //get char from input
+        dest[i]=getchar();
+        //check for newline or null
+        if(dest[i]=='\r' || dest[i]=='\n' || dest[i]=='\0'){
+            //write null terminator
+            dest[i]='\0';
+            //exit loop
+            return dest;
+        }
+    }
+    return NULL;
+}
+
+//write filter to flash
+void filter_write(FILTER_STORE *src){
+    //compute CRC only on filter structure
+    src->crc=crc16(&src->dat.filter,sizeof(IIR_FILTER));
+    //write data to flash
+    flash_write((void*)&bdot_filter,src,sizeof(FILTER_STORE));
+}
+
+int filter_Cmd(char **argv,unsigned short argc){
+    int i,checksum,checksum_rec;
+    char buffer[FILTER_MAX_B*20],*ptr;
+    unsigned short crc;
+    FILTER_STORE tmp_filt;
     if(argc>0){
         //process arguments
-        if(!strcmp("on",argv[1])){
-        }else if(!strcmp("off",argv[1])){
+        if(!strcmp("off",argv[1])){
+            //coppy data to RAM
+            memcpy(&tmp_filt,&bdot_filter,sizeof(FILTER_STORE));
             //turn filter off    
-            bdot_filter.status=FILTER_OFF;
+            tmp_filt.dat.filter.status=FILTER_OFF;
+            //write new filter
+            filter_write(&tmp_filt);
         }else if(!strcmp("on",argv[1])){
+            //coppy data to RAM
+            memcpy(&tmp_filt,&bdot_filter,sizeof(FILTER_STORE));
             //turn filter on
-            bdot_filter.status=FILTER_ON;
+            tmp_filt.dat.filter.status=FILTER_ON;
+            //write new filter
+            filter_write(&tmp_filt);
         }else if(!strcmp("new",argv[1])){
             //upload new filter
-            printf("Ready for filter upload\r\n");
+            printf("Ready for filter upload na=%i nb=%i\r\n",FILTER_MAX_A,FILTER_MAX_B);
+            //get line check if buffer overflowed
+            if(!getline(buffer,sizeof(buffer))){
+                //print error
+                printf("Error : buffer overflow\r\n");
+                //exit
+                return -2;
+            }
+            //clear errno
+            errno=0;
+            //parse data
+            for(i=0,ptr=buffer;i<FILTER_MAX_A;i++){
+                tmp_filt.dat.filter.a[i]=strtof(ptr,&ptr);
+                //check for end
+                if(*ptr=='\0'){
+                    break;
+                }
+                //skip comma seperator
+                if(*ptr!=','){
+                    break;
+                }
+                ptr++;
+            }
+            //check if all elements were parsed
+            if((i+1)!=FILTER_MAX_A){
+                printf("Error : too few elements in a. found %i expected %i\r\n",i,FILTER_MAX_A);
+                return -4;
+            }
+            
+            //get line check if buffer overflowed
+            if(!getline(buffer,sizeof(buffer))){
+                //print error
+                printf("Error : buffer overflow\r\n");
+                //exit
+                return -2;
+            }
+            //parse data
+            for(i=0,ptr=buffer;i<FILTER_MAX_B;i++){
+                tmp_filt.dat.filter.b[i]=strtof(ptr,&ptr);
+                //check for end
+                if(*ptr=='\0'){
+                    break;
+                }
+                //skip comma seperator
+                if(*ptr!=','){
+                    break;
+                }
+                ptr++;
+            }
+            //check if all elements were parsed
+            if((i+1)!=FILTER_MAX_B){
+                printf("Error : too few elements in b. found %i expected %i\r\n",i,FILTER_MAX_B);
+                return -4;
+            }
+            //check if an error occured
+            if(errno){
+                printf("Error : could not parse data %i returned\r\n",errno);
+                return -3;
+            }
+            
+            //get line check if buffer overflowed
+            if(!getline(buffer,sizeof(buffer))){
+                //print error
+                printf("Error : buffer overflow\r\n");
+                //exit
+                return -2;
+            }
+            //parse filter orders
+            if(2!=sscanf(buffer,"na = %u nb = %u",&tmp_filt.dat.filter.na,&tmp_filt.dat.filter.nb)){
+                //print error
+                printf("Error : unable to parse filter orders\r\n");
+                return -5;
+            }
+            //check filter orders
+            if(tmp_filt.dat.filter.na>FILTER_MAX_A){
+                printf("Error : na is too large\r\n");
+                return -6;
+            }
+            
+            if(tmp_filt.dat.filter.nb>FILTER_MAX_B){
+                printf("Error : nb is too large\r\n");
+                return -6;
+            }
+            
+            //success!! fill in values in structure
+            tmp_filt.magic=FILTER_MAGIC;
+            tmp_filt.dat.filter.status=bdot_filter.dat.filter.status;
+            filter_write(&tmp_filt);
+            //print success
+            printf("Filter transfer complete!\r\n");
+            //done exit so we don't print
+            return 0;
         }else if(!strcmp("show",argv[1])){
             //fall through to printing
         }else{
@@ -1394,8 +1521,17 @@ int filter_Cmd(char **argv,unsigned short argc){
             return 1;
         }
     }
+    //check filter magic
+    if(bdot_filter.magic!=FILTER_MAGIC){
+        printf("Filter magic incorrect. Read %04X expected %04X\r\n",bdot_filter.magic,FILTER_MAGIC);
+    }
+    //check crc
+    crc=crc16(&bdot_filter.dat.filter,sizeof(IIR_FILTER));
+    if(bdot_filter.crc!=crc){
+        printf("Filter CRC incorrect. Read %04X calculated %04X\r\n",bdot_filter.crc,crc);
+    }
     //print filter status
-    switch(bdot_filter.status){
+    switch(bdot_filter.dat.filter.status){
         case FILTER_ON:
             printf("Filter is on\r\n");
         break;    
@@ -1403,17 +1539,17 @@ int filter_Cmd(char **argv,unsigned short argc){
             printf("Filter is off\r\n");
         break;    
         default:
-            printf("unknown filter status = %i\r\n",bdot_filter.status);
+            printf("unknown filter status = %i\r\n",bdot_filter.dat.filter.status);
         break;
     }
     //print filter coefficents
-    printf("a[%i] = ",bdot_filter.na);
-    for(i=0;i<bdot_filter.na;i++){
-        printf("%f\t",bdot_filter.a[i]);
+    printf("a[%i] = ",bdot_filter.dat.filter.na);
+    for(i=0;i<bdot_filter.dat.filter.na && i<FILTER_MAX_A;i++){
+        printf("%f\t",bdot_filter.dat.filter.a[i]);
     }
-    printf("\r\n""b[%i] = ",bdot_filter.nb);
-    for(i=0;i<bdot_filter.nb;i++){
-        printf("%f\t",bdot_filter.b[i]);
+    printf("\r\n""b[%i] = ",bdot_filter.dat.filter.nb);
+    for(i=0;i<bdot_filter.dat.filter.nb && i<FILTER_MAX_B;i++){
+        printf("%f\t",bdot_filter.dat.filter.b[i]);
     }
     printf("\r\n");
     return 0;

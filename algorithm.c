@@ -17,8 +17,12 @@
 const float pi=3.14159265358979323846;
 
 
+#pragma zeroedseg("INFO_C")
+#pragma constseg("INFO_C")
 //filter coefficents for B-dot filter
-IIR_FILTER bdot_filter={FILTER_ON,2,3,{1,0.5,0.25},{1,0.5,0.25}};
+const FILTER_STORE bdot_filter={FILTER_MAGIC,{{FILTER_ON,2,3,{1,0.5,0.25},{1,0.5,0.25}}},0};
+#pragma constseg(default)
+#pragma zeroedseg(default)
 
 //outputs values of {2,1,-2}*qval according to Figure 14 in Mench 2011
 //may be combined into torquer firing routine
@@ -366,15 +370,21 @@ short forceMode(unsigned short new_mode,unsigned short new_upgrade){
 //run the B-dot control algorithm
 void bdot(const VEC *FluxVector,unsigned short step){
   //commanded dipole moments
-  VEC M_cmd;
+  VEC M_cmd,filter_flux;
   short flux_valid,old_flux_valid;
   //check for nans in flux vector
   flux_valid=(isfinite(FluxVector->c.x) && isfinite(FluxVector->c.z) && isfinite(FluxVector->c.z));
   old_flux_valid=(isfinite(acds_dat.dat.acds_dat.flux.c.x) && isfinite(acds_dat.dat.acds_dat.flux.c.z) && isfinite(acds_dat.dat.acds_dat.flux.c.z));
+  //filter flux
+  if(bdot_filter.dat.filter.status==FILTER_ON){
+      filter_flux.c.x=filter(&bdot_filter.dat.filter,acds_dat.dat.acds_dat.mdat.mode1.z_xmag,flux_valid?FluxVector->c.x:0);
+      filter_flux.c.y=filter(&bdot_filter.dat.filter,acds_dat.dat.acds_dat.mdat.mode1.z_ymag,flux_valid?FluxVector->c.y:0);
+      filter_flux.c.z=filter(&bdot_filter.dat.filter,acds_dat.dat.acds_dat.mdat.mode1.z_zmag,flux_valid?FluxVector->c.z:0);
+  }
   //check if old flux is valid
   if(old_flux_valid && flux_valid){
     //compute B-dot
-    vec_cp(&M_cmd,FluxVector);
+    vec_cp(&M_cmd,bdot_filter.dat.filter.status==FILTER_ON?&filter_flux:FluxVector);
     vec_dif(&M_cmd,&acds_dat.dat.acds_dat.flux);
   }else{
     //use zero vector for B-dot
