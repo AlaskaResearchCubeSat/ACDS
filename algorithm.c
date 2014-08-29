@@ -286,7 +286,6 @@ int gainCmd(char **argv,unsigned short argc){
   //read values
   for(i=0;i<((argc==4)?3:1);i++){
     //get value
-    printf("i = %i\r\n",i);
     tmp.elm[i]=strtof(argv[i+2],&end);
     //check if value parsed correctly
     if(end==argv[i+2]){
