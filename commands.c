@@ -1352,7 +1352,12 @@ int blacklist_Cmd(char **argv,unsigned short argc){
         //set CRC
         tmp_settings->crc=crc16((void*)&tmp_settings->dat,sizeof(ACDS_SETTINGS));
         //write values to flash
-        flash_write((void*)&ACDS_settings,tmp_settings,sizeof(ACDS_SETTINGS_STORE));
+        if(flash_write((void*)&ACDS_settings,tmp_settings,sizeof(ACDS_SETTINGS_STORE))!=RET_SUCCESS){
+            printf("Error : could not write settings\r\n");
+            //free buffer
+            BUS_free_buffer();  
+            return -1;
+        }
         //free buffer
         BUS_free_buffer();  
     }
@@ -1396,7 +1401,9 @@ void filter_write(FILTER_STORE *src){
     //compute CRC only on filter structure
     src->crc=crc16(&src->dat.filter,sizeof(IIR_FILTER));
     //write data to flash
-    flash_write((void*)&bdot_filter,src,sizeof(FILTER_STORE));
+    if(flash_write((void*)&bdot_filter,src,sizeof(FILTER_STORE))!=RET_SUCCESS){
+        printf("Error : could not write filter\r\n");
+    }
 }
 
 int filter_Cmd(char **argv,unsigned short argc){

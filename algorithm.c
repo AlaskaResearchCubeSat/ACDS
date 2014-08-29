@@ -214,7 +214,11 @@ int setpointCmd(char **argv,unsigned short argc){
     //set CRC
     tmp_settings->crc=crc16((void*)&tmp_settings->dat,sizeof(ACDS_SETTINGS));
     //write values to flash
-    flash_write((void*)&ACDS_settings,tmp_settings,sizeof(ACDS_SETTINGS_STORE));
+    if(flash_write((void*)&ACDS_settings,tmp_settings,sizeof(ACDS_SETTINGS_STORE))!=RET_SUCCESS){
+        printf("Error : write failed\r\n");
+        //free buffer
+        BUS_free_buffer();  
+    }
     //free buffer
     BUS_free_buffer();  
   }
@@ -311,7 +315,11 @@ int gainCmd(char **argv,unsigned short argc){
   //set CRC
   tmp_settings->crc=crc16((void*)&tmp_settings->dat,sizeof(ACDS_SETTINGS));
   //write values to flash
-  flash_write((void*)&ACDS_settings,tmp_settings,sizeof(ACDS_SETTINGS_STORE));
+  if(flash_write((void*)&ACDS_settings,tmp_settings,sizeof(ACDS_SETTINGS_STORE))!=RET_SUCCESS){
+     printf("Error : write failed\r\n");
+     //free buffer
+     BUS_free_buffer();  
+  }
   //print values from flash
   if(!strcmp(argv[1],"Ka")){
     vecPrint(argv[1],&ACDS_settings.dat.settings.Ka);
