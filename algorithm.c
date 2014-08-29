@@ -145,7 +145,7 @@ int flash_write(void *dest,const void *src,int size){
     //lock the flash again
     FCTL3=FWKEY|LOCK;
     //check fail flag and that the first and last bytes were erased
-    if(FCTL3&FAIL || *(unsigned short*)(dest)!=0xFFFF || ((unsigned short*)(dest))[size-1]!=0xFFFF){
+    if(FCTL3&FAIL || *(unsigned short*)(dest)!=0xFFFF || ((unsigned short*)(dest))[(size/2)-1]!=0xFFFF){
         //re-enable interrupts if enabled before
         BUS_restart_interrupts(en);
         return -1;
