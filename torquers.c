@@ -12,6 +12,7 @@
 #include "ACDS.h"
 #include "LED.h"
 #include "bias.h"
+#include "log.h"
 
 //structures to track torquer status
 TQ_SET tq_stat;
@@ -629,9 +630,11 @@ int drive_torquers(const int* num,const int* dir){
    ctl_task_set_priority(ctl_task_executing,p_old);
    //toggle LED
    FLIP_LED_toggle();
-   //TODO: save feedback for ground analysis
-   report_error(ERR_LEV_INFO,ACDS_ERR_SRC_TORQUERS,TQ_INFO_TQFB,((fb1<<8)|fb2));
-   //printf("fb1 0x%02X\r\nfb2 0x%02X\r\n",fb1,fb2);
+   //save feedback for ground analysis
+   acds_dat.dat.acds_dat.fb1=fb1;
+   acds_dat.dat.acds_dat.fb2=fb2;
+   //generate debug message with torquer feedback
+   report_error(ERR_LEV_DEBUG,ACDS_ERR_SRC_TORQUERS,TQ_INFO_TQFB,((fb1<<8)|fb2));
    //Look at torquer feedback for each axis and add error bits to status if nessissary
    //TODO: think deep thoughts about what error bits should be set here
    //special care should be taken so that functionality is not limited if comparitors function poorly
@@ -639,9 +642,9 @@ int drive_torquers(const int* num,const int* dir){
      //check if torquer was flipped in this axis
      if(num[i]!=0){
        //increment flips
-       if(status.flips[i]++==USHRT_MAX){
+       if(acds_dat.dat.acds_dat.flips[i]++==USHRT_MAX){
          //saturate
-         status.flips[i]=USHRT_MAX;
+         acds_dat.dat.acds_dat.flips[i]=USHRT_MAX;
        }
      }  
      //check feedback from before flip

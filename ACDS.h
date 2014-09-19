@@ -26,8 +26,6 @@
   //mode for ACDS system
   extern int ACDS_mode;
   
-  extern ACDS_STAT status;
-  
   //all events for ACDS
 #define ACDS_EVT_ALL  (ACDS_EVT_DAT_REC)
   

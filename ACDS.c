@@ -16,8 +16,6 @@
 #include <SDlib.h>
 #include "corrections.h"
 #include "log.h"
-
-ACDS_STAT status;
     
 typedef struct{
         CTL_MUTEX_t lock;
@@ -29,10 +27,29 @@ typedef struct{
     
 SPI_DATA_ACTION spi_action;
 
+void make_status(ACDS_STAT *dest){    
+  //get torquer status
+  tqstat2stat(dest->tqstat);
+  //get magnetic flux and convert to integer flux
+  dest->mag[0]=32767/2*acds_dat.dat.acds_dat.flux.elm[0];
+  dest->mag[1]=32767/2*acds_dat.dat.acds_dat.flux.elm[1];
+  dest->mag[2]=32767/2*acds_dat.dat.acds_dat.flux.elm[2];
+  //copy mode
+  dest->mode=acds_dat.dat.acds_dat.mode;
+  //copy flips
+  dest->flips[0]=acds_dat.dat.acds_dat.flips[0];
+  dest->flips[1]=acds_dat.dat.acds_dat.flips[1];
+  dest->flips[2]=acds_dat.dat.acds_dat.flips[2];
+  //TODO: set attitude
+  //set rates
+  ivec_cp(&dest->rates,&acds_dat.dat.acds_dat.gyro);
+}
+
 void sub_events(void *p) __toplevel{
   unsigned int e,len;
   int i,resp;
   extern CTL_TASK_t tasks[3];
+  ACDS_STAT status;
   unsigned short time=32768,count=0;
   unsigned char buf[BUS_I2C_HDR_LEN+sizeof(ACDS_STAT)+BUS_I2C_CRC_LEN],*ptr;
   for(;;){
@@ -78,6 +95,7 @@ void sub_events(void *p) __toplevel{
     if(e&SUB_EV_SEND_STAT){
       //send status
       puts("Sending status\r\n");
+      //get status data
       //setup packet 
       ptr=BUS_cmd_init(buf,CMD_ACDS_STAT);
       //fill in telemitry data
@@ -241,12 +259,6 @@ void ACDS_events(void *p) __toplevel{
   const VEC zero={0,0,0};
   VEC Flux,mag;
   CPOINT pt;
-  //initialize status
-  memset(status.mag,0,sizeof(status.mag));
-  memset(status.tqstat,0,sizeof(status.tqstat));
-  memset(status.flips,0,sizeof(status.flips));
-  iquat_zero(&status.attitude);
-  ivec_zero(&status.rates);
   //init event
   ctl_events_init(&ACDS_evt,0);
   //check correction data status
@@ -351,10 +363,6 @@ void ACDS_events(void *p) __toplevel{
       Flux.c.x=xnum>0?Flux.c.x/xnum:__float32_nan;
       Flux.c.y=ynum>0?Flux.c.y/ynum:__float32_nan;
       Flux.c.z=znum>0?Flux.c.z/znum:__float32_nan;
-      //set flux in status packet
-      status.mag[0]=32767/2*Flux.elm[0];
-      status.mag[1]=32767/2*Flux.elm[1];
-      status.mag[2]=32767/2*Flux.elm[2];
       //do things based on mode
       switch(ACDS_mode){
         case ACDS_MODE_1:
@@ -413,8 +421,6 @@ void ACDS_events(void *p) __toplevel{
       vec_cp(&acds_dat.dat.acds_dat.flux,&Flux);      
       //set mode
       acds_dat.dat.acds_dat.mode=ACDS_mode;
-      //save status
-      tqstat2stat(status.tqstat);
       ctl_events_set_clear(&ACDS_evt,ADCS_EVD_COMMAND_SENSOR_READ,0);
       //write log data
       resp=log_store_data(&acds_dat);

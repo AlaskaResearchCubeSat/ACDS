@@ -456,6 +456,9 @@ int tst_IGRF_cmd(char **argv,unsigned short argc){
 
 int statusCmd(char **argv,unsigned short argc){
   int i;
+  ACDS_STAT status;
+  //get status data
+  make_status(&status);
   printf("Status Size = %u\r\n",sizeof(ACDS_STAT));
   //print status data
   printf   ("Mode   \t%i\r\n",status.mode);
