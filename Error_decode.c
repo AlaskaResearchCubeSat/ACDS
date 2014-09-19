@@ -82,6 +82,9 @@ char *err_decode(char buf[150], unsigned short source,int err, unsigned short ar
             case ACDS_ERR_SUB_LEDL_COMM:
                 sprintf(buf,"Sybsystem : Error Communicating with LEDL: %s (%i)",BUS_error_str(argument),argument);
             break;
+            case ACDS_ERR_SUB_STAT_TX:
+            break;
+                sprintf(buf,"Sybsystem : Error Sending Status: %s (%i)",BUS_error_str(argument),argument);
             default:
               sprintf(buf,"Subsystem : Unknown Error #%i, argument = %i",err,argument);
             return buf;
