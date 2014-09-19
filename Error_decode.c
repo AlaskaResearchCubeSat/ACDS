@@ -1,6 +1,7 @@
 #include <Error.h>
 #include <commandLib.h>
 #include <SDlib.h>
+#include <ARCbus.h>
 #include "ACDSerr.h"
 #include "torquers.h"
 
@@ -76,6 +77,15 @@ char *err_decode(char buf[150], unsigned short source,int err, unsigned short ar
         return buf;
       }
     break;
+    case ACDS_ERR_SRC_SUBSYSTEM:
+        switch(err){
+            case ACDS_ERR_SUB_LEDL_COMM:
+                sprintf(buf,"Sybsystem : Error Communicating with LEDL: %s (%i)",BUS_error_str(argument),argument);
+            break;
+            default:
+              sprintf(buf,"Subsystem : Unknown Error #%i, argument = %i",err,argument);
+            return buf;
+        }
   }
   sprintf(buf,"source = %i, error = %i, argument = %i",source,err,argument);
   return buf;

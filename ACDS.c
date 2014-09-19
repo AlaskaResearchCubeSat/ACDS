@@ -67,7 +67,7 @@ void sub_events(void *p) __toplevel{
         resp=BUS_cmd_tx(BUS_ADDR_LEDL,buf,1,0,BUS_I2C_SEND_FOREGROUND);
         //check result
         if(resp<0){
-            printf("Error communicating with LEDL : %s\r\n",BUS_error_str(resp));
+            report_error(ERR_LEV_ERROR,ACDS_ERR_SRC_SUBSYSTEM,ACDS_ERR_SUB_LEDL_COMM,resp);
         }
     }
     if(e&SUB_EV_PWR_ON){
@@ -89,7 +89,7 @@ void sub_events(void *p) __toplevel{
         resp=BUS_cmd_tx(BUS_ADDR_LEDL,buf,4,0,BUS_I2C_SEND_FOREGROUND);
         //check result
         if(resp<0){
-            printf("Error communicating with LEDL : %s\r\n",BUS_error_str(resp));
+            report_error(ERR_LEV_ERROR,ACDS_ERR_SRC_SUBSYSTEM,ACDS_ERR_SUB_LEDL_COMM,resp);
         }
     }
     if(e&SUB_EV_SEND_STAT){
