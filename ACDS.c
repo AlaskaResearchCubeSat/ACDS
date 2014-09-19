@@ -95,9 +95,6 @@ void sub_events(void *p) __toplevel{
         STAT_LED_toggle();
       }
     }
-    if(e&SUB_EV_TIME_CHECK){
-      printf("time ticker = %li\r\n",get_ticker_time());
-    }
     if(e&SUB_EV_SPI_DAT){
       puts("SPI data recived:\r\n");
       if(!ctl_mutex_lock(&spi_action.lock,CTL_TIMEOUT_DELAY,2048)){
@@ -149,21 +146,6 @@ void sub_events(void *p) __toplevel{
     if(e&SUB_EV_SPI_ERR_CRC){
       puts("SPI bad CRC\r\n");
     }
-    /*if(e&SUB_EV_ASYNC_OPEN){
-      extern unsigned char async_addr;
-      unsigned *stack2;
-      //setup closed event
-      async_setup_close_event(&SUB_events,SUB_EV_ASYNC_CLOSE);
-      //print message
-      printf("Async Opened from 0x%02X\r\n",async_addr);
-      //setup UART terminal        
-      ctl_task_run(&tasks[1],BUS_PRI_NORMAL,terminal,"ACDS Test Program ready","terminal",sizeof(stack2)/sizeof(stack2[0])-2,stack2+1,0);
-      //async_close();
-    }
-    if(e&SUB_EV_ASYNC_CLOSE){
-      //kill off async terminal
-      ctl_task_remove(&tasks[1]);
-    }*/
   }
 }
 
