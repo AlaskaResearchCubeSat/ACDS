@@ -107,7 +107,9 @@ void sub_events(void *p) __toplevel{
       //send command
       resp=BUS_cmd_tx(BUS_ADDR_CDH,buf,sizeof(ACDS_STAT),0,BUS_I2C_SEND_FOREGROUND);
       if(resp!=RET_SUCCESS){
-        printf("Failed to send status %s\r\n",BUS_error_str(resp));
+        //report error
+        report_error(ERR_LEV_ERROR,ACDS_ERR_SRC_SUBSYSTEM,ACDS_ERR_SUB_STAT_TX,resp);
+        //turn on error LED
         ERR_LED_on();
       }else{
         STAT_LED_toggle();
