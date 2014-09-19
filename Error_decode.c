@@ -79,8 +79,11 @@ char *err_decode(char buf[150], unsigned short source,int err, unsigned short ar
     break;
     case ACDS_ERR_SRC_SUBSYSTEM:
         switch(err){
-            case ACDS_ERR_SUB_LEDL_COMM:
-                sprintf(buf,"Sybsystem : Error Communicating with LEDL: %s (%i)",BUS_error_str(argument),argument);
+            case ACDS_ERR_SUB_LEDL_START:
+                sprintf(buf,"Sybsystem : Error starting sensor reading : %s (%i)",BUS_error_str(argument),argument);
+            break;
+            case ACDS_ERR_SUB_LEDL_STOP:
+                sprintf(buf,"Sybsystem : Error starting sensor reading : %s (%i)",BUS_error_str(argument),argument);
             break;
             case ACDS_ERR_SUB_STAT_TX:
             break;
