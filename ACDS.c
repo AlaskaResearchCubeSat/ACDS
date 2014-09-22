@@ -4,6 +4,7 @@
 #include <ARCbus.h>
 #include <string.h>
 #include <terminal.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <math.h> //needed for NAN
 #include "SensorDataInterface.h"
@@ -26,14 +27,38 @@ typedef struct{
     }SPI_DATA_ACTION;
     
 SPI_DATA_ACTION spi_action;
+   
+//Convert magnetometer values to integers 
+//Use smallest value 
+int int_mag(SCL val){
+    //check for NAN
+    if(isnan(val)){
+        //return INT_MIN
+        return INT_MIN;
+    }
+    //scale floating point value
+    val*=32767/2.0;
+    //check for positave overflow
+    if(val>INT_MAX){
+        //return int max
+        return INT_MAX;
+    }    
+    //check for negitave overflow
+    if(val<(INT_MIN+1)){
+        //return minimum value
+        return (INT_MIN+1);
+    }
+    //return scaled value as an integer
+    return ((int)val);
+}
 
 void make_status(ACDS_STAT *dest){    
   //get torquer status
   tqstat2stat(dest->tqstat);
   //get magnetic flux and convert to integer flux
-  dest->mag[0]=32767/2*acds_dat.dat.acds_dat.flux.elm[0];
-  dest->mag[1]=32767/2*acds_dat.dat.acds_dat.flux.elm[1];
-  dest->mag[2]=32767/2*acds_dat.dat.acds_dat.flux.elm[2];
+  dest->mag[0]=int_mag(acds_dat.dat.acds_dat.flux.elm[0]);
+  dest->mag[1]=int_mag(acds_dat.dat.acds_dat.flux.elm[1]);
+  dest->mag[2]=int_mag(acds_dat.dat.acds_dat.flux.elm[2]);
   //copy mode
   dest->mode=acds_dat.dat.acds_dat.mode;
   //copy flips
