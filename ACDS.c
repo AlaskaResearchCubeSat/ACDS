@@ -40,8 +40,10 @@ void make_status(ACDS_STAT *dest){
   dest->flips[0]=acds_dat.dat.acds_dat.flips[0];
   dest->flips[1]=acds_dat.dat.acds_dat.flips[1];
   dest->flips[2]=acds_dat.dat.acds_dat.flips[2];
-  //TODO: set attitude
-  //set rates
+  //set attitude
+  //TODO: figure out what to do here
+  iquat_zero(&dest->attitude);
+  //set rates from gyro
   ivec_cp(&dest->rates,&acds_dat.dat.acds_dat.gyro);
 }
 
