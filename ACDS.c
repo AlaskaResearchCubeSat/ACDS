@@ -191,7 +191,10 @@ void sub_events(void *p) __toplevel{
       BUS_free_buffer_from_event();
     }
     if(e&SUB_EV_SPI_ERR_CRC){
-      puts("SPI bad CRC\r\n");
+        puts("SPI bad CRC\r\n");
+    }
+    if(e&SUB_EV_SPI_ERR_BUSY){
+        puts("SPI packet lost\r\n");
     }
   }
 }
