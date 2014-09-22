@@ -32,5 +32,7 @@
   void sub_events(void *p);
   void ACDS_events(void *p);
 
+  void make_status(ACDS_STAT *dest);
+
 #endif
   
