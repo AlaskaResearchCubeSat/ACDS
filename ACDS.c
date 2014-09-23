@@ -437,7 +437,7 @@ void ACDS_events(void *p) __toplevel{
         break;
         case ACDS_INIT_MODE:
             //check if torquers are initialized
-            if(!checkTorqueInit){
+            if(!checkTorqueInit()){
                 //flip torquers
                 setTorque(&zero);  
             }else{
