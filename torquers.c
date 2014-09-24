@@ -28,6 +28,27 @@ static const int stat_mask[4]={T_STAT_1,T_STAT_2,T_STAT_3,T_STAT_4};
       
 const char ax_char[3]={'X','Y','Z'};
 
+#ifndef DEV_BUILD
+    #define USE_TQ_PIN
+#endif
+
+
+#ifdef USE_TQ_PIN
+    //define test pin
+    #define tqPin_low()         do{P5OUT&=~BIT1;}while(0)
+    #define tqPin_high()        do{P5OUT|=BIT1;}while(0)
+    void tqPin_init(void){
+        P5OUT&=~BIT1;
+        P5SEL&=~BIT1;
+        P5DIR|= BIT1;
+    }
+#else
+    //don't use test pin for DEV_BUILD
+    #define tqPin_low()         do{}while(0)
+    #define tqPin_high()        do{}while(0)
+    #define tqPin_init()        do{}while(0)
+#endif
+
 //check if torquers have been initialized
 //return 1 if torquers have been initialized
 short checkTorqueInit(void){
@@ -185,11 +206,9 @@ void driverInit(void){
   Y_DRV_DIR2|=TQ_DRV_PINS;
   Z_DRV_DIR1|=TQ_DRV_PINS;
   Z_DRV_DIR2|=TQ_DRV_PINS;
-  //TESTING: setup test pin
-  P5OUT&=~BIT1;
-  P5SEL&=~BIT1;
-  P5DIR|= BIT1;
 #endif
+  //setup torquer test pin
+  tqPin_init();
   //reset torquer status to unknown
   resetTorqueStatus();
 }
@@ -586,12 +605,12 @@ int drive_torquers(const int* num,const int* dir){
    #ifndef DEV_BUILD
      //get torquer feedback before
      fb1=get_torquer_fb();
-     //TESTING: set test pin high while torquer is flipped
-     P5OUT|=BIT1;
    #else
     //fake feedback for DEV_BUILD
     fb1=0x2A;
    #endif
+   //set test pin high while torquer is flipped
+   tqPin_high();
    //skip driving torquers for DEV build
    #ifndef DEV_BUILD
      //Set outputs
@@ -611,11 +630,8 @@ int drive_torquers(const int* num,const int* dir){
        *port[i]&=~TQ_DRV_PINS;
      }
    #endif
-   //skip test pin for DEV_BUILD
-   #ifndef DEV_BUILD
-     //TESTING: set test pin low after torquers have been flipped
-     P5OUT&=~BIT1;
-   #endif
+   //set test pin low after torquers have been flipped
+   tqPin_low();
    //get flip time
    lastFlip=ctl_get_current_time();
    //skip torquer feedback for DEV_BUILD
