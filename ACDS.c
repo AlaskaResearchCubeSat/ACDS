@@ -6,6 +6,7 @@
 #include <terminal.h>
 #include <limits.h>
 #include <stdlib.h>
+#include <timerA.h>
 #include <math.h> //needed for NAN
 #include "SensorDataInterface.h"
 #include "ACDS.h"
@@ -27,6 +28,10 @@ typedef struct{
     }SPI_DATA_ACTION;
     
 SPI_DATA_ACTION spi_action;
+    
+    
+//count and period to determine mag timeout
+MAG_TIME mag_time;
    
 //Convert magnetometer values to integers 
 //Use smallest value 
@@ -72,26 +77,78 @@ void make_status(ACDS_STAT *dest){
   ivec_cp(&dest->rates,&acds_dat.dat.acds_dat.gyro);
 }
 
+int mag_sample_stop(void* buf){
+    unsigned char *ptr;
+    //set ACDS mode
+    ACDS_mode=ACDS_IDLE_MODE;
+    //setup command
+    ptr=BUS_cmd_init(buf,CMD_MAG_SAMPLE_CONFIG);
+    //set command
+    *ptr++=MAG_SAMPLE_STOP;
+    //stop LEDL timeout
+    mag_timeout_stop();
+    //send packet
+    return BUS_cmd_tx(BUS_ADDR_LEDL,buf,1,0,BUS_I2C_SEND_FOREGROUND);
+}
+
+int mag_sample_start(void* buf,unsigned short time,unsigned char count){
+    unsigned char *ptr;
+    int resp;
+    //setup command
+    ptr=BUS_cmd_init(buf,CMD_MAG_SAMPLE_CONFIG);
+    //set command
+    *ptr++=MAG_SAMPLE_START;
+    //set time MSB
+    *ptr++=time>>8;
+    //set time LSB
+    *ptr++=time;
+    //set count
+    *ptr++=count;
+    //set timeout structure
+    mag_time.T=time;
+    mag_time.n=count+1;
+    //send packet
+    resp=BUS_cmd_tx(BUS_ADDR_LEDL,buf,4,0,BUS_I2C_SEND_FOREGROUND);
+    //if command was sent successfully then start timeout timer
+    if(resp==RET_SUCCESS){
+        //restart timeout timer
+        mag_timeout_reset();
+    }
+    //return response
+    return resp;
+}
+
+int mag_sample_single(void* buf){
+    unsigned char *ptr;
+    int resp;
+    //setup command
+    ptr=BUS_cmd_init(buf,CMD_MAG_SAMPLE_CONFIG);
+    //set command
+    *ptr++=MAG_SINGLE_SAMPLE;
+    //send packet
+    resp=BUS_cmd_tx(BUS_ADDR_LEDL,buf,1,0,BUS_I2C_SEND_FOREGROUND);
+    //if command was sent successfully then start timeout timer
+    if(resp==RET_SUCCESS){
+        //restart timeout timer
+        mag_timeout_reset();
+    }
+    //return response
+    return resp;
+}
+
 void sub_events(void *p) __toplevel{
   unsigned int e,len;
   int i,resp;
   extern CTL_TASK_t tasks[3];
   ACDS_STAT status;
-  unsigned short time=32768,count=0;
   unsigned char buf[BUS_I2C_HDR_LEN+sizeof(ACDS_STAT)+BUS_I2C_CRC_LEN],*ptr;
   for(;;){
     e=ctl_events_wait(CTL_EVENT_WAIT_ANY_EVENTS_WITH_AUTO_CLEAR,&SUB_events,SUB_EV_ALL|SUB_EV_ASYNC_OPEN|SUB_EV_ASYNC_CLOSE,CTL_TIMEOUT_NONE,0);
     if(e&SUB_EV_PWR_OFF){
         //print message
         puts("System Powering Down\r\n");
-        //set ACDS mode
-        ACDS_mode=ACDS_IDLE_MODE;
-        //setup command
-        ptr=BUS_cmd_init(buf,CMD_MAG_SAMPLE_CONFIG);
-        //set command
-        *ptr++=MAG_SAMPLE_STOP;
-        //send packet
-        resp=BUS_cmd_tx(BUS_ADDR_LEDL,buf,1,0,BUS_I2C_SEND_FOREGROUND);
+        //send stop sampling packet
+        resp=mag_sample_stop(buf);
         //check result
         if(resp<0){
             report_error(ERR_LEV_ERROR,ACDS_ERR_SRC_SUBSYSTEM,ACDS_ERR_SUB_LEDL_STOP,resp);
@@ -102,18 +159,8 @@ void sub_events(void *p) __toplevel{
         puts("System Powering Up\r\n");
         //set init ACDS mode
         ACDS_mode=ACDS_INIT_MODE;
-        //setup command
-        ptr=BUS_cmd_init(buf,CMD_MAG_SAMPLE_CONFIG);
-        //set command
-        *ptr++=MAG_SAMPLE_START;
-        //set time MSB
-        *ptr++=time>>8;
-        //set time LSB
-        *ptr++=time;
-        //set count
-        *ptr++=count;
-        //send packet
-        resp=BUS_cmd_tx(BUS_ADDR_LEDL,buf,4,0,BUS_I2C_SEND_FOREGROUND);
+        //send start sampling packet
+        resp= mag_sample_start(buf,32768,0);
         //check result
         if(resp<0){
             report_error(ERR_LEV_ERROR,ACDS_ERR_SRC_SUBSYSTEM,ACDS_ERR_SUB_LEDL_START,resp);
@@ -311,6 +358,10 @@ void ACDS_events(void *p) __toplevel{
     e=ctl_events_wait(CTL_EVENT_WAIT_ANY_EVENTS_WITH_AUTO_CLEAR,&ACDS_evt,ACDS_EVT_ALL,CTL_TIMEOUT_NONE,0);
     //magnetometer data event
     if(e&ACDS_EVT_DAT_REC){
+      //reset data timeout
+      mag_timeout_reset();
+      //clear LEDL timeout event
+      e&=~ACDS_EVT_DAT_TIMEOUT;
       //clear flux
       Flux.c.x=Flux.c.y=Flux.c.z=0;
       //clear axes sample number
@@ -460,5 +511,58 @@ void ACDS_events(void *p) __toplevel{
           report_error(ERR_LEV_ERROR,ACDS_ERR_SRC_ALGORITHM,ACDS_ERR_ALG_LOG_FAIL,resp);
       }
     }
+	if(e&ACDS_EVT_DAT_TIMEOUT){
+        //TODO : do something
+        puts("LEDL timeout\r");
+        ERR_LED_on();
+    }
+  }
+}
+
+//running interrupt count 
+static short int_count;
+
+//reset timeout timer
+void mag_timeout_reset(void){
+  //disable timer interrupt
+  TACCTL1=0;
+  //initialize interrupt count
+  int_count=mag_time.n;
+  //set interupt time
+  TACCR1=readTA()+mag_time.T;
+  //clear event flag
+  ctl_events_set_clear(&ACDS_evt,0,ACDS_EVT_DAT_TIMEOUT);
+  //enable timer interrupt
+  TACCTL1=CCIE;
+}
+
+//stop timeout timer
+void mag_timeout_stop(void){
+    //disable interrupt
+    TACCTL1=0;
+    //clear event flag
+    ctl_events_set_clear(&ACDS_evt,0,ACDS_EVT_DAT_TIMEOUT);
+}
+
+//Timer A1 interrupt
+void timerA1(void) __ctl_interrupt[TIMERA1_VECTOR]{
+  switch(TAIV){
+    //CCR1 : used for sensor data timeout
+    case TAIV_TACCR1:
+      //setup next interrupt
+      TACCR1+=mag_time.T;
+      //decremint count
+      int_count--;
+      if(int_count<=0){
+        ctl_events_set_clear(&ACDS_evt,ACDS_EVT_DAT_TIMEOUT,0);
+        int_count=mag_time.n;
+      }
+    break;
+    //CCR2 : Unused
+    case TAIV_TACCR2:
+    break;
+    //TAINT : unused
+    case TAIV_TAIFG:
+    break;
   }
 }

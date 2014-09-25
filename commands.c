@@ -324,18 +324,8 @@ int sensorRunCmd(char **argv,unsigned short argc){
       printf("Error : %s takes 0 or 2 arguments\r\n",argv[0]);
       return -1;
   }
-  
-  ptr=BUS_cmd_init(buff,CMD_MAG_SAMPLE_CONFIG);
-  //set command
-  *ptr++=MAG_SAMPLE_START;
-  //set time MSB
-  *ptr++=time>>8;
-  //set time LSB
-  *ptr++=time;
-  //set count
-  *ptr++=count;
-  //send packet
-  res=BUS_cmd_tx(BUS_ADDR_LEDL,buff,4,0,BUS_I2C_SEND_FOREGROUND);
+  //setup sampling
+  res=mag_sample_start(buff,time,count);
   //check result
   if(res<0){
     printf("Error communicating with LEDL : %s\r\n",BUS_error_str(res));
@@ -349,11 +339,8 @@ int sensorRunCmd(char **argv,unsigned short argc){
 int sensorStopCmd(char **argv,unsigned short argc){
   unsigned char buff[BUS_I2C_HDR_LEN+1+BUS_I2C_CRC_LEN],*ptr;
   int res;
-  ptr=BUS_cmd_init(buff,CMD_MAG_SAMPLE_CONFIG);
-  //set command
-  *ptr++=MAG_SAMPLE_STOP;
-  //send packet
-  res=BUS_cmd_tx(BUS_ADDR_LEDL,buff,1,0,BUS_I2C_SEND_FOREGROUND);
+  //send stop command to LEDL
+  res=mag_sample_stop(buff);
   //check result
   if(res<0){
     printf("Error communicating with LEDL : %s\r\n",BUS_error_str(res));
@@ -867,25 +854,13 @@ int magCmd(char **argv,unsigned short argc){
     }
     //set ACDS mode
     ACDS_mode=ACDS_COMMAND_MODE;
-    //setup command
-    ptr=BUS_cmd_init(buff,CMD_MAG_SAMPLE_CONFIG);
     //check if reading a single sample
     if(single){
-        //set command
-        *ptr++=MAG_SINGLE_SAMPLE;
-        //send packet
-        res=BUS_cmd_tx(BUS_ADDR_LEDL,buff,1,0,BUS_I2C_SEND_FOREGROUND);
+        //read single measurement
+        res=mag_sample_single(buff);
     }else{
-        //set command
-        *ptr++=MAG_SAMPLE_START;
-        //set time MSB
-        *ptr++=time>>8;
-        //set time LSB
-        *ptr++=time;
-        //set count
-        *ptr++=count;
-        //send packet
-        res=BUS_cmd_tx(BUS_ADDR_LEDL,buff,4,0,BUS_I2C_SEND_FOREGROUND);
+        //start reading magnetometer data
+        res=mag_sample_start(buff,time,count);
     }
     //check result
     if(res<0){
@@ -1029,12 +1004,8 @@ int magCmd(char **argv,unsigned short argc){
                 printf("Warning : timeout while waiting for sensor data\r\n"); 
             }
         }
-        //setup command
-        ptr=BUS_cmd_init(buff,CMD_MAG_SAMPLE_CONFIG);
-        //set command
-        *ptr++=MAG_SAMPLE_STOP;
-        //send packet
-        res=BUS_cmd_tx(BUS_ADDR_LEDL,buff,1,0,BUS_I2C_SEND_FOREGROUND);
+        //send stop sample command
+        res=mag_sample_stop(buff);
         //check result
         if(res<0){
             printf("Error communicating with LEDL : %s\r\n",BUS_error_str(res));
@@ -1075,18 +1046,8 @@ int modeCmd(char **argv,unsigned short argc){
     acds_dat.dat.acds_dat.flux.c.z=__float32_nan;
     //set ACDS mode
     ACDS_mode=mode;
-    //setup command
-    ptr=BUS_cmd_init(buff,CMD_MAG_SAMPLE_CONFIG);
-    //set command
-    *ptr++=MAG_SAMPLE_START;
-    //set time MSB
-    *ptr++=time>>8;
-    //set time LSB
-    *ptr++=time;
-    //set count
-    *ptr++=count;
-    //send packet
-    res=BUS_cmd_tx(BUS_ADDR_LEDL,buff,4,0,BUS_I2C_SEND_FOREGROUND);
+    //send sample start command
+    res=mag_sample_start(buff,time,count);
     //check result
     if(res<0){
         printf("Error communicating with LEDL : %s\r\n",BUS_error_str(res));
@@ -1125,12 +1086,8 @@ int modeCmd(char **argv,unsigned short argc){
             printf("Warning : timeout while waiting for sensor data\r\n"); 
         }
     }
-    //setup command
-    ptr=BUS_cmd_init(buff,CMD_MAG_SAMPLE_CONFIG);
-    //set command
-    *ptr++=MAG_SAMPLE_STOP;
-    //send packet
-    res=BUS_cmd_tx(BUS_ADDR_LEDL,buff,1,0,BUS_I2C_SEND_FOREGROUND);
+    //send stop command
+    res=mag_sample_stop(buff);
     //check result
     if(res<0){
         printf("Error communicating with LEDL : %s\r\n",BUS_error_str(res));
