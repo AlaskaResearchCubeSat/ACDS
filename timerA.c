@@ -1,9 +1,17 @@
 #include <ctl_api.h>
 #include <msp430.h>
 
-//use majority function so the timer
-//can be read while it is running
+//read the timer until the same result is read twice
+//this is so the timer can be read while it is running
 short readTA(void){
-  int a=TAR,b=TAR,c=TAR;
-  return (a&b)|(a&c)|(b&c);
+    short last,next;
+    int count=0;
+    //capture TAR
+    last=TAR;
+    do{
+        next=TAR;
+        count++;
+    }while(next!=last || count>5);
+    //return value
+    return next;
 }
