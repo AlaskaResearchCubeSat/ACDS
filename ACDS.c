@@ -376,7 +376,7 @@ void ACDS_events(void *p) __toplevel{
                   //X+ axis
                   case MAG_X_PLUS_IDX:
                     if(!(ACDS_settings.dat.settings.blacklist&(1<<(2*i)))){
-                        Flux.c.y+=pt.c.a;
+                        Flux.c.y-=pt.c.a;
                         ynum++;
                     }
                     if(!(ACDS_settings.dat.settings.blacklist&(1<<(2*i+1)))){
@@ -387,7 +387,7 @@ void ACDS_events(void *p) __toplevel{
                   //X- axis
                   case MAG_X_MINUS_IDX:
                     if(!(ACDS_settings.dat.settings.blacklist&(1<<(2*i)))){
-                        Flux.c.y-=pt.c.a;
+                        Flux.c.y+=pt.c.a;
                         ynum++;
                     }
                     if(!(ACDS_settings.dat.settings.blacklist&(1<<(2*i+1)))){
@@ -398,7 +398,7 @@ void ACDS_events(void *p) __toplevel{
                   //Y+ axis
                   case MAG_Y_PLUS_IDX:
                     if(!(ACDS_settings.dat.settings.blacklist&(1<<(2*i)))){
-                        Flux.c.x-=pt.c.a;
+                        Flux.c.x+=pt.c.a;
                         xnum++;
                     }
                     if(!(ACDS_settings.dat.settings.blacklist&(1<<(2*i+1)))){
@@ -409,7 +409,7 @@ void ACDS_events(void *p) __toplevel{
                   //Y- axis
                   case MAG_Y_MINUS_IDX:
                     if(!(ACDS_settings.dat.settings.blacklist&(1<<(2*i)))){
-                        Flux.c.x+=pt.c.a;
+                        Flux.c.x-=pt.c.a;
                         xnum++;
                     }
                     if(!(ACDS_settings.dat.settings.blacklist&(1<<(2*i+1)))){
@@ -424,7 +424,7 @@ void ACDS_events(void *p) __toplevel{
                         xnum++;
                     }
                     if(!(ACDS_settings.dat.settings.blacklist&(1<<(2*i+1)))){
-                        Flux.c.x+=pt.c.b;
+                        Flux.c.x-=pt.c.b;
                         ynum++;
                     }
                   break;
