@@ -870,6 +870,8 @@ int magCmd(char **argv,unsigned short argc){
     }
     //refresh correction data status
     read_cor_stat();
+    //clear event
+    ctl_events_set_clear(&ACDS_evt,0,ADCS_EVD_COMMAND_SENSOR_READ);
     if(single){
         do{
             //wait for measurement
