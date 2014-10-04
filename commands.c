@@ -871,11 +871,11 @@ int magCmd(char **argv,unsigned short argc){
     //refresh correction data status
     read_cor_stat();
     //clear event
-    ctl_events_set_clear(&ACDS_evt,0,ADCS_EVD_COMMAND_SENSOR_READ);
+    ctl_events_set_clear(&ACDS_evt,0,ADCS_EVT_COMMAND_SENSOR_READ);
     if(single){
         do{
             //wait for measurement
-            e=ctl_events_wait(CTL_EVENT_WAIT_ANY_EVENTS_WITH_AUTO_CLEAR,&ACDS_evt,ADCS_EVD_COMMAND_SENSOR_READ,CTL_TIMEOUT_DELAY,2048);
+            e=ctl_events_wait(CTL_EVENT_WAIT_ANY_EVENTS_WITH_AUTO_CLEAR,&ACDS_evt,ADCS_EVT_COMMAND_SENSOR_READ,CTL_TIMEOUT_DELAY,2048);
             if(!e){
                 //send packet again
                 res=BUS_cmd_tx(BUS_ADDR_LEDL,buff,1,0,BUS_I2C_SEND_FOREGROUND);     
@@ -937,9 +937,9 @@ int magCmd(char **argv,unsigned short argc){
         //run while no keys pressed
         while(async_CheckKey()==EOF){
             //wait for data from LEDL
-            e=ctl_events_wait(CTL_EVENT_WAIT_ANY_EVENTS_WITH_AUTO_CLEAR,&ACDS_evt,ADCS_EVD_COMMAND_SENSOR_READ,CTL_TIMEOUT_DELAY,1800);
+            e=ctl_events_wait(CTL_EVENT_WAIT_ANY_EVENTS_WITH_AUTO_CLEAR,&ACDS_evt,ADCS_EVT_COMMAND_SENSOR_READ,CTL_TIMEOUT_DELAY,1800);
             //check if data was received
-            if(e&ADCS_EVD_COMMAND_SENSOR_READ){
+            if(e&ADCS_EVT_COMMAND_SENSOR_READ){
                 if(single_axis==-1){
                     vecPrint("Flux",&acds_dat.dat.acds_dat.flux);
                     //print out individual sensor data
@@ -1015,9 +1015,9 @@ int magCmd(char **argv,unsigned short argc){
             return 1;
         }
         //clear event flag
-        ctl_events_set_clear(&ACDS_evt,0,ADCS_EVD_COMMAND_SENSOR_READ);
+        ctl_events_set_clear(&ACDS_evt,0,ADCS_EVT_COMMAND_SENSOR_READ);
         //wait for straggalers
-        ctl_events_wait(CTL_EVENT_WAIT_ANY_EVENTS_WITH_AUTO_CLEAR,&ACDS_evt,ADCS_EVD_COMMAND_SENSOR_READ,CTL_TIMEOUT_DELAY,900);
+        ctl_events_wait(CTL_EVENT_WAIT_ANY_EVENTS_WITH_AUTO_CLEAR,&ACDS_evt,ADCS_EVT_COMMAND_SENSOR_READ,CTL_TIMEOUT_DELAY,900);
     }
     return 0;
 }
@@ -1063,9 +1063,9 @@ int modeCmd(char **argv,unsigned short argc){
     //run while no keys pressed
     while(async_CheckKey()==EOF){
         //wait for data from LEDL
-        e=ctl_events_wait(CTL_EVENT_WAIT_ANY_EVENTS_WITH_AUTO_CLEAR,&ACDS_evt,ADCS_EVD_COMMAND_SENSOR_READ,CTL_TIMEOUT_DELAY,1800);
+        e=ctl_events_wait(CTL_EVENT_WAIT_ANY_EVENTS_WITH_AUTO_CLEAR,&ACDS_evt,ADCS_EVT_COMMAND_SENSOR_READ,CTL_TIMEOUT_DELAY,1800);
         //check if data was received
-        if(e&ADCS_EVD_COMMAND_SENSOR_READ){
+        if(e&ADCS_EVT_COMMAND_SENSOR_READ){
             if(output_type==HUMAN_OUTPUT){
                 printf("\r\n=========================================================================\r\n");
             }

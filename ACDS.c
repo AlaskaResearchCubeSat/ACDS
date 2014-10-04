@@ -492,7 +492,7 @@ void ACDS_events(void *p) __toplevel{
       //check for command mode
       if(ACDS_mode==ACDS_COMMAND_MODE){
           //send event for command, after structure has been filled
-          ctl_events_set_clear(&ACDS_evt,ADCS_EVD_COMMAND_SENSOR_READ,0);
+          ctl_events_set_clear(&ACDS_evt,ADCS_EVT_COMMAND_SENSOR_READ,0);
       }
       //write log data
       resp=log_store_data(&acds_dat);
@@ -502,7 +502,7 @@ void ACDS_events(void *p) __toplevel{
     }
 	if(e&ACDS_EVT_DAT_TIMEOUT){
         //TODO : do something
-        puts("LEDL timeout\r");
+        //puts("LEDL timeout\r");
         ERR_LED_on();
     }
   }
