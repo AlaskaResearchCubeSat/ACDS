@@ -504,7 +504,11 @@ void ACDS_events(void *p) __toplevel{
       vec_cp(&acds_dat.dat.acds_dat.flux,&Flux);      
       //set mode
       acds_dat.dat.acds_dat.mode=ACDS_mode;
-      ctl_events_set_clear(&ACDS_evt,ADCS_EVD_COMMAND_SENSOR_READ,0);
+      //check for command mode
+      if(ACDS_mode==ACDS_COMMAND_MODE){
+          //send event for command, after structure has been filled
+          ctl_events_set_clear(&ACDS_evt,ADCS_EVD_COMMAND_SENSOR_READ,0);
+      }
       //write log data
       resp=log_store_data(&acds_dat);
       if(resp){
