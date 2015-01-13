@@ -53,12 +53,12 @@
 
     typedef struct{
         unsigned short magic;
+        //block number incremented each time a block is stored
+        unsigned short number;
         //version, changes when structure gets updated
         unsigned char version;
         //flags, decide what these are for
         unsigned char flags;
-        //block number incremented each time a block is stored
-        unsigned short number;
         //captures the time the block was stored
         ticker time;
         union{
