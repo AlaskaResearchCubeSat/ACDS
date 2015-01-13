@@ -170,14 +170,13 @@ void sub_events(void *p) __toplevel{
       //send status
       puts("Sending status\r\n");
       //get status data
+      make_status(&status);
       //setup packet 
       ptr=BUS_cmd_init(buf,CMD_ACDS_STAT);
       //fill in telemitry data
       for(i=0;i<sizeof(ACDS_STAT);i++){
         ptr[i]=((unsigned char*)(&status))[i];
       }
-      //wait to avoid conflicts
-      ctl_timeout_wait(ctl_get_current_time()+50);
       //send command
       resp=BUS_cmd_tx(BUS_ADDR_CDH,buf,sizeof(ACDS_STAT),0,BUS_I2C_SEND_FOREGROUND);
       if(resp!=RET_SUCCESS){
