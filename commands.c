@@ -1524,6 +1524,78 @@ int filter_Cmd(char **argv,unsigned short argc){
     return 0;
 }
     
+int test_Cmd(char **argv,unsigned short argc){
+    extern TQ_SET tq_stat;
+    int num[3]={0,0,0},dir[3]={0,0,0};
+    int i,j;
+    int err;
+    //turn on LED's
+    LED_on(1);
+    LED_on(2);
+    LED_on(3);
+    LED_on(4);
+    printf("Testing ACDS press any key to continue...\r\n");
+    getchar();
+    LEDs_clear();    
+    //turn power LED
+    PWR_LED_on();
+    //initialize torquers
+    torqueInit();
+    //clear error status
+    err=0;
+    //check Y-axis torquer status
+    if(tq_stat.c.x.status!=(T_STAT_1|T_STAT_2)){
+        printf("Error X-axis torquer status is incorrect\r\n");
+        err++;
+    }
+    //check torquer status
+    if(tq_stat.c.y.status!=(T_STAT_1|T_STAT_2)){
+        printf("Error Y-axis torquer status is incorrect\r\n");
+        err++;
+    }
+    //check torquer status
+    if(tq_stat.c.z.status!=(T_STAT_1|T_STAT_2)){
+        printf("Error Z-axis torquer status is incorrect\r\n");
+        err++;
+    }
+    if(err==0){
+        printf("All Torquers initialized properly!\r\n");
+    }
+    printf("Testing torquer flipping\r\n");
+    for(i=0;i<4;i++){
+        for(j=0;j<3;j++){
+            num[j]=i+1;
+            dir[j]=(i>=2)?M_PLUS:M_MINUS;
+        }
+        //drive torquers 
+        drive_torquers(num,dir);
+        //print status
+        printf("New Torquer Status:\r\n");
+        print_torquer_status();
+    }
+    //check Y-axis torquer status
+    if(tq_stat.c.x.status!=(T_STAT_3|T_STAT_4)){
+        printf("Error X-axis torquer status is incorrect\r\n");
+        err++;
+    }
+    //check torquer status
+    if(tq_stat.c.y.status!=(T_STAT_3|T_STAT_4)){
+        printf("Error Y-axis torquer status is incorrect\r\n");
+        err++;
+    }
+    //check torquer status
+    if(tq_stat.c.z.status!=(T_STAT_3|T_STAT_4)){
+        printf("Error Z-axis torquer status is incorrect\r\n");
+        err++;
+    }
+    if(err==0){
+        printf("All Tests completed successfully!\r\n");
+    }else{
+        printf("Test complete there wer %i failed tests\r\n",err);
+    }
+    return 0;
+}
+    
 
 //table of commands with help
 const CMD_SPEC cmd_tbl[]={{"help"," [command]\r\n\t""get a list of commands or help on a spesific command.",helpCmd},
@@ -1565,5 +1637,6 @@ const CMD_SPEC cmd_tbl[]={{"help"," [command]\r\n\t""get a list of commands or h
                      {"ffsector","""\r\n\t""Print the address of the first free sector on the SD card",first_free_sectorCmd},
                      {"blacklist","[rm|add|set|show] ""\r\n\t""show/edit SPB blacklist",blacklist_Cmd},
                      {"filter","[show|on|off|new] ""\r\n\t""Edit filter and filter settings",filter_Cmd},
+                     {"test","""\r\n\t""Run Self test",test_Cmd},
                      //end of list
                      {NULL,NULL,NULL}};
