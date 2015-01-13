@@ -1628,7 +1628,7 @@ const CMD_SPEC cmd_tbl[]={{"help"," [command]\r\n\t""get a list of commands or h
                      {"dummycor","idx""\r\n\t""write corrections data for the given index",dummycorCmd},
                      {"dcor","idx""\r\n\t""write corrections data for the given index",dumpcorCmd},
                      {"ctst","axis aval bval""\r\n\t""apply corrections to a set of measurments",ctstCmd},
-                     {"mag","[raw single]""\r\n\t""read data from magnetomiters",magCmd},
+                     {"mag","[sdata|all|raw|single]...""\r\n\t""read data from magnetomiters",magCmd},
                      {"mode","mode""\r\n\t""run ACDS in given mode",modeCmd},
                      {"ecor","idx""\r\n\t""erase correction data for the given SPB",erase_cor_Cmd},
                      {"stat2idx","axis""\r\n\t""test stat2idx function",stat2idx_Cmd},
