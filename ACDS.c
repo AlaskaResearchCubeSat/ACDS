@@ -490,6 +490,12 @@ void ACDS_events(void *p) __toplevel{
         break;
         case ACDS_IDLE_MODE:
             //do nothing in idle mode
+            //send stop sampling packet
+            resp=mag_sample_stop(buf);
+            //check result
+            if(resp<0){
+                report_error(ERR_LEV_ERROR,ACDS_ERR_SRC_SUBSYSTEM,ACDS_ERR_SUB_LEDL_STOP,resp);
+            }
         break;
         case ACDS_INIT_MODE:
             //check if torquers are initialized
