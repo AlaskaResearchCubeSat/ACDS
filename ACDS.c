@@ -32,6 +32,8 @@ SPI_DATA_ACTION spi_action;
     
 //count and period to determine mag timeout
 MAG_TIME mag_time;
+
+SD_block_addr SD_read_addr;
    
 //Convert magnetometer values to integers 
 //Use smallest value 
@@ -286,6 +288,7 @@ CTL_EVENT_SET_t ACDS_evt;
 //handle ACDS specific commands
 int SUB_parseCmd(unsigned char src,unsigned char cmd,unsigned char *dat,unsigned short len){
   int i;
+  unsigned long block_id;
   unsigned long sector;
   switch(cmd){
     case CMD_MAG_DATA:
@@ -321,6 +324,22 @@ int SUB_parseCmd(unsigned char src,unsigned char cmd,unsigned char *dat,unsigned
                 return ERR_UNKNOWN_CMD;
         }
     return RET_SUCCESS;
+    case CMD_ACDS_READ_BLOCK:
+      if(len!=3){
+        return ERR_PK_LEN;
+      }
+      block_id =((unsigned long)dat[0])<<16;
+      block_id|=((unsigned long)dat[1])<<8;
+      block_id|=((unsigned long)dat[2]);
+      //check range
+      if(block_id>LOG_IDX_MAX){
+        //index is out of range
+        return ERR_PK_BAD_PARM;
+      }
+      //set SD address
+      SD_read_addr=LOG_ADDR_START+block_id;
+      //trigger event
+      ctl_events_set_clear(&ACDS_evt,ACDS_EVT_SEND_DAT,0);
   }
   //Return Error
   return ERR_UNKNOWN_CMD;
@@ -337,6 +356,8 @@ void ACDS_events(void *p) __toplevel{
   const VEC zero={0,0,0};
   VEC Flux,mag;
   CPOINT pt;
+  unsigned char *buffer;
+  unsigned char buf[BUS_I2C_HDR_LEN+3+BUS_I2C_CRC_LEN],*ptr;
   //init event
   ctl_events_init(&ACDS_evt,0);
   //check correction data status
@@ -499,10 +520,33 @@ void ACDS_events(void *p) __toplevel{
           report_error(ERR_LEV_ERROR,ACDS_ERR_SRC_ALGORITHM,ACDS_ERR_ALG_LOG_FAIL,resp);
       }
     }
-	if(e&ACDS_EVT_DAT_TIMEOUT){
+    if(e&ACDS_EVT_DAT_TIMEOUT){
         //TODO : do something
         //puts("LEDL timeout\r");
         ERR_LED_on();
+    }
+    if(e&ACDS_EVT_SEND_DAT){
+      buffer=BUS_get_buffer(CTL_TIMEOUT_DELAY,500);
+      if(buffer!=NULL){
+        //set block 
+        buffer[0]=SPI_ACDS_DAT;
+        buffer[1]=BUS_ADDR_ACDS;
+        //read block into buffer
+        resp=mmcReadBlock(SD_read_addr,buffer+2);
+        //check response
+        if(resp==RET_SUCCESS){
+          //send data to COMM
+          resp=BUS_SPI_txrx(BUS_ADDR_COMM,buffer,NULL,sizeof(LOG_DAT_STORE) + 2);
+          //check result
+          if(resp!=RET_SUCCESS){
+            //TODO: handle error
+          }
+        }else{
+          //TODO: handle error
+        }
+        //done with buffer, free it
+        BUS_free_buffer();
+      }
     }
   }
 }
