@@ -10,7 +10,7 @@
 //current ACDS data
 LOG_DAT_STORE acds_dat;
 
-static SD_blolck_addr current_log_block;
+static SD_block_addr current_log_block;
 
 unsigned short next_log_idx;
 
@@ -69,7 +69,7 @@ void log_init(void){
 
 void log_start(void){
     int resp,found,i;
-    SD_blolck_addr addr,found_addr;
+    SD_block_addr addr,found_addr;
     LOG_DAT_STORE *blk;
     unsigned char *buf;
     unsigned short number;
@@ -182,7 +182,7 @@ int clear_log(void){
 //print only errors with a level greater than level up to a maximum of num errors 
 void log_replay(unsigned short num){
   unsigned short count=0;
-    SD_blolck_addr start,addr;
+    SD_block_addr start,addr;
     LOG_DAT_STORE *store;
     unsigned short number=acds_dat.number;
     unsigned char *buf;
