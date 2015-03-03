@@ -170,7 +170,7 @@ void sub_events(void *p) __toplevel{
     }
     if(e&SUB_EV_SEND_STAT){
       //send status
-      puts("Sending status\r\n");
+      //puts("Sending status\r\n");
       //get status data
       make_status(&status);
       //setup packet 
