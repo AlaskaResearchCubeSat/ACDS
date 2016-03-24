@@ -1,64 +1,123 @@
 <!DOCTYPE CrossStudio_Project_File>
 <solution Name="ADCS" target="9" version="2">
   <project Name="ADCS">
-    <configuration Name="Common" Platform="MSP430" Target="MSP430F2618" build_use_hardware_multiplier="16-Bit Multiplier" link_symbol_definitions="CTL_IRQ_STACK_SIZE=128" link_use_multi_threaded_libraries="Yes" linker_additional_files="$(StudioDir)/ctl/lib/libctl$(LibExt).hza" linker_memory_map_file="$(PackagesDir)/targets/msp430/MSP430F2618.xml" linker_printf_fmt_level="long" linker_scanf_fmt_level="long" linker_scanf_fp_enabled="Yes" linker_section_placement_file="ACDS_sections.xml" msp430_debug_interface="JTAG" msp430_identify_string="MSP430F2618" msp430_insn_set="MSP430X" optimize_code_motion="Yes" optimize_copy_propagation="Yes" optimize_jump_chaining="Yes" project_directory="" project_type="Executable" target_loader_erase_all="No"/>
-    <folder Name="Source Files" file_name="">
-      <configuration Name="Common" filter="c;h;s;asm;inc;s43"/>
-      <file file_name="main.c"/>
-      <file file_name="commands.c"/>
-      <file file_name="bias.c"/>
-      <file file_name="bias.h"/>
-      <file file_name="vector.c"/>
-      <file file_name="vector.h"/>
-      <file file_name="output_type.h"/>
-      <file file_name="SensorDataInterface.h"/>
-      <file file_name="ACDS.c"/>
-      <file file_name="ACDS.h"/>
-      <file file_name="stackcheck.c"/>
+    <configuration
+      Name="Common"
+      Platform="MSP430"
+      Target="MSP430F6779A"
+      build_use_hardware_multiplier="32-Bit Multiplier"
+      libctl="Yes"
+      link_symbol_definitions="CTL_IRQ_STACK_SIZE=128"
+      link_use_multi_threaded_libraries="Yes"
+      linker_additional_files="$(PackagesDir)/libraries/libctl/lib/libctl$(LibExt).hza"
+      linker_memory_map_file="$(PackagesDir)/targets/msp430/MSP430F6779A.xml"
+      linker_printf_fmt_level="long"
+      linker_scanf_fmt_level="long"
+      linker_scanf_fp_enabled="Yes"
+      linker_section_placement_file="ACDS_sections.xml"
+      msp430_debug_interface="JTAG"
+      msp430_identify_string="MSP430F6779A"
+      msp430_insn_set="MSP430X"
+      optimize_code_motion="Yes"
+      optimize_copy_propagation="Yes"
+      optimize_jump_chaining="Yes"
+      project_directory=""
+      project_type="Executable"
+      target_loader_erase_all="No" />
+    <folder Name="Source Files">
+      <configuration Name="Common" filter="c;h;s;asm;inc;s43" />
+      <file file_name="main.c" />
+      <file file_name="commands.c" />
+      <file file_name="bias.c" />
+      <file file_name="bias.h" />
+      <file file_name="vector.c" />
+      <file file_name="vector.h" />
+      <file file_name="output_type.h" />
+      <file file_name="SensorDataInterface.h" />
+      <file file_name="ACDS.c" />
+      <file file_name="ACDS.h" />
+      <file file_name="stackcheck.c" />
       <folder Name="Hardware">
-        <file file_name="LED.c"/>
-        <file file_name="LED.h"/>
-        <file file_name="torquers.c"/>
-        <file file_name="torquers.h"/>
-        <file file_name="timerA.c"/>
-        <file file_name="timerA.h"/>
+        <file file_name="LED.c" />
+        <file file_name="LED.h" />
+        <file file_name="torquers.c" />
+        <file file_name="torquers.h" />
+        <file file_name="timerA0.h" />
+        <file file_name="timerA0.c" />
+        <file file_name="pins.h" />
       </folder>
-      <file file_name="algorithm.h"/>
-      <file file_name="Error_decode.c"/>
-      <file file_name="ACDSerr.h"/>
-      <file file_name="stackcheck.h"/>
+      <file file_name="algorithm.h" />
+      <file file_name="Error_decode.c" />
+      <file file_name="ACDSerr.h" />
+      <file file_name="stackcheck.h" />
       <folder Name="IGRF">
-        <file file_name="IGRF/igrf.c"/>
-        <file file_name="IGRF/igrf.h"/>
-        <file file_name="IGRF/igrfCoeffs.h"/>
+        <file file_name="IGRF/igrf.c" />
+        <file file_name="IGRF/igrf.h" />
+        <file file_name="IGRF/igrfCoeffs.h" />
         <file file_name="IGRF/igrfCoeffs.c">
-          <configuration Name="Common" compile_pre_build_command="python.exe extract-cords.py -o igrfCoeffs.c igrf11coeffs.txt" compile_pre_build_command_wd="$(ProjectDir)/IGRF/"/>
+          <configuration
+            Name="Common"
+            compile_pre_build_command="python.exe extract-cords.py -o igrfCoeffs.c igrf11coeffs.txt"
+            compile_pre_build_command_wd="$(ProjectDir)/IGRF/" />
         </file>
       </folder>
-      <file file_name="quat.h"/>
-      <file file_name="quat.c"/>
-      <file file_name="corrections.c"/>
-      <file file_name="corrections.h"/>
-      <file file_name="algorithm.c"/>
-      <file file_name="log.c"/>
-      <file file_name="log.h"/>
-      <file file_name="mag.h"/>
-      <file file_name="filter.c"/>
-      <file file_name="filter.h"/>
+      <file file_name="quat.h" />
+      <file file_name="quat.c" />
+      <file file_name="corrections.c" />
+      <file file_name="corrections.h" />
+      <file file_name="algorithm.c" />
+      <file file_name="log.c" />
+      <file file_name="log.h" />
+      <file file_name="mag.h" />
+      <file file_name="filter.c" />
+      <file file_name="filter.h" />
     </folder>
     <folder Name="System Files">
-      <file file_name="$(StudioDir)/ctl/source/threads.js"/>
+      <file file_name="$(PackagesDir)/libraries/libctl/source/threads.js" />
     </folder>
-    <folder Name="Section Placement" file_name="">
-      <file file_name="ACDS_sections.xml"/>
+    <folder Name="Section Placement">
+      <file file_name="ACDS_sections.xml" />
     </folder>
   </project>
-  <configuration Name="MSP430 Debug" inherited_configurations="MSP430;Debug" linker_additional_files="" linker_output_format="hex"/>
-  <configuration Name="MSP430" Platform="MSP430" hidden="Yes"/>
-  <configuration Name="Debug" build_debug_information="Yes" hidden="Yes" linker_additional_files="Z:/Software/lib/BUSlib_Debug.hza;Z:/Software/lib/termlib_Debug.hza;Z:/Software/lib/commandLib_Debug.hza;Z:/Software/lib/SD-lib_UCA1_Debug.hza;Z:/Software/lib/Error_SDcard_Debug.hza"/>
-  <configuration Name="MSP430 Release" inherited_configurations="MSP430;Release" linker_additional_files=""/>
-  <configuration Name="Release" build_debug_information="No" c_preprocessor_definitions="NDEBUG" hidden="Yes" linker_additional_files="Z:/Software/lib/BUSlib_Release.hza;Z:/Software/lib/termlib_Release.hza;Z:/Software/lib/commandLib_Release.hza;Z:/Software/lib/SD-lib_UCA1_Release.hza;Z:/Software/lib/Error_SDcard_Release.hza" optimize_block_locality="Yes" optimize_copy_propagation="Yes" optimize_cross_calling="Standard" optimize_cross_jumping="Yes" optimize_dead_code="Yes" optimize_jump_chaining="Yes" optimize_jump_threading="Yes" optimize_tail_merging="Yes"/>
-  <configuration Name="Common" c_system_include_directories="$(StudioDir)/include;$(PackagesDir)/include;$(StudioDir)/ctl/include;Z:/Software/include" linker_printf_fp_enabled="Yes"/>
-  <configuration Name="DEV" c_preprocessor_definitions="DEV_BUILD" hidden="Yes"/>
-  <configuration Name="MSP430 DEV" inherited_configurations="Debug;DEV;MSP430" linker_additional_files="Z:/Software/lib/Error_printf_Debug.hza"/>
+  <configuration
+    Name="MSP430 Debug"
+    inherited_configurations="MSP430;Debug"
+    linker_additional_files=""
+    linker_output_format="hex" />
+  <configuration Name="MSP430" Platform="MSP430" hidden="Yes" />
+  <configuration
+    Name="Debug"
+    build_debug_information="Yes"
+    hidden="Yes"
+    linker_additional_files="Z:/Software/lib/BUSlib_Debug.hza;Z:/Software/lib/termlib_Debug.hza;Z:/Software/lib/commandLib_Debug.hza;Z:/Software/lib/SD-lib_UCA1_Debug.hza;Z:/Software/lib/Error_SDcard_Debug.hza;Z:/Software/lib/UART_UCA2_Debug.hza" />
+  <configuration
+    Name="MSP430 Release"
+    inherited_configurations="MSP430;Release"
+    linker_additional_files="" />
+  <configuration
+    Name="Release"
+    build_debug_information="No"
+    c_preprocessor_definitions="NDEBUG"
+    hidden="Yes"
+    linker_additional_files="Z:/Software/lib/BUSlib_Release.hza;Z:/Software/lib/termlib_Release.hza;Z:/Software/lib/commandLib_Release.hza;Z:/Software/lib/SD-lib_UCA1_Release.hza;Z:/Software/lib/Error_SDcard_Release.hza;Z:/Software/lib/UART_UCA2_Release.hza"
+    optimize_block_locality="Yes"
+    optimize_copy_propagation="Yes"
+    optimize_cross_calling="Standard"
+    optimize_cross_jumping="Yes"
+    optimize_dead_code="Yes"
+    optimize_jump_chaining="Yes"
+    optimize_jump_threading="Yes"
+    optimize_tail_merging="Yes" />
+  <configuration
+    Name="Common"
+    c_system_include_directories="$(StudioDir)/include;$(PackagesDir)/include;$(PackagesDir)/libraries/libctl/include;Z:/Software/include"
+    linker_printf_fp_enabled="Yes" />
+  <configuration
+    Name="DEV"
+    c_preprocessor_definitions="DEV_BUILD"
+    hidden="Yes" />
+  <configuration
+    Name="MSP430 DEV"
+    inherited_configurations="Debug;DEV;MSP430"
+    linker_additional_files="Z:/Software/lib/Error_printf_Debug.hza" />
 </solution>

@@ -19,7 +19,7 @@ static char axis(unsigned short ax){
 }
 
 //decode errors from ACDS system
-char *err_decode(char buf[150], unsigned short source,int err, unsigned short argument){
+const char *ACDS_err_decode(char buf[150], unsigned short source,int err, unsigned short argument){
   switch(source){
     case ERR_SRC_CMD:
       switch(err){

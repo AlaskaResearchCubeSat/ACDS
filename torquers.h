@@ -35,34 +35,40 @@ typedef union{
 #define TQ_OUT2_L    (TQ_DRV_d4)
 
 //define ports for x-axis torquers
-#define X_DRV_PORT1  P7OUT
-#define X_DRV_PORT2  P5OUT
+#define X1_DRV_PORT  P8OUT
+#define X2_DRV_PORT  P7OUT
 
-#define X_DRV_DIR1  P7DIR
-#define X_DRV_DIR2  P5DIR
+#define X1_DRV_DIR   P8DIR
+#define X2_DRV_DIR   P7DIR
 
-#define X_DRV_SEL1  P7SEL
-#define X_DRV_SEL2  P5SEL
+#define X1_DRV_SEL0  P8SEL0
+#define X2_DRV_SEL0  P7SEL0
+#define X1_DRV_SEL1  P8SEL0
+#define X2_DRV_SEL1  P7SEL0
 
 //define ports for y-axis torquers
-#define Y_DRV_PORT1  P2OUT
-#define Y_DRV_PORT2  P8OUT
+#define Y1_DRV_PORT  P6OUT
+#define Y2_DRV_PORT  P10OUT
 
-#define Y_DRV_DIR1   P2DIR
-#define Y_DRV_DIR2   P8DIR
+#define Y1_DRV_DIR   P6DIR
+#define Y2_DRV_DIR   P10DIR
 
-#define Y_DRV_SEL1   P2SEL
-#define Y_DRV_SEL2   P8SEL
+#define Y1_DRV_SEL0   P6SEL0
+#define Y2_DRV_SEL0   P10SEL0
+#define Y1_DRV_SEL1   P6SEL1
+#define Y2_DRV_SEL1   P10SEL0
 
 //define ports for z-axis torquers
-#define Z_DRV_PORT1  P4OUT
-#define Z_DRV_PORT2  P6OUT
+#define Z1_DRV_PORT  P9OUT
+#define Z2_DRV_PORT  P5OUT
 
-#define Z_DRV_DIR1  P4DIR
-#define Z_DRV_DIR2  P6DIR
+#define Z1_DRV_DIR  P9DIR
+#define Z2_DRV_DIR  P5DIR
 
-#define Z_DRV_SEL1  P4SEL
-#define Z_DRV_SEL2  P6SEL
+#define Z1_DRV_SEL0  P9SEL0
+#define Z2_DRV_SEL0  P5SEL0
+#define Z1_DRV_SEL1  P9SEL0
+#define Z2_DRV_SEL1  P5SEL1
 
 //defines for feedback pins
 #define TQ_FB_PIN_MASK  (BIT0|BIT1)
@@ -73,23 +79,26 @@ typedef union{
 #define TQ_FB_Z_MASK    (BIT4|BIT5)
 
 //Definitions for feedback ports
-#define TQ_FB_X     (P7IN)
-#define TQ_FB_X_OUT (P7OUT)
-#define TQ_FB_X_DIR (P7DIR)
-#define TQ_FB_X_REN (P7REN)
-#define TQ_FB_X_SEL (P7SEL)
+#define TQ_FB_X     (P8IN)
+#define TQ_FB_X_OUT (P8OUT)
+#define TQ_FB_X_DIR (P8DIR)
+#define TQ_FB_X_REN (P8REN)
+#define TQ_FB_X_SEL0 (P8SEL0)
+#define TQ_FB_X_SEL1 (P8SEL0)
 
-#define TQ_FB_Y     (P8IN)
-#define TQ_FB_Y_OUT (P8OUT)
-#define TQ_FB_Y_DIR (P8DIR)
-#define TQ_FB_Y_REN (P8REN)
-#define TQ_FB_Y_SEL (P8SEL)
+#define TQ_FB_Y     (P9IN)
+#define TQ_FB_Y_OUT (P9OUT)
+#define TQ_FB_Y_DIR (P9DIR)
+#define TQ_FB_Y_REN (P9REN)
+#define TQ_FB_Y_SEL0 (P9SEL0)
+#define TQ_FB_Y_SEL1 (P9SEL0)
 
-#define TQ_FB_Z     (P6IN)
-#define TQ_FB_Z_OUT (P6OUT)
-#define TQ_FB_Z_DIR (P6DIR)
-#define TQ_FB_Z_REN (P6REN)
-#define TQ_FB_Z_SEL (P6SEL)
+#define TQ_FB_Z     (P7IN)
+#define TQ_FB_Z_OUT (P7OUT)
+#define TQ_FB_Z_DIR (P7DIR)
+#define TQ_FB_Z_REN (P7REN)
+#define TQ_FB_Z_SEL0 (P7SEL0)
+#define TQ_FB_Z_SEL1 (P7SEL0)
 
 
 #define T_STAT_ERR_MASK     (T_STAT_ERR_1|T_STAT_ERR_2|T_STAT_ERR_2|T_STAT_ERR_4| T_STAT_CAP_ERR|T_STAT_COMP_ERR)

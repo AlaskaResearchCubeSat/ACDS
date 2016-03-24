@@ -38,9 +38,10 @@ const char ax_char[3]={'X','Y','Z'};
     #define tqPin_low()         do{P5OUT&=~BIT1;}while(0)
     #define tqPin_high()        do{P5OUT|=BIT1;}while(0)
     void tqPin_init(void){
-        P5OUT&=~BIT1;
-        P5SEL&=~BIT1;
-        P5DIR|= BIT1;
+        P5OUT &=~BIT1;
+        P5SEL0&=~BIT1;
+        P5SEL1&=~BIT1;
+        P5DIR |= BIT1;
     }
 #else
     //don't use test pin for DEV_BUILD
@@ -96,30 +97,30 @@ void torqueInit(void){
   //reset torquer status to unknown
   resetTorqueStatus();
 
-  printf("Initializing torquers\r\n");
+  printf("Torquer init\r\n");
   //drive torquers
   if(output_type==HUMAN_OUTPUT){
-    printf("Previous Torquer Status:\r\n");
+    printf("Previous Status:\r\n");
     print_torquer_status();
   }
   setTorque(&T);
   if(output_type==HUMAN_OUTPUT){
-    printf("New Torquer Status:\r\n");
+    printf("New Status:\r\n");
     print_torquer_status();
   }
   setTorque(&T);
   if(output_type==HUMAN_OUTPUT){
-    printf("New Torquer Status:\r\n");
+    printf("New Status:\r\n");
     print_torquer_status();
   }
   setTorque(&T);
   if(output_type==HUMAN_OUTPUT){
-    printf("New Torquer Status:\r\n");
+    printf("New Status:\r\n");
     print_torquer_status();
   }
   setTorque(&T);
   if(output_type==HUMAN_OUTPUT){
-    printf("Final Torquer Status:\r\n");
+    printf("Final Status:\r\n");
     print_torquer_status();
   }
 }
@@ -140,7 +141,7 @@ void torqueReinit(void){
   
   //print out status
   if(output_type==HUMAN_OUTPUT){
-    printf("Previous Torquer Status:\r\n");
+    printf("Previous Status:\r\n");
     print_torquer_status();
   }
   for(i=0;i<4;i++){
@@ -169,14 +170,14 @@ void torqueReinit(void){
       drive_torquers(num,dir);
       //print status
       if(output_type==HUMAN_OUTPUT){
-        printf("New Torquer Status:\r\n");
+        printf("New Status:\r\n");
         print_torquer_status();
       }
     }
   }
   //print status
   if(output_type==HUMAN_OUTPUT){
-    printf("Final Torquer Status:\r\n");
+    printf("Final Status:\r\n");
     print_torquer_status();
   }
 }
@@ -186,26 +187,37 @@ void driverInit(void){
 //skip init for DEV_BUILD
 #ifndef DEV_BUILD
   //set all driver pins low
-  X_DRV_PORT1&=~TQ_DRV_PINS;
-  X_DRV_PORT2&=~TQ_DRV_PINS;
-  Y_DRV_PORT1&=~TQ_DRV_PINS;
-  Y_DRV_PORT2&=~TQ_DRV_PINS;
-  Z_DRV_PORT1&=~TQ_DRV_PINS;
-  Z_DRV_PORT2&=~TQ_DRV_PINS;
+  X1_DRV_PORT&=~TQ_DRV_PINS;
+  X2_DRV_PORT&=~TQ_DRV_PINS;
+  Y1_DRV_PORT&=~TQ_DRV_PINS;
+  Y2_DRV_PORT&=~TQ_DRV_PINS;
+  Z1_DRV_PORT&=~TQ_DRV_PINS;
+  Z2_DRV_PORT&=~TQ_DRV_PINS;
   //set pins to GPIO function
-  X_DRV_SEL1&=~TQ_DRV_PINS;
-  X_DRV_SEL2&=~TQ_DRV_PINS;
-  Y_DRV_SEL1&=~TQ_DRV_PINS;
-  Y_DRV_SEL2&=~TQ_DRV_PINS;
-  Z_DRV_SEL1&=~TQ_DRV_PINS;
-  Z_DRV_SEL2&=~TQ_DRV_PINS;
+  X1_DRV_SEL0&=~TQ_DRV_PINS;
+  X1_DRV_SEL1&=~TQ_DRV_PINS;
+
+  X2_DRV_SEL0&=~TQ_DRV_PINS;
+  X2_DRV_SEL1&=~TQ_DRV_PINS;
+  
+  Y1_DRV_SEL0&=~TQ_DRV_PINS;
+  Y1_DRV_SEL1&=~TQ_DRV_PINS;
+  
+  Y2_DRV_SEL0&=~TQ_DRV_PINS;
+  Y2_DRV_SEL1&=~TQ_DRV_PINS;
+  
+  Z1_DRV_SEL0&=~TQ_DRV_PINS;
+  Z1_DRV_SEL1&=~TQ_DRV_PINS;
+  
+  Z2_DRV_SEL0&=~TQ_DRV_PINS;
+  Z2_DRV_SEL1&=~TQ_DRV_PINS;
   //set driver pins as outputs
-  X_DRV_DIR1|=TQ_DRV_PINS;
-  X_DRV_DIR2|=TQ_DRV_PINS;
-  Y_DRV_DIR1|=TQ_DRV_PINS;
-  Y_DRV_DIR2|=TQ_DRV_PINS;
-  Z_DRV_DIR1|=TQ_DRV_PINS;
-  Z_DRV_DIR2|=TQ_DRV_PINS;
+  X1_DRV_DIR|=TQ_DRV_PINS;
+  X2_DRV_DIR|=TQ_DRV_PINS;
+  Y1_DRV_DIR|=TQ_DRV_PINS;
+  Y2_DRV_DIR|=TQ_DRV_PINS;
+  Z1_DRV_DIR|=TQ_DRV_PINS;
+  Z2_DRV_DIR|=TQ_DRV_PINS;
 #endif
   //setup torquer test pin
   tqPin_init();
@@ -220,17 +232,20 @@ void torque_fb_init(void){
     //X-axis
     TQ_FB_X_OUT|=TQ_FB_PIN_MASK;
     TQ_FB_X_DIR&=~TQ_FB_PIN_MASK;
-    TQ_FB_X_SEL&=~TQ_FB_PIN_MASK;
+    TQ_FB_X_SEL0&=~TQ_FB_PIN_MASK;
+    TQ_FB_X_SEL1&=~TQ_FB_PIN_MASK;
     TQ_FB_X_REN|=TQ_FB_PIN_MASK;
     //Y-axis
     TQ_FB_Y_OUT|=TQ_FB_PIN_MASK;
     TQ_FB_Y_DIR&=~TQ_FB_PIN_MASK;
-    TQ_FB_Y_SEL&=~TQ_FB_PIN_MASK;
+    TQ_FB_Y_SEL0&=~TQ_FB_PIN_MASK;
+    TQ_FB_Y_SEL1&=~TQ_FB_PIN_MASK;
     TQ_FB_Y_REN|=TQ_FB_PIN_MASK;
     //Z-axis
     TQ_FB_Z_OUT|=TQ_FB_PIN_MASK;
     TQ_FB_Z_DIR&=~TQ_FB_PIN_MASK;
-    TQ_FB_Z_SEL&=~TQ_FB_PIN_MASK;
+    TQ_FB_Z_SEL0&=~TQ_FB_PIN_MASK;
+    TQ_FB_Z_SEL1&=~TQ_FB_PIN_MASK;
     TQ_FB_Z_REN|=TQ_FB_PIN_MASK;
 #endif
 }
@@ -507,7 +522,7 @@ int setTorque(const VEC *T){
 //drive one torquer in each axis
 int drive_torquers(const int* num,const int* dir){
   volatile unsigned char *(port[3]);
-  volatile unsigned char *const ports[3][2]={{&X_DRV_PORT1,&X_DRV_PORT2},{&Y_DRV_PORT1,&Y_DRV_PORT2},{&Z_DRV_PORT1,&Z_DRV_PORT2}};
+  volatile unsigned char *const ports[3][2]={{&X1_DRV_PORT,&X2_DRV_PORT},{&Y1_DRV_PORT,&Y2_DRV_PORT},{&Z1_DRV_PORT,&Z2_DRV_PORT}};
   unsigned char val[3]={0,0,0};
   unsigned char p_old,fb1,fb2;
   CTL_TIME_t ct;

@@ -31,6 +31,9 @@
   
   //mode for ACDS system
   extern int ACDS_mode;
+
+  //command parse structure
+  extern CMD_PARSE_DAT ACDS_parse;
   
   //all events for ACDS
 #define ACDS_EVT_ALL  (ACDS_EVT_DAT_REC|ACDS_EVT_DAT_TIMEOUT|ACDS_EVT_SEND_DAT)

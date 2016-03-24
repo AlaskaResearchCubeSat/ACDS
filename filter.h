@@ -21,7 +21,7 @@ typedef struct{
     unsigned short magic;
     union{
         IIR_FILTER filter;
-        unsigned char pad[60];
+        unsigned char pad[128-4];
     }dat;
     unsigned short crc;
 }FILTER_STORE;

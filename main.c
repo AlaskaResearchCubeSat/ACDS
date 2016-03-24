@@ -6,15 +6,18 @@
 #include <ARCbus.h>
 #include <stdlib.h>
 #include <Error.h>
-#include "timerA.h"
+#include "timerA0.h"
 #include <terminal.h>
 #include <SDlib.h>
+#include <UCA2_uart.h>
 #include "LED.h"
 #include "torquers.h"
 #include "SensorDataInterface.h"
 #include "ACDS.h"
 #include "stackcheck.h"
 #include "log.h"
+#include "ACDSerr.h"
+#include "pins.h"
 
 CTL_TASK_t tasks[3];
 
@@ -46,23 +49,25 @@ unsigned stack3[1+300+1];
 
 //make printf and friends use async
 int __putchar(int c){
-  return async_TxChar(c);
+  return UCA2_TxChar(c);
 }
 
 //make printf and friends use async
 int __getchar(void){
-  return async_Getc();
+  return UCA2_Getc();
 }
 
 int main(void){
   //DO this first
   ARC_setup(); 
   
-  //setup system specific peripherals
-#ifndef DEV_BUILD
+  //====================[register error handler]====================
+  err_register_handler(ACDS_ERROR_MIN,ACDS_ERROR_MAX,ACDS_err_decode,ERR_FLAGS_SUBSYSTEM);
+
+  //==================[setup subsystem Peripherals]==================
+
   //setup mmc interface
   mmcInit_msp();
-#endif
 
   //setup torquer driver pins
   driverInit();
@@ -77,6 +82,12 @@ int main(void){
   
   //turn power LED
   PWR_LED_on();
+
+  //initialize UART
+  UCA2_init_UART(UART_PORT,UART_TX_PIN_NUM,UART_RX_PIN_NUM);
+
+  //setup command parse for ACDS
+  BUS_register_cmd_callback(&ACDS_parse);
   
   //TESTING: set log level to report everything by default
   set_error_level(0);
@@ -94,11 +105,15 @@ int main(void){
 
   //create tasks
   ctl_task_run(&tasks[0],BUS_PRI_NORMAL,ACDS_events,NULL,"ACDS",sizeof(stack1)/sizeof(stack1[0])-2,stack1+1,0);
-  ctl_task_run(&tasks[1],BUS_PRI_LOW,terminal,"ACDS Test Program ready","terminal",sizeof(stack2)/sizeof(stack2[0])-2,stack2+1,0);
+  ctl_task_run(&tasks[1],BUS_PRI_LOW,terminal,"ACDS Test Program","terminal",sizeof(stack2)/sizeof(stack2[0])-2,stack2+1,0);
   ctl_task_run(&tasks[2],BUS_PRI_HIGH,sub_events,NULL,"sub_events",sizeof(stack3)/sizeof(stack3[0])-2,stack3+1,0);
   
+  //start timer A0
+  start_timerA0();
+  
   //seed random number generator
-  srand(TAR);
+  //TODO: figure out which timer should be used
+  srand(TA0R);
   
   mainLoop();
 }

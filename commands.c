@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <msp430.h>
-#include <ctl_api.h>
+#include <ctl.h>
 #include <terminal.h>
 #include <ARCbus.h>
 #include <Error.h>
@@ -31,6 +31,8 @@
 
 int current_set=TQ_SET_BIG;
 
+//axis name array
+const char axis[]={'X','Y','Z'};
 
 //Set torque in each axis
 int setTorqueCmd(char **argv,unsigned short argc){
@@ -57,12 +59,12 @@ int setTorqueCmd(char **argv,unsigned short argc){
   T.c.y=readTorque(argv[2]);
   T.c.z=readTorque(argv[3]);*/
   //print old status
-  printf("Previous Torquer Status:\r\n");
+  printf("Previous Status:\r\n");
   print_torquer_status();
   //current_set torques
   setTorque(&T);
   //print status
-  printf("New Torquer Status:\r\n");
+  printf("New Status:\r\n");
   print_torquer_status();
   return 0;
 }
@@ -73,7 +75,6 @@ int flipCmd(char **argv,unsigned short argc){
   int i,set=TQ_SET_BIG;
   unsigned long tnum;
   char *end;
-  const char axis[]={'X','Y','Z'};
   // three arguments are accepted, X axis, Y axis and Z axis torques
   if(argc!=3){
     printf("Error : %s requires 3 arguments\r\n",argv[0]);
@@ -117,14 +118,14 @@ int flipCmd(char **argv,unsigned short argc){
   }
   if(output_type==HUMAN_OUTPUT){
     //print old status
-    printf("Previous Torquer Status:\r\n");
+    printf("Previous Status:\r\n");
     print_torquer_status();
   }
   //drive torquers 
   drive_torquers(num,dir);
   if(output_type==HUMAN_OUTPUT){
     //print status
-    printf("New Torquer Status:\r\n");
+    printf("New Status:\r\n");
     print_torquer_status();
   }else{
     print_torquer_stat_code();
@@ -182,12 +183,12 @@ int driveCmd(char **argv,unsigned short argc){
     return -1;
   }
   //print old status
-  printf("Previous Torquer Status:\r\n");
+  printf("Previous Status:\r\n");
   print_torquer_status();  
   //drive torquer 
   drive_torquers(num,dir);
   //print new status
-  printf("New Torquer Status:\r\n");
+  printf("New Status:\r\n");
   print_torquer_status();
   return 0;
 }
@@ -466,12 +467,12 @@ int randomTorqueCmd(char **argv,unsigned short argc){
   }
   printf("Torque = (%+i,%+i,%+i)\r\n",(int)T.c.x,(int)T.c.y,(int)T.c.z);
   //print old status
-  printf("Previous Torquer Status:\r\n");
+  printf("Previous Status:\r\n");
   print_torquer_status();
   //current_set torques
   setTorque(&T);
   //print status
-  printf("New Torquer Status:\r\n");
+  printf("New Status:\r\n");
   print_torquer_status();
   return 0;
 }
@@ -878,7 +879,7 @@ int magCmd(char **argv,unsigned short argc){
             e=ctl_events_wait(CTL_EVENT_WAIT_ANY_EVENTS_WITH_AUTO_CLEAR,&ACDS_evt,ADCS_EVT_COMMAND_SENSOR_READ,CTL_TIMEOUT_DELAY,2048);
             if(!e){
                 //send packet again
-                res=BUS_cmd_tx(BUS_ADDR_LEDL,buff,1,0,BUS_I2C_SEND_FOREGROUND);     
+                res=BUS_cmd_tx(BUS_ADDR_LEDL,buff,1,0);     
                 //increse timeout count
                 timeout++;
             }
@@ -1534,7 +1535,7 @@ int test_Cmd(char **argv,unsigned short argc){
     LED_on(2);
     LED_on(3);
     LED_on(4);
-    printf("Testing ACDS press any key to continue...\r\n");
+    printf("Torque test press a key\r\n");
     getchar();
     LEDs_clear();    
     //turn power LED
@@ -1543,25 +1544,18 @@ int test_Cmd(char **argv,unsigned short argc){
     torqueInit();
     //clear error status
     err=0;
-    //check Y-axis torquer status
-    if(tq_stat.c.x.status!=(T_STAT_1|T_STAT_2)){
-        printf("Error X-axis torquer status is incorrect\r\n");
-        err++;
-    }
-    //check torquer status
-    if(tq_stat.c.y.status!=(T_STAT_1|T_STAT_2)){
-        printf("Error Y-axis torquer status is incorrect\r\n");
-        err++;
-    }
-    //check torquer status
-    if(tq_stat.c.z.status!=(T_STAT_1|T_STAT_2)){
-        printf("Error Z-axis torquer status is incorrect\r\n");
-        err++;
+    //check status for all axes
+    for(i=0;i<3;i++){
+      //check torquer status
+      if(tq_stat.elm[i].status!=(T_STAT_3|T_STAT_4)){
+          printf("Error with %c-axis\r\n",axis[i]);
+          err++;
+      }
     }
     if(err==0){
-        printf("All Torquers initialized properly!\r\n");
+        printf("Torquer init : pass!\r\n");
     }
-    printf("Testing torquer flipping\r\n");
+    printf("Flip test\r\n");
     for(i=0;i<4;i++){
         for(j=0;j<3;j++){
             num[j]=i+1;
@@ -1570,73 +1564,66 @@ int test_Cmd(char **argv,unsigned short argc){
         //drive torquers 
         drive_torquers(num,dir);
         //print status
-        printf("New Torquer Status:\r\n");
+        printf("New Status:\r\n");
         print_torquer_status();
     }
-    //check Y-axis torquer status
-    if(tq_stat.c.x.status!=(T_STAT_3|T_STAT_4)){
-        printf("Error X-axis torquer status is incorrect\r\n");
-        err++;
-    }
-    //check torquer status
-    if(tq_stat.c.y.status!=(T_STAT_3|T_STAT_4)){
-        printf("Error Y-axis torquer status is incorrect\r\n");
-        err++;
-    }
-    //check torquer status
-    if(tq_stat.c.z.status!=(T_STAT_3|T_STAT_4)){
-        printf("Error Z-axis torquer status is incorrect\r\n");
-        err++;
+    for(i=0;i<3;i++){
+      //check Y-axis torquer status
+      if(tq_stat.elm[i].status!=(T_STAT_3|T_STAT_4)){
+          printf("Error with %c-axis\r\n",axis[i]);
+          err++;
+      }
     }
     if(err==0){
-        printf("All Tests completed successfully!\r\n");
+        printf("Success!\r\n");
     }else{
-        printf("Test complete there wer %i failed tests\r\n",err);
+        printf("%i failed tests\r\n",err);
     }
     return 0;
 }
     
 
 //table of commands with help
-const CMD_SPEC cmd_tbl[]={{"help"," [command]\r\n\t""get a list of commands or help on a spesific command.",helpCmd},
-                     CTL_COMMANDS,ARC_COMMANDS,ERROR_COMMANDS,
-                     #ifndef DEV_BUILD
-                     MMC_COMMANDS,MMC_DREAD_COMMAND,
-                     #endif
-                     {"flip","[X Y Z]\r\n\t""Flip a torquer in each axis.",flipCmd},
-                     {"setTorque"," Xtorque Ytorque Ztorque\r\n\tFlip torquers to set the torque in the X, Y and Z axis",setTorqueCmd},
-                     {"drive"," axis num dir\r\n\tdrive a torquer in the given axis in a given direction",driveCmd},
+const CMD_SPEC cmd_tbl[]={{"help"," [command]\r\n\t""get help",helpCmd},
+                     //CTL_COMMANDS,
+                     ARC_RESET_COMMAND,ARC_TIME_COMMAND,ARC_TX_COMMAND,ARC_SEARCH_COMMAND,ARC_VERSION_COMMAND,
+                     //ERROR_COMMANDS,
+                     //MMC_INIT_CHECK_COMMAND,
+                     //MMC_DUMP_COMMAND,
+                     MMC_DAT_COMMAND,MMC_ERASE_COMMAND,MMC_INIT_COMMAND,MMC_DREAD_COMMAND,
+                     //{"flip","[X Y Z]\r\n\t""Flip a torquer in each axis.",flipCmd},
+                     {"setTorque"," Xtq Ytq Ztq\r\n\tFlip torquers to set the torque in the X, Y and Z axis",setTorqueCmd},
+                     //{"drive"," axis num dir\r\n\tdrive a torquer in the given axis in a given direction",driveCmd},
                      {"tqstat","\r\n\t""Print torquer status",tqstatCmd},
-                     {"statcode","\r\n\t""Print torquer status in machine readable form",statcodeCmd},
+                     //{"statcode","\r\n\t""Print torquer status in machine readable form",statcodeCmd},
                      {"init","\r\n\t""initialize torquers",initCmd},
-                     {"reinit","\r\n\t""Set torquers to initialized state",reinitCmd},
-                     {"comp","\r\n\t""print feedback comparitor status",compCmd},
-                     {"tst","\r\n\t""axis num dir\r\n\t""do a test flip of given torquer to see if it is connected",tstCmd},
-                     {"srun","[time count]\r\n\t""tell LEDL to start taking sensor data.",sensorRunCmd},
-                     {"sstop","\r\n\t""tell LEDL to stop taking sensor data.",sensorStopCmd},
-                     {"gain","type [g1 g2 g3]\r\n\t""set gain of algorithm",gainCmd},
-                     {"setpoint","s1 s2 s3\r\n\t""get/set setpoint for rates",setpointCmd},
-                     {"log","[level]\r\n\t""get/set log level",logCmd},
-                     {"clrerr","\r\n\t""Clear error LED",clrErrCmd},
-                     {"output","[output type]\r\n\tchange output between human and machine readable",outputTypeCmd},
-                     {"tstIGRF","\r\n\t""Test IGRF conversion",tst_IGRF_cmd},
-                     {"shval3","year alt lat long\r\n\t""IGRF conversion",shval3Cmd},
-                     {"status","\r\n\t""Print status information",statusCmd},
-                     {"rndt","\r\n\t""Set torquers to random torque",randomTorqueCmd},
-                     {"unpack","sector""\r\n\t""Unpack calibration/correction data stored in a given sector",unpackCmd},
+                     //{"reinit","\r\n\t""Set torquers to initialized state",reinitCmd},
+                     //{"comp","\r\n\t""print feedback comparitor status",compCmd},
+                     //{"tst","\r\n\t""axis num dir\r\n\t""do a test flip of given torquer to see if it is connected",tstCmd},
+                     //{"srun","[time count]\r\n\t""tell LEDL to start taking sensor data.",sensorRunCmd},
+                     //{"sstop","\r\n\t""tell LEDL to stop taking sensor data.",sensorStopCmd},
+                     //{"gain","type [g1 g2 g3]\r\n\t""set gain of algorithm",gainCmd},
+                     //{"setpoint","s1 s2 s3\r\n\t""get/set setpoint for rates",setpointCmd},
+                     //{"clrerr","\r\n\t""Clear error LED",clrErrCmd},
+                     //{"output","[output type]\r\n\tchange output between human and machine readable",outputTypeCmd},
+                     //{"tstIGRF","\r\n\t""Test IGRF conversion",tst_IGRF_cmd},
+                     //{"shval3","year alt lat long\r\n\t""IGRF conversion",shval3Cmd},
+                     //{"status","\r\n\t""Print status information",statusCmd},
+                     //{"rndt","\r\n\t""Set torquers to random torque",randomTorqueCmd},
+                     //{"unpack","sector""\r\n\t""Unpack calibration/correction data stored in a given sector",unpackCmd},
                      {"corchk","\r\n\t""Check correction data for all axis\r\n",corchkCmd},
-                     {"dummycor","idx""\r\n\t""write corrections data for the given index",dummycorCmd},
+                     //{"dummycor","idx""\r\n\t""write corrections data for the given index",dummycorCmd},
                      {"dcor","idx""\r\n\t""write corrections data for the given index",dumpcorCmd},
-                     {"ctst","axis aval bval""\r\n\t""apply corrections to a set of measurments",ctstCmd},
-                     {"mag","[sdata|all|raw|single]...""\r\n\t""read data from magnetomiters",magCmd},
-                     {"mode","mode""\r\n\t""run ACDS in given mode",modeCmd},
-                     {"ecor","idx""\r\n\t""erase correction data for the given SPB",erase_cor_Cmd},
-                     {"stat2idx","axis""\r\n\t""test stat2idx function",stat2idx_Cmd},
-                     {"build","""\r\n\t""print build",build_Cmd},
-                     {"dlog","[num]""\r\n\t""replay log data",data_log_Cmd},
-                     {"ffsector","""\r\n\t""Print the address of the first free sector on the SD card",first_free_sectorCmd},
-                     {"blacklist","[rm|add|set|show] ""\r\n\t""show/edit SPB blacklist",blacklist_Cmd},
-                     {"filter","[show|on|off|new] ""\r\n\t""Edit filter and filter settings",filter_Cmd},
-                     {"test","""\r\n\t""Run Self test",test_Cmd},
+                     //{"ctst","axis aval bval""\r\n\t""apply corrections to a set of measurments",ctstCmd},
+                     //{"mag","[sdata|all|raw|single]...""\r\n\t""read data from magnetomiters",magCmd},
+                     //{"mode","mode""\r\n\t""run ACDS in given mode",modeCmd},
+                     {"ecor","idx""\r\n\t""erase correction data",erase_cor_Cmd},
+                     //{"stat2idx","axis""\r\n\t""test stat2idx function",stat2idx_Cmd},
+                     //{"build","""\r\n\t""print build",build_Cmd},
+                     //{"dlog","[num]""\r\n\t""replay log data",data_log_Cmd},
+                     //{"ffsector","""\r\n\t""Print the address of the first free sector on the SD card",first_free_sectorCmd},
+                     //{"blacklist","[rm|add|set|show] ""\r\n\t""show/edit SPB blacklist",blacklist_Cmd},
+                     //{"filter","[show|on|off|new] ""\r\n\t""Edit filter and filter settings",filter_Cmd},
+                     {"test","""\r\n\t""self test",test_Cmd},
                      //end of list
                      {NULL,NULL,NULL}};

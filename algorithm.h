@@ -25,7 +25,7 @@ typedef struct{
     unsigned short magic;
     union{
         ACDS_SETTINGS settings;
-        char pad[60];
+        char pad[128-4];
     }dat;
     unsigned short crc;
 }ACDS_SETTINGS_STORE;

@@ -36,8 +36,8 @@ short write_correction_dat(int idx,const C_AXIS *dat){
     dest->magic=0;
     //lock the flash again
     FCTL3=FWKEY|LOCK;
-    //check fail flag and that the first and last bytes were erased
-    if(FCTL3&FAIL || dest->magic!=0xFFFF || dest->crc!=0xFFFF){
+    //check that the first and last bytes were erased
+    if(dest->magic!=0xFFFF || dest->crc!=0xFFFF){
         //re-enable interrupts if enabled before
         BUS_restart_interrupts(en);
         return WR_COR_ERROR_ERASE_FAIL;
@@ -87,8 +87,8 @@ short erase_correction_dat(int idx){
     FCTL3=FWKEY|LOCK;
     //re-enable interrupts if enabled before
     BUS_restart_interrupts(en);
-    //check fail flag and that the first and last bytes were erased
-    if(FCTL3&FAIL || dest->magic!=0xFFFF || dest->crc!=0xFFFF){
+    //check that the first and last bytes were erased
+    if(dest->magic!=0xFFFF || dest->crc!=0xFFFF){
         //return error
         return WR_COR_ERROR_ERASE_FAIL;
     }  

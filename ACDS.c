@@ -6,7 +6,7 @@
 #include <terminal.h>
 #include <limits.h>
 #include <stdlib.h>
-#include <timerA.h>
+#include <timerA0.h>
 #include <math.h> //needed for NAN
 #include "SensorDataInterface.h"
 #include "ACDS.h"
@@ -90,7 +90,7 @@ int mag_sample_stop(void* buf){
     //stop LEDL timeout
     mag_timeout_stop();
     //send packet
-    return BUS_cmd_tx(BUS_ADDR_LEDL,buf,1,0,BUS_I2C_SEND_FOREGROUND);
+    return BUS_cmd_tx(BUS_ADDR_LEDL,buf,1,0);
 }
 
 int mag_sample_start(void* buf,unsigned short time,unsigned char count){
@@ -110,7 +110,7 @@ int mag_sample_start(void* buf,unsigned short time,unsigned char count){
     mag_time.T=time;
     mag_time.n=count+1;
     //send packet
-    resp=BUS_cmd_tx(BUS_ADDR_LEDL,buf,4,0,BUS_I2C_SEND_FOREGROUND);
+    resp=BUS_cmd_tx(BUS_ADDR_LEDL,buf,4,0);
     //if command was sent successfully then start timeout timer
     if(resp==RET_SUCCESS){
         //restart timeout timer
@@ -128,7 +128,7 @@ int mag_sample_single(void* buf){
     //set command
     *ptr++=MAG_SINGLE_SAMPLE;
     //send packet
-    resp=BUS_cmd_tx(BUS_ADDR_LEDL,buf,1,0,BUS_I2C_SEND_FOREGROUND);
+    resp=BUS_cmd_tx(BUS_ADDR_LEDL,buf,1,0);
     //if command was sent successfully then start timeout timer
     if(resp==RET_SUCCESS){
         //restart timeout timer
@@ -180,7 +180,7 @@ void sub_events(void *p) __toplevel{
         ptr[i]=((unsigned char*)(&status))[i];
       }
       //send command
-      resp=BUS_cmd_tx(BUS_ADDR_CDH,buf,sizeof(ACDS_STAT),0,BUS_I2C_SEND_FOREGROUND);
+      resp=BUS_cmd_tx(BUS_ADDR_CDH,buf,sizeof(ACDS_STAT),0);
       if(resp!=RET_SUCCESS){
         //report error
         report_error(ERR_LEV_ERROR,ACDS_ERR_SRC_SUBSYSTEM,ACDS_ERR_SUB_STAT_TX,resp);
@@ -285,8 +285,11 @@ long adc16Val(unsigned char *dat){
 
 CTL_EVENT_SET_t ACDS_evt;
 
+int ACDS_parse_cmd(unsigned char src,unsigned char cmd,unsigned char *dat,unsigned short len,unsigned char flags);
+CMD_PARSE_DAT ACDS_parse={ACDS_parse_cmd,CMD_PARSE_ADDR0|CMD_PARSE_GC_ADDR,BUS_PRI_NORMAL,NULL};
+
 //handle ACDS specific commands
-int SUB_parseCmd(unsigned char src,unsigned char cmd,unsigned char *dat,unsigned short len){
+int ACDS_parse_cmd(unsigned char src,unsigned char cmd,unsigned char *dat,unsigned short len,unsigned char flags){
   int i;
   unsigned long block_id;
   unsigned long sector;
@@ -299,7 +302,7 @@ int SUB_parseCmd(unsigned char src,unsigned char cmd,unsigned char *dat,unsigned
         return ERR_PK_LEN;
       }
       memcpy(&magData,dat,sizeof(magData));
-      //sensor data recieved set event
+      //sensor data received set event
       ctl_events_set_clear(&ACDS_evt,ACDS_EVT_DAT_REC,0);
     return RET_SUCCESS;
     case CMD_SPI_DATA_ACTION:
@@ -563,32 +566,32 @@ static short int_count;
 //reset timeout timer
 void mag_timeout_reset(void){
   //disable timer interrupt
-  TACCTL1=0;
+  TA0CCTL1=0;
   //initialize interrupt count
   int_count=mag_time.n;
   //set interupt time
-  TACCR1=readTA()+mag_time.T;
+  TA0CCR1=readTA0()+mag_time.T;
   //clear event flag
   ctl_events_set_clear(&ACDS_evt,0,ACDS_EVT_DAT_TIMEOUT);
   //enable timer interrupt
-  TACCTL1=CCIE;
+  TA0CCTL1=CCIE;
 }
 
 //stop timeout timer
 void mag_timeout_stop(void){
     //disable interrupt
-    TACCTL1=0;
+    TA0CCTL1=0;
     //clear event flag
     ctl_events_set_clear(&ACDS_evt,0,ACDS_EVT_DAT_TIMEOUT);
 }
 
 //Timer A1 interrupt
-void timerA1(void) __ctl_interrupt[TIMERA1_VECTOR]{
-  switch(TAIV){
+void ACDS_timer(void) __ctl_interrupt[TIMER0_A0_VECTOR]{
+  switch(TA0IV){
     //CCR1 : used for sensor data timeout
-    case TAIV_TACCR1:
+    case TA0IV_TACCR1:
       //setup next interrupt
-      TACCR1+=mag_time.T;
+      TA0CCR1+=mag_time.T;
       //decremint count
       int_count--;
       if(int_count<=0){
@@ -597,10 +600,10 @@ void timerA1(void) __ctl_interrupt[TIMERA1_VECTOR]{
       }
     break;
     //CCR2 : Unused
-    case TAIV_TACCR2:
+    case TA0IV_TACCR2:
     break;
-    //TAINT : unused
-    case TAIV_TAIFG:
+    //TA0INT : unused
+    case TA0IV_TAIFG:
     break;
   }
 }
