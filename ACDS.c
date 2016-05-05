@@ -16,6 +16,7 @@
 #include "torquers.h"
 #include "ACDSerr.h"
 #include <SDlib.h>
+#include <crc.h>
 #include "corrections.h"
 #include "log.h"
     
@@ -29,7 +30,10 @@ typedef struct{
     
 SPI_DATA_ACTION spi_action;
     
-    
+float setpoint_dat[3];
+unsigned char gain_dat[1+3*sizeof(float)];
+
+
 //count and period to determine mag timeout
 MAG_TIME mag_time;
 
@@ -293,6 +297,7 @@ int ACDS_parse_cmd(unsigned char src,unsigned char cmd,unsigned char *dat,unsign
   int i;
   unsigned long block_id;
   unsigned long sector;
+  signed char *parms;
   switch(cmd){
     case CMD_MAG_DATA:
       //check packet length
@@ -343,6 +348,122 @@ int ACDS_parse_cmd(unsigned char src,unsigned char cmd,unsigned char *dat,unsign
       SD_read_addr=LOG_ADDR_START+block_id;
       //trigger event
       ctl_events_set_clear(&ACDS_evt,ACDS_EVT_SEND_DAT,0);
+      return RET_SUCCESS;
+    case CMD_ACDS_CONFIG:
+      //check length
+      if(len<1){
+        return ERR_PK_LEN;
+      }
+      //parameters start at 1
+      parms=(signed char*)&dat[1];
+      //see what to configure
+      switch(dat[0]){
+        case ACDS_CONFIG_FLIP:
+          //x y z
+          //check length
+          if(len!=4){
+            return ERR_PK_LEN;
+          }
+          //loop through the arguments
+          for(i=0;i<3;i++){
+            //check range:
+            //  torquers are numbered 1-T_NUM_AXIS_TQ
+            //  zero is for no action
+            //  sign indicates flip direction
+            if(parms[i]>T_NUM_AXIS_TQ || parms[i]<-1*T_NUM_AXIS_TQ){
+              //incorrect parameter
+              return ERR_PK_BAD_PARM;
+            }
+            //TODO: copy data
+          }
+          //TODO: set event
+        return RET_SUCCESS;
+        case ACDS_CONFIG_SET_TQ:
+          //check length
+          if(len!=4){
+            return ERR_PK_LEN;
+          }
+          //loop through the arguments
+          for(i=0;i<3;i++){
+            //check range of possible torques
+            if(parms[i]>T_NUM_AXIS_TQ/2 || parms[1]<-1*T_NUM_AXIS_TQ/2){
+              //incorrect parameter
+              return ERR_PK_BAD_PARM;
+            }
+            //TODO: copy data
+          }
+          //TODO: set event
+        return RET_SUCCESS;
+        case ACDS_CONFIG_DRIVE:
+          //check length
+          if(len!=4){
+            return ERR_PK_LEN;
+          }
+          //check axis
+          if(parms[0]<0 || parms[0]>=3){
+              //incorrect axis
+              return ERR_PK_BAD_PARM;
+          }
+          //check torquer number
+          if(parms[1]<=0 || parms[1]>T_NUM_AXIS_TQ){
+              //incorrect torquer number
+              return ERR_PK_BAD_PARM;
+          }
+          //check torquer direction
+          if(parms[2]!=M_MINUS && parms[2]!=M_PLUS){
+              //incorrect direction
+              return ERR_PK_BAD_PARM;
+          }
+          //TODO: copy data
+          //TODO: set event
+        return RET_SUCCESS;
+        case ACDS_CONFIG_TQ_INIT:
+          //check length
+          if(len!=1){
+            return ERR_PK_LEN;
+          }
+          //TODO: set event
+        return RET_SUCCESS;
+        case ACDS_CONFIG_GAIN:
+          //check length
+          if(len!=(1+1+3*sizeof(float))){
+            return ERR_PK_LEN;
+          }
+          //check gain type
+          switch(parms[0]){
+            case 'a':
+              //set Ka
+            break;
+            case 'm':
+              //set Km
+            break;
+            case 'b':
+              //set Kb
+            break;
+            default:
+              //unknown gain type
+              return ERR_PK_BAD_PARM;
+          }
+          //copy data into staging
+          memcpy(&gain_dat,parms,1+3*sizeof(float));
+          //set event
+          ctl_events_set_clear(&ACDS_evt,ACDS_EVT_WRITE_GAIN,0);
+        return RET_SUCCESS;
+        case ACDS_CONFIG_FILTER:
+        return RET_SUCCESS;
+        case ACDS_CONFIG_SETPOINT:
+          //check length
+          if(len!=(1+3*sizeof(float))){
+            return ERR_PK_LEN;
+          }
+          //copy data
+          memcpy(&setpoint_dat,parms,3*sizeof(float));
+          //set event
+          ctl_events_set_clear(&ACDS_evt,ACDS_EVT_WRITE_SETPOINT,0);
+        return RET_SUCCESS;
+      }
+      //unknown 
+      return ERR_PK_BAD_PARM;
   }
   //Return Error
   return ERR_UNKNOWN_CMD;
@@ -357,9 +478,11 @@ void ACDS_events(void *p) __toplevel{
   unsigned int e;
   int i,xnum,ynum,znum,resp;
   const VEC zero={0,0,0};
+  ACDS_SETTINGS_STORE *tmp_settings;
   VEC Flux,mag;
   CPOINT pt;
   unsigned char *buffer;
+  VEC *dest;
   unsigned char buf[BUS_I2C_HDR_LEN+3+BUS_I2C_CRC_LEN],*ptr;
   //init event
   ctl_events_init(&ACDS_evt,0);
@@ -548,13 +671,82 @@ void ACDS_events(void *p) __toplevel{
           resp=BUS_SPI_txrx(BUS_ADDR_COMM,buffer,NULL,sizeof(LOG_DAT_STORE) + 2);
           //check result
           if(resp!=RET_SUCCESS){
-            //TODO: handle error
+            //report error
+            report_error(ERR_LEV_ERROR,ACDS_ERR_SRC_I2C_CMD,ACDS_ERR_I2C_SPI_DAT,resp);
           }
         }else{
-          //TODO: handle error
+          //report error
+          report_error(ERR_LEV_ERROR,ACDS_ERR_SRC_I2C_CMD,ACDS_ERR_I2C_READ_DAT,resp);
         }
         //done with buffer, free it
         BUS_free_buffer();
+      }
+    }
+    if(e&ACDS_EVT_WRITE_SETPOINT){
+      //get buffer, set a timeout of ~500 ms
+      buffer=BUS_get_buffer(CTL_TIMEOUT_DELAY,500);
+      //check for error
+      if(buffer!=NULL){
+        //set temporary settings pointer
+        tmp_settings=(ACDS_SETTINGS_STORE*)buffer;
+        //copy settings into temp buffer
+        memcpy(tmp_settings,&ACDS_settings,sizeof(ACDS_SETTINGS_STORE));
+        //read setpoint
+        for(i=0;i<3;i++){
+          //get value
+          tmp_settings->dat.settings.Omega_CMD.elm[i]=gain_dat[i];  
+        }
+        //set magic
+        tmp_settings->magic=ACDS_SETTINGS_MAGIC;
+        //set CRC
+        tmp_settings->crc=crc16((void*)&tmp_settings->dat,sizeof(ACDS_SETTINGS));
+        //write values to flash
+        if(flash_write((void*)&ACDS_settings,tmp_settings,sizeof(ACDS_SETTINGS_STORE))!=RET_SUCCESS){
+          //TODO: flash write failed, report error
+        }
+        //free buffer
+        BUS_free_buffer();
+      }else{
+          //TODO: buffer not free, report error
+      }
+    }
+    if(e&ACDS_EVT_WRITE_GAIN){
+      //get buffer, set a timeout of ~500 ms
+      buffer=BUS_get_buffer(CTL_TIMEOUT_DELAY,500);
+      //check for error
+      if(buffer!=NULL){
+        //set temporary settings pointer
+        tmp_settings=(ACDS_SETTINGS_STORE*)buffer;
+        //coppy settings into temp buffer
+        memcpy(tmp_settings,&ACDS_settings,sizeof(ACDS_SETTINGS_STORE));
+        //determine which gian to set
+        switch(gain_dat[0]){
+          case 'a':
+            dest=&(tmp_settings->dat.settings.Ka);
+          break;
+          case 'm':
+            dest=&(tmp_settings->dat.settings.Km);
+          break;
+          case 'b':
+            dest=&(tmp_settings->dat.settings.Kb);
+          break;
+          default:
+            buffer=NULL;
+        }
+        //store values in temp buffer
+        memcpy(dest,&gain_dat[1],sizeof(VEC));
+        //set magic
+        tmp_settings->magic=ACDS_SETTINGS_MAGIC;
+        //set CRC
+        tmp_settings->crc=crc16((void*)&tmp_settings->dat,sizeof(ACDS_SETTINGS));
+        //write values to flash
+        if(flash_write((void*)&ACDS_settings,tmp_settings,sizeof(ACDS_SETTINGS_STORE))!=RET_SUCCESS){
+           //TODO: flash write failed, report error
+        }
+        //free buffer
+        BUS_free_buffer();  
+      }else{
+          //TODO: buffer not free, report error
       }
     }
   }

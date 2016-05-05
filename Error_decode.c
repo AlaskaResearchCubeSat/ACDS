@@ -86,10 +86,25 @@ const char *ACDS_err_decode(char buf[150], unsigned short source,int err, unsign
                 sprintf(buf,"Sybsystem : Error starting sensor reading : %s (%i)",BUS_error_str(argument),argument);
             break;
             case ACDS_ERR_SUB_STAT_TX:
-            break;
                 sprintf(buf,"Sybsystem : Error Sending Status: %s (%i)",BUS_error_str(argument),argument);
             default:
               sprintf(buf,"Subsystem : Unknown Error #%i, argument = %i",err,argument);
+            return buf;
+        }
+    case ACDS_ERR_SRC_I2C_CMD:
+        switch(err){
+            case ACDS_ERR_I2C_FLASH_WRITE:
+                return "I2C command : flash erase failed";
+            case ACDS_ERR_I2C_BUFF_BUSY:
+                return "I2C command : buffer busy";
+            case ACDS_ERR_I2C_SPI_DAT:
+              sprintf(buf,"I2C command : Error sending data block : %s (%i)",BUS_error_str(argument),argument);
+            return buf;
+            case ACDS_ERR_I2C_READ_DAT:
+              sprintf(buf,"I2C command : Error reading data block : %s (%i)",SD_error_str(argument),argument);
+            return buf;
+            default:
+              sprintf(buf,"I2C command : Unknown Error #%i, argument = %i",err,argument);
             return buf;
         }
   }

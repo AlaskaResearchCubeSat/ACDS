@@ -2,8 +2,7 @@
 #define __FILTER_H
 
 
-
-#define FILTER_MAX_B        5
+#define FILTER_MAX_B        15
 #define FILTER_MAX_A        (FILTER_MAX_B-1)
 #define FILTER_MAGIC        0x5A4C
 

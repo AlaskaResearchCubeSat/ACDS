@@ -7,17 +7,10 @@
 #define CLOCK_SEL0        P1SEL0
 #define CLOCK_SEL1        P1SEL1
 
-#ifdef DEV_BUILD
-  //devboard pins : P3.5 P3.6  
-  #define UART_TX_PIN_NUM   5
-  #define UART_RX_PIN_NUM   6
-  #define UART_PORT         3
-#else
-  //flight pins : P4.3 P4.2
-  #define UART_TX_PIN_NUM   3
-  #define UART_RX_PIN_NUM   2
-  #define UART_PORT         4
-#endif
+//pins : P3.5 P3.6  
+#define UART_TX_PIN_NUM   5
+#define UART_RX_PIN_NUM   6
+#define UART_PORT         3
 
 #define UART_TX_PIN       (1<<(UART_TX_PIN_NUM))
 #define UART_RX_PIN       (1<<(UART_RX_PIN_NUM))

@@ -1222,7 +1222,7 @@ int blacklist_Cmd(char **argv,unsigned short argc){
     int action=BLACKLIST_SHOW;
     short blacklist=0;
     unsigned char *buffer=NULL;
-    ACDS_SETTINGS_STORE *tmp_settings;
+     ACDS_SETTINGS_STORE *tmp_settings;
     if(argc>0){
         if(!strcmp("rm",argv[1])){
             action=BLACKLIST_RM;
@@ -1586,13 +1586,15 @@ int test_Cmd(char **argv,unsigned short argc){
 //table of commands with help
 const CMD_SPEC cmd_tbl[]={{"help"," [command]\r\n\t""get help",helpCmd},
                      //CTL_COMMANDS,
-                     ARC_RESET_COMMAND,ARC_TIME_COMMAND,ARC_TX_COMMAND,ARC_SEARCH_COMMAND,ARC_VERSION_COMMAND,
+                     ARC_RESET_COMMAND,
+                     //ARC_TIME_COMMAND,
+                     ARC_TX_COMMAND,ARC_SEARCH_COMMAND,ARC_VERSION_COMMAND,
                      //ERROR_COMMANDS,
                      //MMC_INIT_CHECK_COMMAND,
                      //MMC_DUMP_COMMAND,
                      MMC_DAT_COMMAND,MMC_ERASE_COMMAND,MMC_INIT_COMMAND,MMC_DREAD_COMMAND,
                      //{"flip","[X Y Z]\r\n\t""Flip a torquer in each axis.",flipCmd},
-                     {"setTorque"," Xtq Ytq Ztq\r\n\tFlip torquers to set the torque in the X, Y and Z axis",setTorqueCmd},
+                     //{"setTorque"," Xtq Ytq Ztq\r\n\tFlip torquers to set the torque in the X, Y and Z axis",setTorqueCmd},
                      //{"drive"," axis num dir\r\n\tdrive a torquer in the given axis in a given direction",driveCmd},
                      {"tqstat","\r\n\t""Print torquer status",tqstatCmd},
                      //{"statcode","\r\n\t""Print torquer status in machine readable form",statcodeCmd},
@@ -1617,7 +1619,7 @@ const CMD_SPEC cmd_tbl[]={{"help"," [command]\r\n\t""get help",helpCmd},
                      //{"ctst","axis aval bval""\r\n\t""apply corrections to a set of measurments",ctstCmd},
                      //{"mag","[sdata|all|raw|single]...""\r\n\t""read data from magnetomiters",magCmd},
                      //{"mode","mode""\r\n\t""run ACDS in given mode",modeCmd},
-                     {"ecor","idx""\r\n\t""erase correction data",erase_cor_Cmd},
+                     //{"ecor","idx""\r\n\t""erase correction data",erase_cor_Cmd},
                      //{"stat2idx","axis""\r\n\t""test stat2idx function",stat2idx_Cmd},
                      //{"build","""\r\n\t""print build",build_Cmd},
                      //{"dlog","[num]""\r\n\t""replay log data",data_log_Cmd},
