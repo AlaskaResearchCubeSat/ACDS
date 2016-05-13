@@ -270,7 +270,6 @@ unsigned char get_torquer_fb(void){
   return fb;
 }
 
-//TODO: fix this for 4 torquer set code
 //determine which torquer should be flipped based on what direction the flip is and which torquer was last flipped
 int choseTorquer(int stat,int last,int dir){
   int i,pos,tq,j,tp,tlast;
@@ -289,8 +288,7 @@ int choseTorquer(int stat,int last,int dir){
   if(dir==M_PLUS){
     //find a - torquer to flip
     for(i=0,pos=-1;i<4;i++){
-      //take the first one that comes along
-      //TODO : find the torquer flipped least recently
+      //find the torquer flipped least recently
       if(!(stat&stat_mask[i])){
         //find when the current torquer was last flipped
         for(j=0,tp=5,tlast=last;tlast;j++,tlast>>=4){
@@ -311,8 +309,7 @@ int choseTorquer(int stat,int last,int dir){
   }else{
     //find a + torquer to flip
     for(i=0,pos=-1;i<4;i++){
-      //take the first that comes along
-      //TODO : find the torquer flipped least recently
+      //find the torquer flipped least recently
       if(stat&stat_mask[i]){
         //find when the current torquer was last flipped
         for(j=0,tp=5,tlast=last;tlast;j++,tlast>>=4){

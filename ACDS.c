@@ -286,6 +286,8 @@ long adc16Val(unsigned char *dat){
   return val;
 }
 
+//command data for ACDS settings
+signed char settings_dat[10];
 
 CTL_EVENT_SET_t ACDS_evt;
 
@@ -374,9 +376,11 @@ int ACDS_parse_cmd(unsigned char src,unsigned char cmd,unsigned char *dat,unsign
               //incorrect parameter
               return ERR_PK_BAD_PARM;
             }
-            //TODO: copy data
+            //copy data
+            settings_dat[i],parms[i];
           }
-          //TODO: set event
+          //set event
+          ctl_events_set_clear(&ACDS_evt,ACDS_EVT_FLIP,0);
         return RET_SUCCESS;
         case ACDS_CONFIG_SET_TQ:
           //check length
@@ -390,9 +394,11 @@ int ACDS_parse_cmd(unsigned char src,unsigned char cmd,unsigned char *dat,unsign
               //incorrect parameter
               return ERR_PK_BAD_PARM;
             }
-            //TODO: copy data
+            //copy data
+            settings_dat[i]=parms[i];
           }
-          //TODO: set event
+          //set event
+          ctl_events_set_clear(&ACDS_evt,ACDS_EVT_TQ_SET,0);
         return RET_SUCCESS;
         case ACDS_CONFIG_DRIVE:
           //check length
@@ -414,15 +420,18 @@ int ACDS_parse_cmd(unsigned char src,unsigned char cmd,unsigned char *dat,unsign
               //incorrect direction
               return ERR_PK_BAD_PARM;
           }
-          //TODO: copy data
-          //TODO: set event
+          //copy data
+          memcpy(settings_dat,parms,3);
+          //set event
+          ctl_events_set_clear(&ACDS_evt,ACDS_EVT_DRIVE,0);
         return RET_SUCCESS;
         case ACDS_CONFIG_TQ_INIT:
           //check length
           if(len!=1){
             return ERR_PK_LEN;
           }
-          //TODO: set event
+          //set event
+          ctl_events_set_clear(&ACDS_evt,ACDS_EVT_TQ_INIT,0);
         return RET_SUCCESS;
         case ACDS_CONFIG_GAIN:
           //check length
@@ -450,6 +459,7 @@ int ACDS_parse_cmd(unsigned char src,unsigned char cmd,unsigned char *dat,unsign
           ctl_events_set_clear(&ACDS_evt,ACDS_EVT_WRITE_GAIN,0);
         return RET_SUCCESS;
         case ACDS_CONFIG_FILTER:
+          //TODO: do things
         return RET_SUCCESS;
         case ACDS_CONFIG_SETPOINT:
           //check length
@@ -476,6 +486,9 @@ int ACDS_mode=ACDS_HOLD_MODE;
 
 void ACDS_events(void *p) __toplevel{
   unsigned int e;
+  int num[3],dir[3];
+  signed char tmp;
+  VEC T;
   int i,xnum,ynum,znum,resp;
   const VEC zero={0,0,0};
   ACDS_SETTINGS_STORE *tmp_settings;
@@ -680,6 +693,9 @@ void ACDS_events(void *p) __toplevel{
         }
         //done with buffer, free it
         BUS_free_buffer();
+      }else{
+          //buffer not free, report error
+          report_error(ERR_LEV_ERROR,ACDS_ERR_SRC_I2C_CMD,ACDS_ERR_I2C_BUFFER_BUSY,resp);
       }
     }
     if(e&ACDS_EVT_WRITE_SETPOINT){
@@ -701,13 +717,15 @@ void ACDS_events(void *p) __toplevel{
         //set CRC
         tmp_settings->crc=crc16((void*)&tmp_settings->dat,sizeof(ACDS_SETTINGS));
         //write values to flash
-        if(flash_write((void*)&ACDS_settings,tmp_settings,sizeof(ACDS_SETTINGS_STORE))!=RET_SUCCESS){
-          //TODO: flash write failed, report error
+        if((resp=flash_write((void*)&ACDS_settings,tmp_settings,sizeof(ACDS_SETTINGS_STORE)))!=RET_SUCCESS){
+          //flash write failed, report error
+          report_error(ERR_LEV_ERROR,ACDS_ERR_SRC_I2C_CMD,ACDS_ERR_I2C_FLASH_WRITE,resp);
         }
         //free buffer
         BUS_free_buffer();
       }else{
-          //TODO: buffer not free, report error
+          //buffer not free, report error
+          report_error(ERR_LEV_ERROR,ACDS_ERR_SRC_I2C_CMD,ACDS_ERR_I2C_BUFFER_BUSY,resp);
       }
     }
     if(e&ACDS_EVT_WRITE_GAIN){
@@ -741,12 +759,60 @@ void ACDS_events(void *p) __toplevel{
         tmp_settings->crc=crc16((void*)&tmp_settings->dat,sizeof(ACDS_SETTINGS));
         //write values to flash
         if(flash_write((void*)&ACDS_settings,tmp_settings,sizeof(ACDS_SETTINGS_STORE))!=RET_SUCCESS){
-           //TODO: flash write failed, report error
+           //flash write failed, report error
+          report_error(ERR_LEV_ERROR,ACDS_ERR_SRC_I2C_CMD,ACDS_ERR_I2C_BUFFER_BUSY,resp);
         }
         //free buffer
         BUS_free_buffer();  
       }else{
-          //TODO: buffer not free, report error
+          //buffer not free, report error
+          report_error(ERR_LEV_ERROR,ACDS_ERR_SRC_I2C_CMD,ACDS_ERR_I2C_BUFFER_BUSY,resp);
+      }
+    }
+    if(e&ACDS_EVT_FLIP){
+      for(i=0;i<3;i++){
+        if(settings_dat[i]==0){
+          num[i]=0;
+          dir[i]=0;
+        }else{
+          if(settings_dat[i]<0){
+            num[i]=-1*settings_dat[i];
+            dir[i]=M_MINUS;
+          }else{
+            num[i]=settings_dat[i];
+            dir[i]=M_PLUS;
+          }
+        }
+      }
+      //drive torquers
+      drive_torquers(num,dir);
+    }
+    if(e&ACDS_EVT_TQ_SET){
+      //calculate requested torque
+      for(i=0;i<3;i++){
+        //multiply by torque of torquer
+        T.elm[i]=settings_dat[i]*M_CmdLim_b;
+      }
+      //set torques
+      setTorque(&T);
+    }
+    if(e&ACDS_EVT_TQ_INIT){
+      //initialize torquers
+      torqueInit();
+    }
+    if(e&ACDS_EVT_DRIVE){
+      //set num to zero
+      memset(num,0,sizeof(num));
+      //set dir to zero
+      memset(dir,0,sizeof(dir));
+      //check axis, just to be sure
+      tmp=settings_dat[0];
+      if(tmp>=0 && tmp<3){
+        //copy data
+        num[tmp]=settings_dat[1];
+        dir[tmp]=settings_dat[2];
+        //drive torquers
+        drive_torquers(num,dir);
       }
     }
   }

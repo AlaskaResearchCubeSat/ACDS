@@ -94,7 +94,7 @@ const char *ACDS_err_decode(char buf[150], unsigned short source,int err, unsign
     case ACDS_ERR_SRC_I2C_CMD:
         switch(err){
             case ACDS_ERR_I2C_FLASH_WRITE:
-                return "I2C command : flash erase failed";
+                return "I2C command : flash write failed";
             case ACDS_ERR_I2C_BUFF_BUSY:
                 return "I2C command : buffer busy";
             case ACDS_ERR_I2C_SPI_DAT:
@@ -103,6 +103,8 @@ const char *ACDS_err_decode(char buf[150], unsigned short source,int err, unsign
             case ACDS_ERR_I2C_READ_DAT:
               sprintf(buf,"I2C command : Error reading data block : %s (%i)",SD_error_str(argument),argument);
             return buf;
+            case ACDS_ERR_I2C_BUFFER_BUSY:
+              return "I2C command : Error Buffer Busy";
             default:
               sprintf(buf,"I2C command : Unknown Error #%i, argument = %i",err,argument);
             return buf;
