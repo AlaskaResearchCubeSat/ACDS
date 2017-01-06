@@ -16,6 +16,19 @@
 #define UART_RX_PIN       (1<<(UART_RX_PIN_NUM))
 #define UART_PINS         (UART_RX_PIN|UART_TX_PIN)
 
+//define sensor I2C pins
+#define SEN_PORT          4
+#define SEN_SDA_PIN_NUM   0
+#define SEN_SCL_PIN_NUM   1
+
+//define magnetometer Set/Reset pin
+#define MAG_SR_PIN        BIT0
+#define MAG_SR_DIR        P6DIR
+#define MAG_SR_OUT        P6OUT
+#define MAG_SR_SEL0       P6SEL0
+#define MAG_SR_SEL1       P6SEL1
+
+
 //define serial pins
 #define BUS_PIN_SDA       BIT1
 #define BUS_PIN_SCL       BIT0

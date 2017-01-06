@@ -39,7 +39,7 @@ VEC* vec_zero(VEC* v);
 VEC* vec_ascale(SCL s,VEC* a);
 SCL vec_magsq(const VEC *v);
 
-//intiger vector opperations
+//integer vector opperations
 SCL_INT ivec_magsq(const VEC_INT* v);
 VEC* ivec2vec(VEC* dest,const VEC_INT* src);
 VEC_INT* ivec_cross(VEC_INT* a,const VEC_INT* b);

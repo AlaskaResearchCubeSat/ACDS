@@ -27,12 +27,6 @@
       IQUAT attitude;
       VEC_INT rates;
   }ACDS_STAT;
-    
-  //Interrupt timing for magnetometer
-  typedef struct{
-      unsigned short T;       //period
-      unsigned short n;       //count
-  }MAG_TIME;
   
   //events for ACDS task
   extern CTL_EVENT_SET_t ACDS_evt;
@@ -50,10 +44,7 @@
   void make_status(ACDS_STAT *dest);
   void mag_timeout_reset(void);
   void mag_timeout_stop(void);
-
-  int mag_sample_start(void* buf,unsigned short time,unsigned char count);
-  int mag_sample_stop(void* buf);
-  int mag_sample_single(void* buf);
+  long adc16Val(unsigned char *dat);
 
 #endif
   

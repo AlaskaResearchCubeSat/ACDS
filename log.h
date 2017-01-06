@@ -3,7 +3,7 @@
     #include "vector.h"
     #include "quat.h"
     #include "torquers.h"
-    #include "mag.h"
+    #include "sensor-interface.h"
     #include "filter.h"
     #include <error.h>
     #include <ARCbus.h>

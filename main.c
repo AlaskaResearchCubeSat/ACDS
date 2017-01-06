@@ -10,11 +10,12 @@
 #include <terminal.h>
 #include <SDlib.h>
 #include <UCA2_uart.h>
+#include <i2c.h>
 #include "LED.h"
 #include "torquers.h"
-#include "SensorDataInterface.h"
 #include "ACDS.h"
 #include "stackcheck.h"
+#include "sensor-interface.h"
 #include "log.h"
 #include "ACDSerr.h"
 #include "pins.h"
@@ -85,6 +86,12 @@ int main(void){
 
   //initialize UART
   UCA2_init_UART(UART_PORT,UART_TX_PIN_NUM,UART_RX_PIN_NUM);
+
+  //initialize sensor I2C
+  initI2C(SEN_PORT,SEN_SDA_PIN_NUM,SEN_SCL_PIN_NUM);
+
+  //initialize magnetometer S/R pin
+  mag_init();
 
   //setup command parse for ACDS
   BUS_register_cmd_callback(&ACDS_parse);

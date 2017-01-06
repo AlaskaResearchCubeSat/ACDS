@@ -2,7 +2,7 @@
     #define __CORRECTIONS_H
     
     #include "vector.h"
-    #include "mag.h"
+    #include "sensor-interface.h"
     
     #define COR_MAGIC       0xAA43
     

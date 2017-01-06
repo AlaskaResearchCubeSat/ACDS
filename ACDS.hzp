@@ -33,7 +33,6 @@
       <file file_name="vector.c" />
       <file file_name="vector.h" />
       <file file_name="output_type.h" />
-      <file file_name="SensorDataInterface.h" />
       <file file_name="ACDS.c" />
       <file file_name="ACDS.h" />
       <file file_name="stackcheck.c" />
@@ -68,9 +67,11 @@
       <file file_name="algorithm.c" />
       <file file_name="log.c" />
       <file file_name="log.h" />
-      <file file_name="mag.h" />
       <file file_name="filter.c" />
       <file file_name="filter.h" />
+      <file file_name="LTC24XX.h" />
+      <file file_name="sensor-interface.c" />
+      <file file_name="sensor-interface.h" />
     </folder>
     <folder Name="System Files">
       <file file_name="$(PackagesDir)/libraries/libctl/source/threads.js" />
@@ -89,7 +90,7 @@
     Name="Debug"
     build_debug_information="Yes"
     hidden="Yes"
-    linker_additional_files="$(ARC_prefix)/lib/BUSlib_Debug.hza;$(ARC_prefix)/lib/termlib_Debug.hza;$(ARC_prefix)/lib/commandLib_Debug.hza;$(ARC_prefix)/lib/SD-lib_UCA1_Debug.hza;$(ARC_prefix)/lib/Error_SDcard_Debug.hza;$(ARC_prefix)/lib/UART_UCA2_Debug.hza" />
+    linker_additional_files="$(ARC_prefix)/lib/BUSlib_Debug.hza;$(ARC_prefix)/lib/termlib_Debug.hza;$(ARC_prefix)/lib/commandLib_Debug.hza;$(ARC_prefix)/lib/SD-lib_UCA1_Debug.hza;$(ARC_prefix)/lib/Error_SDcard_Debug.hza;$(ARC_prefix)/lib/UART_UCA2_Debug.hza;$(ARC_prefix)/lib/I2Clib_Debug.hza" />
   <configuration
     Name="MSP430 Release"
     inherited_configurations="MSP430;Release"
@@ -99,7 +100,7 @@
     build_debug_information="No"
     c_preprocessor_definitions="NDEBUG"
     hidden="Yes"
-    linker_additional_files="$(ARC_prefix)/lib/BUSlib_Release.hza;$(ARC_prefix)lib/termlib_Release.hza;$(ARC_prefix)/lib/commandLib_Release.hza;$(ARC_prefix)/lib/SD-lib_UCA1_Release.hza;$(ARC_prefix)/lib/Error_SDcard_Release.hza;$(ARC_prefix)/lib/UART_UCA2_Release.hza"
+    linker_additional_files="$(ARC_prefix)/lib/BUSlib_Release.hza;$(ARC_prefix)lib/termlib_Release.hza;$(ARC_prefix)/lib/commandLib_Release.hza;$(ARC_prefix)/lib/SD-lib_UCA1_Release.hza;$(ARC_prefix)/lib/Error_SDcard_Release.hza;$(ARC_prefix)/lib/UART_UCA2_Release.hza;$(ARC_prefix)/lib/I2Clib_Release.hza"
     optimize_block_locality="Yes"
     optimize_copy_propagation="Yes"
     optimize_cross_calling="Standard"

@@ -2,6 +2,7 @@
 #include <commandLib.h>
 #include <SDlib.h>
 #include <ARCbus.h>
+#include <i2c.h>
 #include "ACDSerr.h"
 #include "torquers.h"
 
@@ -70,8 +71,18 @@ const char *ACDS_err_decode(char buf[150], unsigned short source,int err, unsign
     break;
     case ACDS_ERR_SRC_SENSORS:
       switch(err){
-        case ACDS_ERR_SEN_BAD_PACKET_LENGTH:
-          sprintf(buf,"Sensors : Bad Packet Length, len = %i",argument);
+        case ACDS_ERR_SEN_SETUP:
+          sprintf(buf,"Sensor I2C : Setup %s",I2C_error_str(argument));
+        return buf;
+        case ACDS_ERR_SEN_CONV_READ:
+          sprintf(buf,"Sensor I2C : Conversion Result %s",I2C_error_str(argument));
+        return buf;
+        case ACDS_ERR_SEN_BAD_GAIN:
+          sprintf(buf,"Sensor I2C : Invalid Gain %u",argument);
+        return buf;
+        case ACDS_ERR_SEN_INSUFFICIENT_DATA:
+          sprintf(buf,"Sensor I2C : Insufficient Data, Flags = 0x%04X",argument);
+        return buf;
         default:
           sprintf(buf,"Sensors : Unknown Error #%i, argument = %i",err,argument);
         return buf;

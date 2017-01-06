@@ -8,7 +8,6 @@
 #include <stdlib.h>
 #include <timerA0.h>
 #include <math.h> //needed for NAN
-#include "SensorDataInterface.h"
 #include "ACDS.h"
 #include "LED.h"
 #include "vector.h"
@@ -32,10 +31,6 @@ SPI_DATA_ACTION spi_action;
     
 float setpoint_dat[3];
 unsigned char gain_dat[1+3*sizeof(float)];
-
-
-//count and period to determine mag timeout
-MAG_TIME mag_time;
 
 SD_block_addr SD_read_addr;
    
@@ -63,7 +58,8 @@ int int_mag(SCL val){
     return ((int)val);
 }
 
-void make_status(ACDS_STAT *dest){    
+void make_status(ACDS_STAT *dest)
+{    
   //get torquer status
   tqstat2stat(dest->tqstat);
   //get magnetic flux and convert to integer flux
@@ -83,65 +79,6 @@ void make_status(ACDS_STAT *dest){
   ivec_cp(&dest->rates,&acds_dat.dat.acds_dat.gyro);
 }
 
-int mag_sample_stop(void* buf){
-    unsigned char *ptr;
-    //set ACDS mode
-    ACDS_mode=ACDS_IDLE_MODE;
-    //setup command
-    ptr=BUS_cmd_init(buf,CMD_MAG_SAMPLE_CONFIG);
-    //set command
-    *ptr++=MAG_SAMPLE_STOP;
-    //stop LEDL timeout
-    mag_timeout_stop();
-    //send packet
-    return BUS_cmd_tx(BUS_ADDR_LEDL,buf,1,0);
-}
-
-int mag_sample_start(void* buf,unsigned short time,unsigned char count){
-    unsigned char *ptr;
-    int resp;
-    //setup command
-    ptr=BUS_cmd_init(buf,CMD_MAG_SAMPLE_CONFIG);
-    //set command
-    *ptr++=MAG_SAMPLE_START;
-    //set time MSB
-    *ptr++=time>>8;
-    //set time LSB
-    *ptr++=time;
-    //set count
-    *ptr++=count;
-    //set timeout structure
-    mag_time.T=time;
-    mag_time.n=count+1;
-    //send packet
-    resp=BUS_cmd_tx(BUS_ADDR_LEDL,buf,4,0);
-    //if command was sent successfully then start timeout timer
-    if(resp==RET_SUCCESS){
-        //restart timeout timer
-        mag_timeout_reset();
-    }
-    //return response
-    return resp;
-}
-
-int mag_sample_single(void* buf){
-    unsigned char *ptr;
-    int resp;
-    //setup command
-    ptr=BUS_cmd_init(buf,CMD_MAG_SAMPLE_CONFIG);
-    //set command
-    *ptr++=MAG_SINGLE_SAMPLE;
-    //send packet
-    resp=BUS_cmd_tx(BUS_ADDR_LEDL,buf,1,0);
-    //if command was sent successfully then start timeout timer
-    if(resp==RET_SUCCESS){
-        //restart timeout timer
-        mag_timeout_reset();
-    }
-    //return response
-    return resp;
-}
-
 void sub_events(void *p) __toplevel{
   unsigned int e,len;
   int i,resp;
@@ -153,24 +90,16 @@ void sub_events(void *p) __toplevel{
     if(e&SUB_EV_PWR_OFF){
         //print message
         puts("System Powering Down\r\n");
-        //send stop sampling packet
-        resp=mag_sample_stop(buf);
-        //check result
-        if(resp<0){
-            report_error(ERR_LEV_ERROR,ACDS_ERR_SRC_SUBSYSTEM,ACDS_ERR_SUB_LEDL_STOP,resp);
-        }
+        //stop sampling
+        mag_sample_stop();
     }
     if(e&SUB_EV_PWR_ON){
         //print message
         puts("System Powering Up\r\n");
         //set init ACDS mode
         ACDS_mode=ACDS_INIT_MODE;
-        //send start sampling packet
-        resp= mag_sample_start(buf,32768,0);
-        //check result
-        if(resp<0){
-            report_error(ERR_LEV_ERROR,ACDS_ERR_SRC_SUBSYSTEM,ACDS_ERR_SUB_LEDL_START,resp);
-        }
+        //send sampling
+        mag_sample_start(32768,0);
     }
     if(e&SUB_EV_SEND_STAT){
       //send status
@@ -218,12 +147,14 @@ void sub_events(void *p) __toplevel{
             len=len/512;
             if(len==1){
                 resp=mmcWriteBlock(spi_action.parm.sector,(unsigned char*)arcBus_stat.spi_stat.rx);
-            }else{
-                resp=mmcWriteMultiBlock(spi_action.parm.sector,(unsigned char*)arcBus_stat.spi_stat.rx,len);
             }
-            if(resp){
+            if(resp){ //CN: swapped here
                 printf("Unable to write SPI data to SD card : %s\r\n",SD_error_str(resp));
             }
+            else{
+                resp=mmcWriteMultiBlock(spi_action.parm.sector,(unsigned char*)arcBus_stat.spi_stat.rx,len);
+            }
+
           break;
           default:
             printf("\tUnknown SPI data action %i\r\n",spi_action.action);
@@ -301,17 +232,6 @@ int ACDS_parse_cmd(unsigned char src,unsigned char cmd,unsigned char *dat,unsign
   unsigned long sector;
   signed char *parms;
   switch(cmd){
-    case CMD_MAG_DATA:
-      //check packet length
-      if(len!=sizeof(magData)){
-        //length incorrect, report error and exit
-        report_error(ERR_LEV_ERROR,ACDS_ERR_SRC_SENSORS,ACDS_ERR_SEN_BAD_PACKET_LENGTH,len);
-        return ERR_PK_LEN;
-      }
-      memcpy(&magData,dat,sizeof(magData));
-      //sensor data received set event
-      ctl_events_set_clear(&ACDS_evt,ACDS_EVT_DAT_REC,0);
-    return RET_SUCCESS;
     case CMD_SPI_DATA_ACTION:
         if(len==0){
             return ERR_PK_LEN;
@@ -517,8 +437,6 @@ void ACDS_events(void *p) __toplevel{
     e=ctl_events_wait(CTL_EVENT_WAIT_ANY_EVENTS_WITH_AUTO_CLEAR,&ACDS_evt,ACDS_EVT_ALL,CTL_TIMEOUT_NONE,0);
     //magnetometer data event
     if(e&ACDS_EVT_DAT_REC){
-      //reset data timeout
-      mag_timeout_reset();
       //clear LEDL timeout event
       e&=~ACDS_EVT_DAT_TIMEOUT;
       //clear flux
@@ -630,11 +548,7 @@ void ACDS_events(void *p) __toplevel{
         case ACDS_IDLE_MODE:
             //do nothing in idle mode
             //send stop sampling packet
-            resp=mag_sample_stop(buf);
-            //check result
-            if(resp<0){
-                report_error(ERR_LEV_ERROR,ACDS_ERR_SRC_SUBSYSTEM,ACDS_ERR_SUB_LEDL_STOP,resp);
-            }
+            mag_sample_stop();
         break;
         case ACDS_INIT_MODE:
             //check if torquers are initialized
@@ -815,53 +729,5 @@ void ACDS_events(void *p) __toplevel{
         drive_torquers(num,dir);
       }
     }
-  }
-}
-
-//running interrupt count 
-static short int_count;
-
-//reset timeout timer
-void mag_timeout_reset(void){
-  //disable timer interrupt
-  TA0CCTL1=0;
-  //initialize interrupt count
-  int_count=mag_time.n;
-  //set interupt time
-  TA0CCR1=readTA0()+mag_time.T;
-  //clear event flag
-  ctl_events_set_clear(&ACDS_evt,0,ACDS_EVT_DAT_TIMEOUT);
-  //enable timer interrupt
-  TA0CCTL1=CCIE;
-}
-
-//stop timeout timer
-void mag_timeout_stop(void){
-    //disable interrupt
-    TA0CCTL1=0;
-    //clear event flag
-    ctl_events_set_clear(&ACDS_evt,0,ACDS_EVT_DAT_TIMEOUT);
-}
-
-//Timer A1 interrupt
-void ACDS_timer(void) __ctl_interrupt[TIMER0_A0_VECTOR]{
-  switch(TA0IV){
-    //CCR1 : used for sensor data timeout
-    case TA0IV_TACCR1:
-      //setup next interrupt
-      TA0CCR1+=mag_time.T;
-      //decremint count
-      int_count--;
-      if(int_count<=0){
-        ctl_events_set_clear(&ACDS_evt,ACDS_EVT_DAT_TIMEOUT,0);
-        int_count=mag_time.n;
-      }
-    break;
-    //CCR2 : Unused
-    case TA0IV_TACCR2:
-    break;
-    //TA0INT : unused
-    case TA0IV_TAIFG:
-    break;
   }
 }

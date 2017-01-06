@@ -15,7 +15,6 @@
 #include <crc.h>
 #include "torquers.h"
 #include "output_type.h"
-#include "SensorDataInterface.h"
 #include "algorithm.h"
 #include "stackcheck.h"
 #include "ACDS.h"
@@ -326,13 +325,7 @@ int sensorRunCmd(char **argv,unsigned short argc){
       return -1;
   }
   //setup sampling
-  res=mag_sample_start(buff,time,count);
-  //check result
-  if(res<0){
-    printf("Error communicating with LEDL : %s\r\n",BUS_error_str(res));
-    //return error
-    return 1;
-  } 
+  mag_sample_start(time,count);
   return 0;
 }
 
@@ -341,13 +334,7 @@ int sensorStopCmd(char **argv,unsigned short argc){
   unsigned char buff[BUS_I2C_HDR_LEN+1+BUS_I2C_CRC_LEN],*ptr;
   int res;
   //send stop command to LEDL
-  res=mag_sample_stop(buff);
-  //check result
-  if(res<0){
-    printf("Error communicating with LEDL : %s\r\n",BUS_error_str(res));
-    //return error
-    return 1;
-  } 
+  mag_sample_stop();
   return 0;
 }
 
@@ -858,16 +845,10 @@ int magCmd(char **argv,unsigned short argc){
     //check if reading a single sample
     if(single){
         //read single measurement
-        res=mag_sample_single(buff);
+        mag_sample_single();
     }else{
         //start reading magnetometer data
-        res=mag_sample_start(buff,time,count);
-    }
-    //check result
-    if(res<0){
-        printf("Error communicating with LEDL : %s\r\n",BUS_error_str(res));
-        //return error
-        return 1;
+        mag_sample_start(time,count);
     }
     //refresh correction data status
     read_cor_stat();
@@ -1008,13 +989,7 @@ int magCmd(char **argv,unsigned short argc){
             }
         }
         //send stop sample command
-        res=mag_sample_stop(buff);
-        //check result
-        if(res<0){
-            printf("Error communicating with LEDL : %s\r\n",BUS_error_str(res));
-            //return error
-            return 1;
-        }
+        mag_sample_stop();
         //clear event flag
         ctl_events_set_clear(&ACDS_evt,0,ADCS_EVT_COMMAND_SENSOR_READ);
         //wait for straggalers
@@ -1050,13 +1025,7 @@ int modeCmd(char **argv,unsigned short argc){
     //set ACDS mode
     ACDS_mode=mode;
     //send sample start command
-    res=mag_sample_start(buff,time,count);
-    //check result
-    if(res<0){
-        printf("Error communicating with LEDL : %s\r\n",BUS_error_str(res));
-        //return error
-        return 1;
-    }
+    mag_sample_start(time,count);
     //refresh correction data status
     read_cor_stat();
     //print message
@@ -1090,13 +1059,7 @@ int modeCmd(char **argv,unsigned short argc){
         }
     }
     //send stop command
-    res=mag_sample_stop(buff);
-    //check result
-    if(res<0){
-        printf("Error communicating with LEDL : %s\r\n",BUS_error_str(res));
-        //return error
-        return 1;
-    }
+    mag_sample_stop();
     return 0;
 }
 
@@ -1592,7 +1555,8 @@ const CMD_SPEC cmd_tbl[]={{"help"," [command]\r\n\t""get help",helpCmd},
                      //ERROR_COMMANDS,
                      //MMC_INIT_CHECK_COMMAND,
                      //MMC_DUMP_COMMAND,
-                     MMC_DAT_COMMAND,MMC_ERASE_COMMAND,MMC_INIT_COMMAND,MMC_DREAD_COMMAND,
+                     MMC_DAT_COMMAND,MMC_ERASE_COMMAND,MMC_INIT_COMMAND,
+                     //MMC_DREAD_COMMAND,
                      //{"flip","[X Y Z]\r\n\t""Flip a torquer in each axis.",flipCmd},
                      //{"setTorque"," Xtq Ytq Ztq\r\n\tFlip torquers to set the torque in the X, Y and Z axis",setTorqueCmd},
                      //{"drive"," axis num dir\r\n\tdrive a torquer in the given axis in a given direction",driveCmd},
